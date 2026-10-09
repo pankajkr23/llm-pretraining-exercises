@@ -84,6 +84,25 @@ is why they are measured each time rather than assumed.
 
 ## Change log
 
+### 2026-10-10 — the page, after review
+
+- **Every verdict on the page now comes from the data.** The first version typed "inside the
+  noise", "narrowed, not removed" and "falls" while claiming they came from the renderer. They are
+  read from flags the `*_numbers` functions return, and a browser test renders the page from
+  deliberately reversed data and checks each phrase flips. The sweep's drift now carries its
+  direction (`_fold` is symmetric) and its margin over the floor; the seed floor takes every seed
+  rather than the first two.
+- **The schedule story states all its comparisons.** At the stop point the schedules cannot be
+  ranked; the two finished models at that budget can (the branch beats the planned cosine); run to
+  the end, WSD ends lower; the decay on its own bought nothing outside the noise. The planned
+  cosine's deficit against the longer cosine cut at the same step is given with a reading (a lower
+  average rate), labelled as a reading.
+- **`RESULTS.md` changed by one sentence, on purpose:** "never falls inside that noise" became "dips
+  inside that noise for 41 of 600 steps and never stays there", computed from the same smoothing.
+- **Absent values render as absent.** A missing floor, an empty list of unsettled layers or a median
+  of nothing used to print "step 0", "Zero layer" or an empty code box; a test now renders the page
+  from such data.
+
 ### 2026-10-10 — the page
 
 - **`web/`, on the spine, from the published bundles alone.** No experiment was re-run. Six figures,
@@ -98,9 +117,7 @@ is why they are measured each time rather than assumed.
   holds the renderer's copy of that arithmetic to `ratios.smooth`.
 - **Found while building it:** the uncorrected run is not merely "outside the noise". It is ahead
   for a dozen steps, then falls behind, and its smoothed gap dips inside the seed gap for stretches
-  without ever staying there — the page states that precisely. `RESULTS.md`'s sentence "it never
-  falls inside that noise within 600 steps" is looser than the measure it reports, which is "never
-  *stays* inside"; left unchanged here, because this change keeps that document byte-identical.
+  without ever staying there. `RESULTS.md` now says so too (see the review entry above this one).
 
 ### 2026-10-09 — published, after two corrections
 

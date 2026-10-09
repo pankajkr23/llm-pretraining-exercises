@@ -129,14 +129,34 @@ def test_no_heading_or_rail_label_types_a_count() -> None:
     number is always a count of that section's own contents. `one` is excluded and only `one`. A
     backtick is not derivation; `${` is.
     """
+    source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
+    labels, offenders = _typed_counts(source)
+    assert labels, "no headings or rail labels matched; the patterns have gone stale"
+    assert not offenders, (
+        "a heading or rail label types a count instead of deriving it: "
+        f"{offenders}. Use spell()/Spell() over the list itself, or drop the count."
+    )
+
+
+def test_the_heading_guard_catches_a_typed_count() -> None:
+    """Its twin: a typed count in a heading or a rail label is caught; a derived one is not."""
+    typed = (
+        "section('limits', 'limits', 'In the open', 'Eight things this run cannot show', [],\n"
+        "  { short: 'The limits', sub: 'three small models' });"
+    )
+    derived = "section('limits', 'limits', 'In the open', `${Spell(items.length)} things`, []);"
+    assert _typed_counts(typed)[1] == ["three small models", "Eight things this run cannot show"]
+    assert _typed_counts(derived)[1] == []
+
+
+def _typed_counts(source: str) -> tuple[list[str], list[str]]:
+    """Every heading and rail label in `source`, and those that type a count instead of deriving."""
     import re as _re
 
     numbers = (
         r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen"
         r"|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\b"
     )
-    source = (EXERCISE / "web" / "chapters.js").read_text(encoding="utf-8")
-
     labels: list[str] = []
     labels += _re.findall(r"\b(?:short|sub):\s*'([^']*)'", source)
     labels += _re.findall(r"\b(?:short|sub):\s*`([^`]*)`", source)
@@ -150,14 +170,8 @@ def test_no_heading_or_rail_label_types_a_count() -> None:
         source,
         _re.S,
     )
-    assert labels, "no headings or rail labels matched; the patterns have gone stale"
-    labels = [label for label in labels if "${" not in label]
-
-    offenders = [label for label in labels if _re.search(numbers, label, _re.I)]
-    assert not offenders, (
-        "a heading or rail label types a count instead of deriving it: "
-        f"{offenders}. Use spell()/Spell() over the list itself, or drop the count."
-    )
+    typed = [label for label in labels if "${" not in label]
+    return labels, [label for label in typed if _re.search(numbers, label, _re.I)]
 
 
 def test_no_count_is_typed_into_the_page_as_a_word() -> None:

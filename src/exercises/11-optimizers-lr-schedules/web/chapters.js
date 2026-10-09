@@ -174,11 +174,115 @@ function animate(ms, step) {
 /** Every interactive figure registers its end state here; print and reduced motion paint it. */
 const ENDINGS = [];
 
+/** A drawing that scrolls inside its own box, with a cue that says so wherever it has to.
+ *
+ * The svg is never drawn below its designed width, so on a phone it scrolls rather than shrinking
+ * its labels — and a scroller with no cue reads as a figure cut off at the edge. The cue is shown
+ * by the stylesheet only at widths where the drawing does not fit. */
+function scrollBox(node) {
+  const box = el('div', 'fig-scroll');
+  box.append(node);
+  const wrap = el('div', 'scrollable');
+  wrap.append(box, scrollCue());
+  return wrap;
+}
+
+/** The cue itself, for figures that build their own scrolling boxes. */
+const scrollCue = () =>
+  el('p', 'scroll-cue', 'Wider than this screen — swipe the figure sideways to see all of it.');
+
 /** The tightest tolerance the bias experiment reports, and the step it is met. */
 const tightest = (B) => {
   const tol = Math.min(...Object.keys(B.within).map(Number));
   return { tol, step: B.within[String(tol)] };
 };
+
+/* Absent is not zero. A median of nothing, a floor that could not be measured, a list with nobody
+ * in it: each has to read as absent, because `int(null)` prints a confident "0" and `Spell(0)` a
+ * "Zero layer". */
+const known = (x) => x !== null && x !== undefined;
+/** "one layer", "three layers", or `none` when there are none. */
+const countOf = (n, one, many, none) => (n === 0 ? none : `${spell(n)} ${n === 1 ? one : many}`);
+/** A list of matrix names as code, or `null` when there are none, so callers phrase the absence. */
+const codeList = (names) => (names.length ? names.map((n) => `<code>${n}</code>`).join(', ') : null);
+
+/** Every word on this page that ranks one thing above another, or calls a difference noise.
+ *
+ * **Read from the data, never typed.** The first version of this page typed "inside the noise",
+ * "narrowed, not removed" and "falls" into sentences while its header claimed every verdict came
+ * from the renderer's `*_numbers` functions. Each flag below is one of those functions' outputs,
+ * and a browser test renders the page from deliberately reversed data and checks every one flips.
+ */
+function verdicts(M) {
+  const S = M.schedules;
+  const W = M.sweep;
+  const B = M.bias;
+  const name = { cosine: 'cosine', wsd: 'WSD' };
+  const other = (k) => (k === 'cosine' ? 'wsd' : 'cosine');
+  const planned = `the cosine planned for ${S.stop}`;
+  const mup = {
+    narrows: 'narrowed, not removed',
+    holds: 'held still, inside the floor',
+    does_not_narrow: 'not narrowed at all',
+  }[W.conclusion];
+  return {
+    mup,
+    mupMark: { holds: 'good', narrows: 'watch' }[W.conclusion] || 'bad',
+    spMoves: `${W.falls.sp ? 'falls' : 'rises'}`,
+    mupMoves: `${W.falls.mup ? 'falls' : 'rises'}`,
+    /* (a) Cosine and WSD, both stopped at the stop point. */
+    stop: `${name[S.stop_lower]} is lower by ${Math.abs(S.stop_gap).toFixed(4)}`,
+    stopCall: S.stop_resolved
+      ? `larger than the seed spread of ${S.stop_noise.toFixed(4)} between two runs of the same
+         schedule, so the comparison ranks them: ${name[S.stop_lower]} first`
+      : `inside the seed spread of ${S.stop_noise.toFixed(4)} between two runs of the same
+         schedule, so the comparison cannot rank them`,
+    stopWinner: S.stop_resolved ? name[S.stop_lower] : null,
+    stopLoser: name[other(S.stop_lower)],
+    /* (b) The two finished models at the stop point's budget. */
+    finished:
+      S.finished_lower === 'branch'
+        ? `the WSD branch is lower than ${planned}`
+        : `${planned} is lower than the WSD branch`,
+    finishedCall: S.finished_resolved
+      ? `larger than their seed spread of ${S.finished_noise.toFixed(4)}`
+      : `inside their seed spread of ${S.finished_noise.toFixed(4)}, so it does not rank them`,
+    finishedWinner: S.finished_lower === 'branch' ? 'the WSD branch' : planned,
+    /* (c) The two schedules run to the end of their plan. */
+    end: `${name[S.end_lower]} ends lower by ${Math.abs(S.end_gap).toFixed(4)}`,
+    endCall: S.end_resolved
+      ? `larger than their seed spread of ${S.end_noise.toFixed(4)}`
+      : `inside their seed spread of ${S.end_noise.toFixed(4)}`,
+    /* The decay on its own: the branch against WSD left at its peak to the same step. */
+    decay: S.decay_inside_noise
+      ? `the decay itself bought nothing outside the noise: ${signed(S.decay_bought)} against a
+         seed spread of ${S.decay_noise.toFixed(4)} between the branch's seeds and WSD's`
+      : `the decay itself bought more than the noise: ${signed(S.decay_bought)} against a seed
+         spread of ${S.decay_noise.toFixed(4)} between the branch's seeds and WSD's`,
+    decayMark: S.decay_inside_noise ? 'bad' : 'good',
+    /* The cosine planned for the stop point against the longer cosine cut there. */
+    planned: S.planned_cut_resolved
+      ? `${planned} ends ${S.planned_minus_cut > 0 ? 'worse' : 'better'} than the
+         ${S.total}-step cosine cut at step ${S.stop}, by ${Math.abs(S.planned_minus_cut).toFixed(4)}
+         against a seed spread of ${S.planned_cut_noise.toFixed(4)}`
+      : `${planned} and the ${S.total}-step cosine cut at step ${S.stop} cannot be told apart:
+         ${Math.abs(S.planned_minus_cut).toFixed(4)} against a seed spread of
+         ${S.planned_cut_noise.toFixed(4)}`,
+    /* The bias-correction runs against two seeds of the corrected one. */
+    biasStays: known(B.settles_at_step)
+      ? `comes back inside the noise from step ${int(B.settles_at_step)} and stays there`
+      : B.steps_inside_noise > 0
+        ? `dips inside the noise for ${spell(B.steps_inside_noise)} of ${int(B.horizon)} steps and
+           never stays there`
+        : `never dips inside the noise in ${int(B.horizon)} steps`,
+    /* What a plot of only the first steps shows of the closed form. */
+    firstSteps:
+      B.peak_step < B.ratio_by_step.length
+        ? `a curve that has already turned — it peaks at step ${B.peak_step} and is still
+           ${fold(B.last)} at step ${B.last_step}`
+        : `a curve still climbing at step ${B.last_step}`,
+  };
+}
 
 /* ============================================================== 1 · thesis */
 
@@ -188,6 +292,7 @@ function chapterThesis(M) {
   const W = M.sweep;
   const S = M.schedules;
   const tight = tightest(B);
+  const V = verdicts(M);
   const s = section(
     'thesis',
     'thesis',
@@ -195,43 +300,53 @@ function chapterThesis(M) {
     'The opening of a run is a different machine',
     [
       `Adam is one formula, applied the same way at every step. Measured on a small language model,
-       it does not behave the same way at every step: for its first hundreds of steps — thousands,
-       for one of its parts — it is driven by averages that start at zero, weights that start small
-       and a learning rate that starts low. <b>Every effect below is set against the difference two
-       identical runs show for no reason</b>, and where an effect is smaller than that, the page
-       says so rather than ranking.`,
+       it does not behave the same way at every step: for its first hundreds of steps it is driven
+       by averages that start at zero, weights that start small and a learning rate that starts
+       low. <b>Every effect below is set against the difference two identical runs show for no
+       reason</b>, and where an effect is smaller than that, the page says so rather than ranking.`,
     ],
     { short: 'The claim', sub: 'early steps are a different regime' }
   );
 
+  const settleTile = known(R.median_settle)
+    ? [
+        `step ${int(R.median_settle)}`,
+        `where the median layer's update ratio stops moving in the run with warmup, against a
+         warmup that ends at step ${R.warmup}${
+           known(R.median_settle_none)
+             ? `; without warmup the median is step ${int(R.median_settle_none)}`
+             : ''
+         }. ${
+           R.unsettled.length
+             ? `${Spell(R.unsettled.length)} ${R.unsettled.length === 1 ? 'layer never settles' : 'layers never settle'} at all.`
+             : 'Every layer settles.'
+         }`,
+      ]
+    : ['no median', 'no layer settled within the run, so there is no median step to give.'];
   const tiles = el('div', 'tiles');
   for (const [v, k, mark] of [
     [
       fold(B.peak),
       `how much larger Adam's step is with bias correction switched off, at its worst — step
-       ${B.peak_step}. It is still more than ${pct(tight.tol, 0)} too large until step
-       <b>${int(tight.step)}</b>.`,
+       ${B.peak_step}. In closed form, for a gradient that never changes, it is still more than
+       ${pct(tight.tol, 0)} too large until step <b>${int(tight.step)}</b>.`,
       'watch',
     ],
-    [
-      `step ${int(R.median_settle)}`,
-      `where the median layer's update ratio stops moving, against a warmup that ends at step
-       ${R.warmup}. ${Spell(R.unsettled.length)} layer never settles at all.`,
-      'watch',
-    ],
+    [...settleTile, 'watch'],
     [
       fold(W.drift.mup),
       `how far muP's best learning rate moves across a ${fold(W.widths.at(-1) / W.widths[0], 0)}
        range of widths, against <b>${fold(W.drift.sp)}</b> in the standard parametrization —
-       narrowed, not removed.`,
-      'good',
+       ${V.mup}. muP is a rule that scales the hidden and output layers' learning rates with width.`,
+      V.mupMark,
     ],
     [
-      `+${S.branch_decay} steps`,
-      `of extra training the first WSD branch was given over the cosine it beat. At an equal
-       budget, the decay itself bought <b>${signed(S.decay_bought)}</b> — inside a seed spread of
-       ${S.decay_noise.toFixed(4)}.`,
-      'bad',
+      signed(S.decay_bought),
+      `what decaying the learning rate over the last ${S.branch_decay} steps before step
+       ${S.stop} bought a WSD run (one that holds its rate flat and decays only at the end), against
+       the same run left flat: ${V.decay}. The first version of this comparison let one side train
+       for longer than the other.`,
+      V.decayMark,
     ],
   ]) {
     const tile = el('div', `tile ${mark}`);
@@ -245,10 +360,10 @@ function chapterThesis(M) {
   s.append(tiles);
 
   const note = el('p', 'say small');
-  note.innerHTML = `The last tile is a failure of this exercise's own first attempt, and it is in the
-    opening on purpose: the comparison it describes looked like a clean win for one schedule until
-    the code was read against the sentence it printed. A page that shows only its wins has not
-    earned the ones it shows.`;
+  note.innerHTML = `The last tile carries this exercise's own failure. The first version of the
+    schedule comparison was not at an equal budget, which was found by reading the code against the
+    sentence it printed and fixed before anything was published; the exercise's progress log records
+    it. A page that shows only its wins has not earned the ones it shows.`;
   s.append(note);
 }
 
@@ -306,8 +421,12 @@ function chapterGlossary(M) {
     [
       'settled',
       `The step after which a layer's smoothed ratio stays within ±${pct(R.band, 0)} of its own late
-       level — a definition fixed before looking. The median layer settles at step
-       ${int(R.median_settle)}.`,
+       level — a definition fixed before looking. Steps are counted from zero, as the results
+       document counts them. ${
+         known(R.median_settle)
+           ? `With warmup, the median layer settles at step ${int(R.median_settle)}.`
+           : 'No layer settled in the warmup run, so there is no median.'
+       }`,
     ],
     [
       'cosine',
@@ -318,7 +437,8 @@ function chapterGlossary(M) {
       'WSD',
       `Warmup, stable, decay: hold η flat, then decay only over the last
        ${pct(S.decay_fraction, 0)} of the plan, from step ${S.decay_start} of ${S.total}. A
-       checkpoint from the flat stretch can be branched off and decayed early.`,
+       checkpoint from the flat stretch can be copied and decayed early — a <b>branch</b>. The
+       branch here starts at step ${S.branch_at} and decays for ${S.branch_decay} steps.`,
     ],
     [
       'validation loss',
@@ -327,25 +447,31 @@ function chapterGlossary(M) {
     ],
     [
       'a seed',
-      `The number that fixes a run's random starting weights (and, in most experiments here, the
-       order it reads its data). Every comparison here runs ${spell(M.facts.seeds)} of them, and
-       they disagree: in the width sweep they put one setting's best learning rate up to
+      `The number that fixes a run's random starting weights (and, in the schedule comparison and
+       the width sweep, the order it reads its data). The schedule comparison and the width sweep run
+       ${spell(M.facts.seeds)} seeds of every setting; the bias-correction comparison runs a second
+       seed of the corrected run only, as its yardstick; the warmup comparison is one run of each.
+       Seeds disagree: in the width sweep they put one setting's best learning rate up to
        ${fold(W.seed_floor)} apart.`,
     ],
     [
       'the noise floor',
-      `The difference two runs show for no reason at all. At step ${S.stop} two seeds of one
-       schedule differ by up to ${S.stop_noise.toFixed(4)} in validation loss, so a smaller
-       difference between schedules is not a finding.`,
+      `The difference two runs show for no reason at all, measured afresh for each comparison as the
+       spread between seeds of the settings involved: ${S.stop_noise.toFixed(4)} for cosine against
+       WSD at step ${S.stop}, ${S.finished_noise.toFixed(4)} for the branch against the cosine
+       planned for ${S.stop}, ${S.decay_noise.toFixed(4)} for the branch against WSD left at its
+       peak. A smaller difference is not a finding.`,
     ],
     [
       'width, SP and muP',
       `Width is how many numbers the model keeps per token: ${widths.join(', ')} here, or
        ${int(W.parameters[widths[0]])} to ${int(W.parameters[widths.at(-1)])} parameters. The
-       <b>standard parametrization</b> (SP) gives every layer the same η; <b>muP</b> scales the
-       hidden and output layers' η, and the output layer's starting size, with width so the best η
-       should stay put (arXiv:2203.03466),
-       anchored at width ${W.base_width}, where the two are the same model.`,
+       <b>standard parametrization</b> (SP) gives every layer the same η. <b>muP</b>
+       (arXiv:2203.03466, Table 3, as this exercise implements it) divides the η of every hidden
+       and output matrix by its input width, measured in units of width ${W.base_width} — so that η
+       halves each time the width doubles — and starts the output layer smaller, with variance
+       1/fan_in² instead of 1/fan_in. Embeddings, biases and norms keep η in both. At width
+       ${W.base_width} the two are the same model, and the idea is that the best η then stays put.`,
     ],
   ];
   const s = section(
@@ -417,14 +543,15 @@ function chapterProblem(M) {
         {
           cells: [
             'the update ratio',
-            'When does warmup stop mattering to each layer?',
+            'When does each layer’s update ratio stop moving, with warmup and without?',
             `a warmup of ${M.ratios.warmup} steps, or none`,
           ],
         },
         {
           cells: [
             'cosine against WSD',
-            `If a ${S.total}-step plan must stop at step ${S.stop}, which schedule should it have used?`,
+            `A ${S.total}-step plan must stop at step ${S.stop}: which schedule is ahead there, and
+             which gives the better finished model at that budget?`,
             'the shape of the schedule, each tuned on its own',
           ],
         },
@@ -553,8 +680,7 @@ function adamFigure(M) {
     show(next);
     buttons[next - 1].focus();
   });
-  const holder = el('div', 'fig-scroll');
-  holder.append(node);
+  const holder = scrollBox(node);
   const noteEl = el('p', 'fig-note');
   const chips = el('div', 'chips');
   chips.innerHTML = `<span class="chip-k">against <code>torch.optim.Adam</code>, float64</span>
@@ -570,8 +696,9 @@ function adamFigure(M) {
     const lead =
       t === 1
         ? `With one gradient in it, m̂ is the gradient and v̂ its square, so m̂ ÷ √v̂ is just the
-           gradient's sign — and the step is η in size, short by ${pct(1 - share, 2)}, the share ε
-           takes. The gradient was ${sci(s.g)}; the weight still moved by ${sci(Math.abs(s.update))}.`
+           gradient's sign — and the step is η in size, short by ${pct(1 - share, 2)}. That shortfall
+           is ε, a constant of ${sci(M.bias.eps, 0)} Adam adds to √v̂ so it can never divide by zero.
+           The gradient was ${sci(s.g)}; the weight still moved by ${sci(Math.abs(s.update))}.`
         : `The gradient is ${sci(s.g)}${Math.sign(s.g) !== Math.sign(S[t - 2].g) ? ', and it has <b>changed sign</b>' : ''}.
            m now holds ${pct(1 / s.m_fix, 0)} of the weight a full average would, and v only
            ${pct(1 / s.v_fix, 2)}, so correction scales them up ${s.m_fix.toFixed(2)}× and
@@ -687,8 +814,7 @@ function biasSimulator(M) {
   const lock = el('button', 'btn', 'Lock in my guess');
   lock.type = 'button';
   row.append(label, slider, out, lock);
-  const holder = el('div', 'fig-scroll');
-  holder.append(node);
+  const holder = scrollBox(node);
   const cascade = el('div', 'cascade');
   const verdict = el('p', 'fig-note');
 
@@ -803,12 +929,13 @@ function biasSimulator(M) {
   show(0);
   return figure(
     wrap,
-    `<b>Without correction the step is larger, not smaller, and stays larger for thousands of
-     steps.</b> For a steady gradient the uncorrected step is m's filled share divided by the square
-     root of v's: ${fold(B.first)} at step 1, ${fold(B.peak)} at step ${B.peak_step}, and within
-     ${pct(tight.tol, 0)} only from step ${int(tight.step)}. A plot of the first ${shown} steps shows
-     a curve still climbing and cannot show any of that. This is exact for a constant gradient; the
-     real runs in <a href="#negatives">the negatives</a> test whether it matters on a model.`
+    `<b>Without correction the step is larger, not smaller, and in closed form stays more than
+     ${pct(tight.tol, 0)} larger until step ${int(tight.step)}.</b> For a steady gradient the
+     uncorrected step is m's filled share divided by the square root of v's: ${fold(B.first)} at step
+     1, ${fold(B.peak)} at step ${B.peak_step}. A plot of the first ${shown} steps shows
+     ${verdicts(M).firstSteps}, and nothing of how long the excess lasts. This is exact only for a
+     gradient that never changes; the real runs in <a href="#negatives">the negatives</a> test
+     whether it matters on a model.`
   );
 }
 
@@ -834,7 +961,7 @@ function chapterMechanism(M) {
   s.append(adamFigure(M));
 
   const p = el('p', 'say');
-  p.innerHTML = `<b>The two averages do not empty at the same rate.</b> m remembers about
+  p.innerHTML = `<b>The two averages do not fill at the same rate.</b> m remembers about
     ${int(B.memory.m)} steps and v about ${int(B.memory.v)}. Switch the correction off and m recovers
     long before v does — so the step is divided by a scale that is still far too small, and it comes
     out <i>larger</i> than intended, not smaller. How much larger, and for how long, is a closed-form
@@ -883,7 +1010,13 @@ function chapterMethod(M) {
              of one pass over the training text`,
           ],
         },
-        { cells: ['seeds', `${spell(F.seeds)} for every setting that is compared`] },
+        {
+          cells: [
+            'seeds',
+            `${spell(F.seeds)} of every schedule and sweep setting; a second seed of the corrected run
+             as the bias-correction yardstick; one run each with and without warmup`,
+          ],
+        },
         {
           cells: [
             'schedules',
@@ -910,22 +1043,56 @@ function chapterMethod(M) {
   );
 
   const floors = el('p', 'say');
-  floors.innerHTML = `<b>Two floors, both measured rather than assumed.</b> The <i>seed floor</i> is
+  floors.innerHTML = `<b>The floors are measured rather than assumed.</b> The <i>seed floor</i> is
     how far apart two seeds of one setting land: up to ${fold(W.seed_floor)} in a fitted best learning
-    rate. The <i>run-to-run floor</i> came free: at width ${W.base_width} SP and muP are the same model
-    bit for bit, yet their two runs on this GPU differ by up to ${W.run_floor_loss_gap.toFixed(4)} in
-    loss and ${fold(W.run_floor)} in the fitted minimum — the device does not repeat a run exactly.
-    An effect is called an effect only when it clears the larger of the two.`;
+    rate. ${
+      known(W.run_floor)
+        ? `The <i>run-to-run floor</i> came free: at width ${W.base_width} SP and muP are the same
+           model bit for bit, yet their two runs on this GPU differ by up to
+           ${W.run_floor_loss_gap.toFixed(4)} in loss and ${fold(W.run_floor)} in the fitted
+           minimum — the device does not repeat a run exactly. An effect is called an effect only
+           when it clears the larger of the two.`
+        : `A run-to-run floor could not be measured in this sweep, so the seed floor is the only
+           yardstick.`
+    } The schedule comparison sets each difference against the spread between seeds of the
+    settings it compares.`;
   s.append(floors);
 }
 
 /* ============================================================== 6 · expected */
+
+/** The warmup row of the predictions table, with its verdict read from the settle steps. */
+function warmupRow(R) {
+  const claim = 'Once warmup ends, every layer is in its steady state';
+  if (!known(R.median_settle)) {
+    return {
+      cells: [claim, '<b>not measurable here</b> — no layer settled within the run'],
+      __mark: 'warn',
+    };
+  }
+  const later = R.median_settle > R.warmup;
+  const none = known(R.median_settle_none)
+    ? `; without warmup it is step ${int(R.median_settle_none)}`
+    : '';
+  const never = R.unsettled.length
+    ? `, and ${countOf(R.unsettled.length, 'layer never settles', 'layers never settle', '')}`
+    : '';
+  return {
+    cells: [
+      claim,
+      `<b>${later ? 'wrong' : 'held'}</b> — warmup ends at step ${R.warmup}; with warmup the median
+       layer settles at step ${int(R.median_settle)}${none}${never}`,
+    ],
+    __mark: later ? 'bad' : 'good',
+  };
+}
 
 function chapterExpected(M) {
   const B = M.bias;
   const R = M.ratios;
   const S = M.schedules;
   const W = M.sweep;
+  const V = verdicts(M);
   const tight = tightest(B);
   const s = section(
     'expected',
@@ -959,29 +1126,30 @@ function chapterExpected(M) {
           ],
           __mark: 'bad',
         },
-        {
-          cells: [
-            'Once warmup ends, every layer is in its steady state',
-            `<b>wrong</b> — warmup ends at step ${R.warmup}; the median layer settles at step
-             ${int(R.median_settle)}, and ${spell(R.unsettled.length)} never does`,
-          ],
-          __mark: 'bad',
-        },
+        warmupRow(R),
         {
           cells: [
             'Stopped early, WSD beats cosine',
-            `<b>not shown at this budget</b> — WSD is lower by ${Math.abs(S.stop_gap).toFixed(4)},
-             inside a seed spread of ${S.stop_noise.toFixed(4)}`,
+            `<b>${
+              V.stopWinner === null
+                ? 'not shown at this budget'
+                : V.stopWinner === 'WSD'
+                  ? 'held at this budget'
+                  : 'reversed at this budget'
+            }</b> — at step ${S.stop}, ${V.stop}, ${V.stopCall}. The finished models differ more:
+             ${V.finished}, by ${S.finished_gap.toFixed(4)}, ${V.finishedCall}`,
           ],
-          __mark: 'warn',
+          __mark: V.stopWinner === 'WSD' ? 'good' : V.stopWinner === null ? 'warn' : 'bad',
         },
         {
           cells: [
             'Under muP the best learning rate does not move with width',
-            `<b>partly</b> — it moves ${fold(W.drift.mup)} against SP's ${fold(W.drift.sp)}: both above
-             the ${fold(W.noise)} floor`,
+            `<b>${{ holds: 'held', narrows: 'partly', does_not_narrow: 'wrong' }[W.conclusion]}</b> —
+             it ${V.mupMoves} ${fold(W.drift.mup)} against SP's ${fold(W.drift.sp)}, against a floor of
+             ${fold(W.noise)}: muP's drift is ${fold(W.margin.mup)} the floor, a margin
+             ${spell(M.facts.seeds)} seeds can only roughly measure`,
           ],
-          __mark: 'warn',
+          __mark: { holds: 'good', narrows: 'warn' }[W.conclusion] || 'bad',
         },
       ]
     )
@@ -1000,7 +1168,9 @@ function ratioDiff(M) {
   const PW = 140;
   const PH = 84;
   const P = 4;
-  const px = (n) => P + (Math.log10(n) / Math.log10(R.steps)) * (PW - 2 * P);
+  /* Steps are 0-based, as the results document counts them, so the axis is log(step + 1): the
+   * first step sits at the left edge and a label and its mark name the same step. */
+  const px = (n) => P + (Math.log10(n + 1) / Math.log10(R.steps)) * (PW - 2 * P);
   const py = (v) => P + ((hi - Math.log10(v)) / (hi - lo)) * (PH - 2 * P);
   const path = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${px(p[0]).toFixed(1)},${py(p[1]).toFixed(1)}`).join(' ');
 
@@ -1027,13 +1197,13 @@ function ratioDiff(M) {
     <span><i class="sw tick"></i>settles (warmup run)</span>
     <span><i class="sw edge"></i>warmup ends, step ${R.warmup}</span>`;
   const axes = el('p', 'sm-axes');
-  axes.textContent = `Each panel: update 1 to ${int(R.steps)} across, on a log scale; ‖ΔW‖ / ‖W‖ up,
+  axes.textContent = `Each panel: all ${int(R.steps)} steps across, on a log scale; ‖ΔW‖ / ‖W‖ up,
     on one log scale shared by every panel, ${sci(10 ** lo, 0)} to ${sci(10 ** hi, 0)}. Under each:
     how many times higher the run without warmup is, at its early peak and at its late level.`;
 
   const grid = el('div', 'sm-grid');
   for (const m of mats) {
-    const cell = el('div', `sm-cell${m.settles === null ? ' never' : ''}`);
+    const cell = el('div', `sm-cell${known(m.settles) ? '' : ' never'}`);
     cell.append(el('div', 'sm-name', m.label));
     const p = svg('svg', {
       viewBox: `0 0 ${PW} ${PH}`,
@@ -1051,13 +1221,13 @@ function ratioDiff(M) {
     p.append(svg('line', { x1: px(R.warmup), x2: px(R.warmup), y1: P, y2: PH - P, class: 'edge-line' }));
     p.append(svg('path', { d: path(m.none), class: 'series b ser-none' }));
     p.append(svg('path', { d: path(m.warmup), class: 'series a ser-warm' }));
-    if (m.settles !== null) {
-      const x = px(m.settles + 1);
+    if (known(m.settles)) {
+      const x = px(m.settles);
       p.append(svg('path', { d: `M${x - 4},${PH - P} L${x + 4},${PH - P} L${x},${PH - P - 7} Z`, class: 'settle-tick' }));
     }
     cell.append(p);
     const foot = el('div', 'sm-foot');
-    foot.innerHTML = `${m.settles === null ? '<b class="never-t">never settles</b>' : `settles at ${int(m.settles)}`}<br>
+    foot.innerHTML = `${known(m.settles) ? `settles at ${int(m.settles)}` : '<b class="never-t">never settles</b>'}<br>
       early ${fold(m.early_fold, 1)}<br>late ${fold(m.late_fold, 2)}`;
     cell.append(foot);
     grid.append(cell);
@@ -1067,14 +1237,24 @@ function ratioDiff(M) {
   const [e0, e1] = R.early_fold_range;
   const [l0, l1] = R.late_fold_range;
   /* stateFor(mode) — PURE. Which runs to draw, and what that view shows. */
+  const unsettled = codeList(R.unsettled);
+  const medianWarm = known(R.median_settle)
+    ? `The median matrix settles at step ${int(R.median_settle)}, ${fold(R.median_settle / R.warmup, 1)}
+       the warmup's length${unsettled ? `, and ${unsettled} is still moving at the end` : ''}.`
+    : 'No matrix settles within the run, so there is no median to give.';
+  const medianNone = known(R.median_settle_none)
+    ? `; the median settles at step ${int(R.median_settle_none)}${
+        known(R.median_settle)
+          ? `, ${R.median_settle_none > R.median_settle ? 'later than' : 'no later than'} with warmup`
+          : ''
+      }.`
+    : '; no matrix settles within the run.';
   const stateFor = (mode) =>
     ({
-      warmup: `<b>With warmup</b>, each ratio climbs as η does and then levels off. The median matrix
-        settles at step ${int(R.median_settle)} — ${fold(R.median_settle / R.warmup, 1)} the warmup's
-        length — and <code>${R.unsettled.join(', ')}</code> is still moving at the end.`,
-      none: `<b>Without warmup</b>, every matrix starts at its highest: ${spell(R.higher_without_warmup.length)}
-        of ${spell(R.matrices)} peak higher in the first ${R.warmup} steps, by ${fold(e0, 1)} to
-        ${fold(e1, 1)}, and the median settles later, at step ${int(R.median_settle_none)}.`,
+      warmup: `<b>With warmup</b>, each ratio climbs as η does and then levels off. ${medianWarm}`,
+      none: `<b>Without warmup</b>, ${spell(R.higher_without_warmup.length)} of ${spell(R.matrices)}
+        matrices reach a higher peak in the first ${R.warmup} steps than they do with it, by
+        ${fold(e0, 1)} to ${fold(e1, 1)}${medianNone}`,
       both: `<b>Overlaid</b>, the two runs part at the start and meet at the end: early peaks differ by
         ${fold(e0, 1)} to ${fold(e1, 1)}, late levels only by ${fold(l0, 2)} to ${fold(l1, 2)}.
         Warmup changes how every layer opens far more than where it ends up.`,
@@ -1088,13 +1268,18 @@ function ratioDiff(M) {
   wrap.playAll = () => show('both');
   ENDINGS.push(wrap);
   wrap.append(tabs, key, axes, grid, noteEl);
-  show('warmup');
+  /* Opens on both runs, because the legend and the caption describe both; the tabs isolate one. */
+  show('both');
+  const settled = mats.filter((m) => known(m.settles)).map((m) => m.settles);
+  const where = settled.length
+    ? `the triangles land anywhere from step ${int(Math.min(...settled))} to
+       ${int(Math.max(...settled))}`
+    : 'no panel settles at all';
   return figure(
     wrap,
     `<b>Warmup is a fact about the schedule; when a layer settles is a fact about the model, and the
-     two do not coincide.</b> Warmup ends at step ${R.warmup} in every panel, and the triangles land
-     anywhere from step ${int(Math.min(...mats.filter((m) => m.settles !== null).map((m) => m.settles)))}
-     to ${int(Math.max(...mats.map((m) => m.settles ?? 0)))}. Every panel uses the same log scale, so a
+     two do not coincide.</b> Warmup ends at step ${R.warmup} in every panel, and ${where}. Every
+     panel uses the same log scale, so a
      panel whose line sits higher is a matrix that moves more per step. <b>What would refute it:</b>
      late levels that differed between the two runs as much as their early peaks do — they differ
      ${fold(R.late_fold_range[0], 2)} to ${fold(R.late_fold_range[1], 2)}, against
@@ -1188,17 +1373,17 @@ function scheduleFigure(M) {
   });
   node.append(svgText(xf(lo), FOREST + ROWS.length * ROW + 34, 'ax', '← lower is better'));
 
-  const holder = el('div', 'fig-scroll');
-  holder.append(node);
+  const holder = scrollBox(node);
+  const V = verdicts(M);
   return figure(
     holder,
-    `<b>Stopped at step ${S.stop}, the two schedules cannot be told apart; the two finished models at
-     that budget can.</b> Cosine and WSD stopped at ${S.stop} sit ${Math.abs(S.stop_gap).toFixed(4)}
-     apart with seed bars of up to ${S.stop_noise.toFixed(4)} — overlapping. The branch, decayed over
-     its last ${S.branch_decay} steps, and a cosine planned for ${S.stop} from the start both see
-     exactly ${S.stop} steps of data, and the branch is lower by ${S.finished_gap.toFixed(4)}, against
-     a spread of ${S.finished_noise.toFixed(4)}. Neither schedule records a loss at every step, so the
-     upper panel draws the rates and the lower one only where each run was scored.`
+    `<b>Three comparisons, and the noise decides each one.</b> Stopped at step ${S.stop}, ${V.stop},
+     ${V.stopCall}. The two finished models at that budget — the branch, decayed over its last
+     ${S.branch_decay} steps, and a cosine planned for ${S.stop} from the start, each trained on
+     exactly ${S.stop} steps of data — differ more: ${V.finished} by ${S.finished_gap.toFixed(4)},
+     ${V.finishedCall}. Run to step ${S.total}, ${V.end}, ${V.endCall}. Neither schedule records a
+     loss at every step, so the upper panel draws the rates and the lower one only where each run was
+     scored.`
   );
 }
 
@@ -1363,8 +1548,9 @@ function sweepOptimizer(M) {
       P.unknown.setAttribute('visibility', revealed ? 'visible' : 'hidden');
     }
     if (refused) {
-      ask.innerHTML = `<b>Predict first.</b> In the standard parametrization the best rate falls as the
-        model widens: ${widths.map((w) => `${sci(W.mean_minimum.sp[w], 2)} at ${w}`).join(', ')}. Where
+      ask.innerHTML = `<b>Predict first.</b> In the standard parametrization the best rate
+        ${verdicts(M).spMoves} as the model widens:
+        ${widths.map((w) => `${sci(W.mean_minimum.sp[w], 2)} at ${w}`).join(', ')}. Where
         does it land at width ${target}, ${fold(W.sp.extrapolation, 0)} wider than anything trained?
         Drag the diamond and lock it in.`;
       verdict.textContent = refused.note;
@@ -1422,17 +1608,24 @@ function sweepOptimizer(M) {
   key.innerHTML = `${widths.map((w, i) => `<span><i class="sw line ${CLS[i]}"></i>width ${w}</span>`).join('')}
     <span>dot: the fitted minimum (mean of seeds)</span>
     <span><i class="sw band"></i>noise floor, ${fold(W.noise)} either way</span>`;
-  wrap.append(ask, row, key, pair, verdict);
+  wrap.append(ask, row, key, pair, scrollCue(), verdict);
   show();
+  const V = verdicts(M);
+  const clears = (name) =>
+    W.above_noise[name]
+      ? `${fold(W.margin[name])} the floor`
+      : `inside the floor (${fold(W.margin[name])} of it)`;
   return figure(
     wrap,
-    `<b>In SP the best learning rate walks left as the model widens; in muP it barely moves — but it
-     does move.</b> The shaded band around each dot is the noise floor, ${fold(W.noise)} either way:
-     SP's best rate falls ${fold(W.drift.sp)} from width ${widths[0]} to ${widths.at(-1)}, far outside
-     it, and muP's falls ${fold(W.drift.mup)}, which also clears it. So at this scale muP narrows the
-     drift and does not remove it. The prediction at ${target} rests on ${spell(widths.length)} widths
-     and reaches ${fold(W.sp.extrapolation, 0)} past the widest — <b>it would be refuted</b> by
-     training at that width and finding the minimum outside its bar.`
+    `<b>The drift of the best learning rate with width, against the noise floor.</b> The shaded band
+     around each dot is the floor, ${fold(W.noise)} either way. SP's best rate ${V.spMoves}
+     ${fold(W.drift.sp)} from width ${widths[0]} to ${widths.at(-1)}, ${clears('sp')}; muP's
+     ${V.mupMoves} ${fold(W.drift.mup)}, ${clears('mup')}. So at this scale muP's drift is ${V.mup},
+     on a floor that ${spell(M.facts.seeds)} seeds measure only roughly. Once revealed, the
+     prediction at ${target} rests on ${spell(widths.length)} widths and reaches
+     ${fold(W.sp.extrapolation, 0)} past the widest; the bar across it is how far it moves when each
+     seed is fitted alone. <b>It would be refuted</b> by training at that width and finding the
+     minimum outside that bar.`
   );
 }
 
@@ -1444,7 +1637,7 @@ function chapterResults(M) {
     'results',
     'results',
     'What happened',
-    'Warmup shapes the opening, the decay buys little this early, and muP narrows the drift',
+    'What each experiment measured, and what its noise allows it to say',
     [
       `Every figure below is read from the published bundles in <code>results/</code>, through the same
        functions that write this exercise's results document. A test regenerates the page's data and
@@ -1453,13 +1646,21 @@ function chapterResults(M) {
     { short: 'What happened', sub: 'each measurement against its noise' }
   );
 
-  const h1 = el('h3', null, 'When warmup stops mattering, layer by layer');
+  const V = verdicts(M);
+  const h1 = el('h3', null, 'When each layer stops moving, with warmup and without');
   const p1 = el('p', 'say');
+  const settleWith = known(R.median_settle)
+    ? `with warmup the median matrix settles at step ${int(R.median_settle)}`
+    : 'with warmup no matrix settles within the run';
+  const settleWithout = known(R.median_settle_none)
+    ? `without it, at step ${int(R.median_settle_none)}`
+    : 'without it, none does';
   p1.innerHTML = `Two runs, identical except that one raises η over its first ${R.warmup} steps and
     the other starts at full η. For every matrix in the model the run logs how much each step
     changed it. <b>Without warmup, ${spell(R.higher_without_warmup.length)} of ${spell(R.matrices)}
-    matrices peak higher early on</b> — that much is the usual account. What it does not predict is
-    how long the warmup run keeps moving after warmup ends.`;
+    matrices reach a higher peak in those first steps</b> — that much is the usual account. What it
+    does not predict is how long both runs keep moving after warmup ends: ${settleWith};
+    ${settleWithout}.`;
   s.append(h1, p1, ratioDiff(M));
 
   const h2 = el('h3', null, 'Cosine against WSD, stopped early');
@@ -1467,9 +1668,26 @@ function chapterResults(M) {
   p2.innerHTML = `Both schedules are planned for ${S.total} steps and stopped at ${S.stop}, as a run
     that loses its compute budget would be. Each was tuned first: ${spell(S.peaks.length)} peak rates,
     ${spell(M.facts.seeds)} seeds each, and every schedule's best peak was
-    ${[...new Set(Object.values(S.best_peak))].map((v) => sci(v, 0)).join(' or ')} — inside the grid,
-    not at its edge, so the grid was wide enough.`;
-  s.append(h2, p2, scheduleFigure(M));
+    ${[...new Set(Object.values(S.best_peak))].map((v) => sci(v, 0)).join(' or ')} — ${
+      Object.values(S.best_peak).every((p) => p > Math.min(...S.peaks) && p < Math.max(...S.peaks))
+        ? 'inside the grid, not at its edge, so the grid was wide enough'
+        : 'at an edge of the grid for at least one schedule, so that grid may have been too narrow'
+    }.`;
+  const p2b = el('p', 'say');
+  p2b.innerHTML = `<b>Three comparisons come out of it, and the noise treats them differently.</b>
+    At step ${S.stop}, ${V.stop}, ${V.stopCall}. To hold a <i>finished</i> model at that budget you
+    either branch WSD and decay it early, or plan a cosine for ${S.stop} from the start; both train
+    on exactly ${S.stop} steps of data, and ${V.finished} by ${S.finished_gap.toFixed(4)},
+    ${V.finishedCall}. Run to the end of the plan, ${V.end}, ${V.endCall}. And on its own,
+    ${V.decay}.`;
+  const p2c = el('p', 'say');
+  const lessRate = S.mean_rate_to_stop.planned < S.mean_rate_to_stop.cosine;
+  p2c.innerHTML = `<b>The cosine planned for ${S.stop} against the longer cosine cut at the same
+    step:</b> ${V.planned}. Over those ${S.stop} steps its average rate is
+    ${sci(S.mean_rate_to_stop.planned, 2)}, against ${sci(S.mean_rate_to_stop.cosine, 2)} for the
+    ${S.total}-step cosine — it spends ${lessRate ? 'less' : 'more'} of its run at a high rate. That
+    is a reading of the difference, not something these runs test as its cause.`;
+  s.append(h2, p2, p2b, p2c, scheduleFigure(M));
 
   const peaks = S.peaks;
   const tuneRows = peaks.map((p) => {
@@ -1538,22 +1756,20 @@ function gapFigure(M) {
   node.append(svg('path', { d: line('noise'), class: 'series b' }));
   node.append(svg('path', { d: line('gap'), class: 'series a' }));
   const last = G.at(-1);
-  node.append(svgText(PAD.l + 8, PAD.t + 4, 'fig-lab', 'loss gap, smoothed'));
+  node.append(svgText(PAD.l + 8, PAD.t - 7, 'fig-lab', 'loss gap, smoothed'));
   /* Above the highest stretch of the line rather than on its end, which is ragged. */
   node.append(svgText(px(last.step) - 4, py(Math.max(...G.slice(-40).map((p) => p.gap))) - 12, 'lab a end', 'without correction, against with'));
   node.append(svgText(px(last.step) - 4, py(last.noise) - 10, 'lab b end', 'seed against seed'));
-  const holder = el('div', 'fig-scroll');
-  holder.append(node);
+  const holder = scrollBox(node);
   return figure(
     holder,
-    `<b>Switching the correction off never stops mattering within this run.</b> Both lines are loss
+    `<b>Switching the correction off: the effect ${verdicts(M).biasStays}.</b> Both lines are loss
      differences smoothed over ${B.smoothing_window} steps. The uncorrected run, taking the larger
-     steps, is ahead at first — lower loss at ${spell(B.early_ahead_steps.length)} of the first
-     ${B.ratio_by_step.length} steps — and then falls behind. Its gap dips inside the seed gap for
-     ${spell(B.steps_inside_noise)} of ${int(B.horizon)} steps and never stays there: at the last step it
-     is ${signed(B.final_signed, 2)} in loss against a seed gap of ${B.final_noise.toFixed(3)}. These are
-     training losses from a single run of each setting, so this says the effect lasts, not how large
-     it is in general.`
+     steps, has the lower loss at ${spell(B.early_ahead_steps.length)} of the first
+     ${B.ratio_by_step.length} steps; at the last step it is ${signed(B.final_signed, 2)} in loss
+     against a seed gap of ${B.final_noise.toFixed(3)}. These are training losses: the uncorrected
+     setting ran once, and the corrected one twice, its second seed serving as the yardstick — so
+     this says how long the effect lasts here, not how large it is in general.`
   );
 }
 
@@ -1561,51 +1777,57 @@ function chapterNegatives(M) {
   const B = M.bias;
   const R = M.ratios;
   const S = M.schedules;
-  const rows = [
-    {
+  const V = verdicts(M);
+  const unsettled = codeList(R.unsettled);
+  /* Each row is a claim, the number it rests on, and the noise. A row stays only while the data
+   * refuses its claim — so a re-run that supports a claim removes the row rather than leaving a
+   * refutation standing over data that no longer refutes anything. */
+  const candidates = [
+    !S.stop_resolved && {
       cells: [
-        `WSD beats cosine when both stop at step ${S.stop}`,
-        `WSD lower by ${Math.abs(S.stop_gap).toFixed(4)}`,
-        `seed spread ${S.stop_noise.toFixed(4)} — <b>inside it</b>, so no ranking`,
+        `One schedule beats the other when both stop at step ${S.stop}`,
+        V.stop,
+        `seed spread ${S.stop_noise.toFixed(4)} between two runs of the same schedule — <b>inside
+         it</b>, so no ranking`,
       ],
       __mark: 'bad',
     },
-    {
+    S.decay_inside_noise && {
       cells: [
         'The decay is what makes the WSD branch good',
-        `the branch ends ${signed(S.decay_bought)} against WSD left at its peak`,
-        `seed spread ${S.decay_noise.toFixed(4)} — <b>inside it</b>: this early, the decay gives back
-         about what it costs`,
+        `the branch ends ${signed(S.decay_bought)} against WSD left at its peak to the same step`,
+        `seed spread ${S.decay_noise.toFixed(4)} between the branch's seeds and WSD's — <b>inside
+         it</b>`,
       ],
       __mark: 'bad',
     },
-    {
+    unsettled && {
       cells: [
         'Every layer settles within the run',
-        `<code>${R.unsettled.join(', ')}</code> is still moving at step ${int(R.steps)}`,
-        `reported as "never", not given a step`,
+        `${unsettled} ${R.unsettled.length === 1 ? 'is' : 'are'} still moving at the last step`,
+        'reported as "never", not given a step',
       ],
       __mark: 'warn',
     },
-    {
+    !known(B.settles_at_step) && {
       cells: [
         'Without correction, the damage is confined to the first steps',
-        `smoothed gap ${B.final_gap.toFixed(3)} at step ${int(B.horizon)}`,
-        `seed gap ${B.final_noise.toFixed(3)} — <b>far outside it</b>, inside it for only
-         ${spell(B.steps_inside_noise)} steps`,
+        `smoothed gap ${B.final_gap.toFixed(3)} at the last of ${int(B.horizon)} steps`,
+        `seed gap ${B.final_noise.toFixed(3)} — <b>${B.final_gap > B.final_noise ? 'outside' : 'inside'}
+         it</b> at the end; the effect ${V.biasStays}`,
       ],
       __mark: 'bad',
     },
     {
       cells: [
         'The first schedule comparison was at an equal budget',
-        `its WSD branch decayed for ${S.branch_decay} steps <i>after</i> the stop point, and its
-         planned cosine borrowed another run's peak`,
-        'found by reading the code against its own sentence; fixed, tested and re-run — the margin shrank',
+        'it was not: one side trained for longer than the other, and the planned cosine was not tuned',
+        'found by reading the code against its own sentence, then fixed, tested and re-run; the progress log records it',
       ],
       __mark: 'bad',
     },
   ];
+  const rows = candidates.filter(Boolean);
   const s = section(
     'negatives',
     'negatives',
@@ -1633,28 +1855,38 @@ function chapterNegatives(M) {
 function chapterConclusion(M) {
   const W = M.sweep;
   const S = M.schedules;
+  const V = verdicts(M);
   const s = section(
     'conclusion',
     'conclusion',
     'The verdict',
     'Measure the floor before you rank anything',
     [
-      `The optimiser is exactly its formula, and still the formula is a poor guide to a run: the same
-       arithmetic does very different work at step ${M.bias.peak_step} and at step
-       ${int(M.ratios.median_settle)}. Bias correction, warmup and the schedule all act on the
-       opening, and the opening lasts longer than its name suggests.`,
-      `And some of the comparisons here that looked like findings sat inside the noise. WSD's edge at the
-       stop point was ${Math.abs(S.stop_gap).toFixed(4)} against a spread of ${S.stop_noise.toFixed(4)};
-       the decay bought ${signed(S.decay_bought)}. Only measuring the floor — two seeds, and a
-       comparison of a model with itself — made either visible.`,
+      `The optimiser is exactly its formula, and still the formula is a poor guide to a run: bias
+       correction, warmup and the schedule all act on the opening${
+         known(M.ratios.median_settle) && M.ratios.median_settle > M.ratios.warmup
+           ? `, and the opening lasts longer than its name suggests — with warmup the median layer
+              is still moving until step ${int(M.ratios.median_settle)}, after warmup ends at
+              ${M.ratios.warmup}`
+           : ''
+       }.`,
+      `On the schedules, the answer depends on the question. At step ${S.stop}, ${V.stop},
+       ${V.stopCall}. As finished models at that budget, ${V.finished}, ${V.finishedCall}. Run to the
+       end of the plan, ${V.end}, ${V.endCall}. And ${V.decay}.`,
+      `On width, muP's drift of the best learning rate is ${V.mup}: ${fold(W.drift.mup)} against SP's
+       ${fold(W.drift.sp)}, which is ${fold(W.margin.mup)} the floor — a margin measured with
+       ${spell(M.facts.seeds)} seeds, and so only roughly.`,
     ],
     { short: 'The verdict', sub: 'the floor first, the ranking after' }
   );
   const box = el('div', 'takeaway');
   box.innerHTML = `<b>The cheapest version of this check.</b> Before ranking two runs, run one of them
-    twice. Here that second run showed the device itself moving a fitted minimum by
-    ${fold(W.run_floor)} and two seeds moving it by ${fold(W.seed_floor)} — and every difference smaller
-    than that is reported here as noise, not as a finding.`;
+    twice. Here ${
+      known(W.run_floor)
+        ? `that showed the device itself moving a fitted minimum by ${fold(W.run_floor)} and two seeds
+           moving it by ${fold(W.seed_floor)}`
+        : `two seeds moved a fitted minimum by ${fold(W.seed_floor)}`
+    } — and every difference smaller than that is reported here as noise, not as a finding.`;
   s.append(box);
 }
 
@@ -1680,9 +1912,12 @@ function chapterLimits(M) {
     `<b>One corpus slice.</b> The first rows of one published sample of ${F.corpus.dataset}, of
      which ${int(F.corpus.train_tokens)} training tokens were fetched; no single run read more than
      ${pct(epochs, 1)} of those. Other text, tokenizers and languages are not measured.`,
-    `<b>The machine does not repeat itself.</b> The same model run twice on this GPU differs by up to
-     ${W.run_floor_loss_gap.toFixed(4)} in loss, which is why that difference is published as a floor
-     rather than ignored.`,
+    known(W.run_floor_loss_gap)
+      ? `<b>The machine does not repeat itself.</b> The same model run twice on this GPU differs by
+         up to ${W.run_floor_loss_gap.toFixed(4)} in loss, which is why that difference is published
+         as a floor rather than ignored.`
+      : `<b>The machine's own repeatability was not measured</b> in this sweep, so the seed spread is
+         the only floor.`,
   ];
   const s = section(
     'limits',

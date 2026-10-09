@@ -104,12 +104,28 @@ def bias_numbers(r: dict) -> dict:
     them, so they are derived here once rather than once per document.
     """
     ratio = r["analytic"]["ratio_by_step"]
+    # The real runs, smoothed exactly as the experiment smoothed them: how often the correction's
+    # effect sits inside the seed gap, and whether it ever stays there. "Never settles" and "never
+    # dips inside" are different claims, and the document used to print the second for the first.
+    losses = r["losses"]
+    gap = [abs(u - c) for u, c in zip(losses["uncorrected"], losses["corrected"], strict=True)]
+    noise = [
+        abs(o - c) for o, c in zip(losses["corrected_seed1"], losses["corrected"], strict=True)
+    ]
+    window = r["smoothing_window"]
+    gap_s, noise_s = _trailing_mean(gap, window), _trailing_mean(noise, window)
+    settled = _first_settled(gap_s, noise_s)
+    if settled != r["settles_at_step"]:
+        raise ValueError("the renderer's smoothing no longer reproduces the bundle's verdict")
     return {
         "peak_step": max(range(len(ratio)), key=ratio.__getitem__) + 1,
         "peak": max(ratio),
         "first": ratio[0],
         "last": ratio[-1],
         "last_step": len(ratio),
+        "steps_inside_noise": sum(1 for g, n in zip(gap_s, noise_s, strict=True) if g <= n),
+        "gap_smoothed": gap_s,
+        "noise_smoothed": noise_s,
     }
 
 
@@ -136,11 +152,18 @@ def bias_section(b: dict) -> list[str]:
             f"{first['corrected_seed1'][i]:.4f} |"
         )
     settle = r["settles_at_step"]
-    settle_line = (
-        f"in this run it falls inside that noise from step **{settle}** on, of {r['horizon']}"
-        if settle is not None
-        else f"in this run it never falls inside that noise within {r['horizon']} steps"
-    )
+    inside = nums["steps_inside_noise"]
+    if settle is not None:
+        settle_line = (
+            f"in this run it falls inside that noise from step **{settle}** on, of {r['horizon']}"
+        )
+    elif inside:
+        settle_line = (
+            f"in this run it dips inside that noise for {inside} of {r['horizon']} steps and never "
+            "stays there"
+        )
+    else:
+        settle_line = f"in this run it never falls inside that noise within {r['horizon']} steps"
     return [
         "## 2 · Bias correction off",
         "",
@@ -250,6 +273,13 @@ def schedule_numbers(r: dict) -> dict:
     finished_noise = max(_spread(branch), _spread(planned))
     decay = _mean(branch) - _mean(wsd_stop)
     decay_noise = max(_spread(branch), _spread(wsd_stop))
+    cos_end, wsd_end = runs["cosine_end"], runs["wsd_end"]
+    end_gap = _mean(wsd_end) - _mean(cos_end)
+    end_noise = max(_spread(cos_end), _spread(wsd_end))
+    # The cosine planned for the stop point against the 300-step cosine cut there: same steps of
+    # data, different shapes.
+    cut_gap = _mean(planned) - _mean(cos_stop)
+    cut_noise = max(_spread(planned), _spread(cos_stop))
     return {
         "runs": runs,
         "means": {k: _mean(v) for k, v in runs.items()},
@@ -266,6 +296,13 @@ def schedule_numbers(r: dict) -> dict:
         "decay_bought": decay,
         "decay_noise": decay_noise,
         "decay_inside_noise": abs(decay) <= decay_noise,
+        "end_gap": end_gap,
+        "end_noise": end_noise,
+        "end_lower": "cosine" if end_gap > 0 else "wsd",
+        "end_resolved": abs(end_gap) > end_noise,
+        "planned_minus_cut": cut_gap,
+        "planned_cut_noise": cut_noise,
+        "planned_cut_resolved": abs(cut_gap) > cut_noise,
     }
 
 
@@ -437,7 +474,9 @@ def sweep_numbers(r: dict) -> dict:
     def drift(name: str) -> float:
         return _fold(_mean(minima(name, widths[0])), _mean(minima(name, widths[-1])))
 
-    seed_floor = max(_fold(*minima(n, w)[:2]) for n in res for w in widths)
+    # The widest gap among however many seeds there are: with two it is their ratio, and a third
+    # seed is never silently ignored (it was, through a `[:2]`, before this was a function).
+    seed_floor = max(_fold(max(minima(n, w)), min(minima(n, w))) for n in res for w in widths)
     floor = loss_gap = None
     if base in res["sp"]["losses"] and set(res) == {"sp", "mup"}:
         sp, mup = res["sp"]["losses"][base], res["mup"]["losses"][base]
@@ -464,6 +503,13 @@ def sweep_numbers(r: dict) -> dict:
         "noise": noise,
         "drift": drifts,
         "above_noise": {name: d > noise for name, d in drifts.items()},
+        # `_fold` is symmetric, so the drift alone has lost which way the optimum moved.
+        "falls": {
+            name: _mean(minima(name, widths[-1])) < _mean(minima(name, widths[0]))
+            for name in ("sp", "mup")
+        },
+        # How many times the drift clears the floor: the hedge, as a number.
+        "margin": {name: d / noise for name, d in drifts.items()},
         "mean_minimum": {
             name: {str(w): _mean(minima(name, w)) for w in widths} for name in ("sp", "mup")
         },
@@ -567,7 +613,6 @@ def render(results: Path = RESULTS) -> str:
 #: and every step the page names, so downsampling can never move a number the prose quotes.
 BIAS_CURVE_POINTS = 140
 RATIO_POINTS = 68
-GAP_STRIDE = 5
 
 
 def _sig(x: float, digits: int = 5) -> float:
@@ -670,17 +715,12 @@ def _page_bias(b: dict) -> dict:
         for i in _log_indices(horizon, BIAS_CURVE_POINTS, keep)
     ]
 
-    # The real runs, smoothed exactly as the experiment smoothed them, and the verdict re-derived.
+    # The real runs, smoothed exactly as the experiment smoothed them (in `bias_numbers`, which
+    # re-derives the bundle's own verdict). Every step is kept: a stride hid the steps where the
+    # gap dips inside the noise, which are the whole point of the figure.
     losses = r["losses"]
-    gap = [abs(u - c) for u, c in zip(losses["uncorrected"], losses["corrected"], strict=True)]
-    noise = [
-        abs(o - c) for o, c in zip(losses["corrected_seed1"], losses["corrected"], strict=True)
-    ]
-    window = r["smoothing_window"]
-    gap_s, noise_s = _trailing_mean(gap, window), _trailing_mean(noise, window)
-    _refuse(_first_settled(gap_s, noise_s) == r["settles_at_step"], "the settling verdict")
-    inside = [i for i, (g, n) in enumerate(zip(gap_s, noise_s, strict=True)) if g <= n]
-    # The gap above is an absolute value, as the verdict needs. Which run was AHEAD is the signed
+    gap_s, noise_s = nums.pop("gap_smoothed"), nums.pop("noise_smoothed")
+    # The gap is an absolute value, as the verdict needs. Which run was AHEAD is the signed
     # difference, uncorrected minus corrected: negative means the uncorrected run's loss was lower.
     signed = [u - c for u, c in zip(losses["uncorrected"], losses["corrected"], strict=True)]
     first = r["first_steps"]
@@ -689,11 +729,11 @@ def _page_bias(b: dict) -> dict:
         for i, (u, c) in enumerate(zip(first["uncorrected"], first["corrected"], strict=True))
         if u < c
     ]
-    keep_gap = {len(gap_s) - 1, max(range(len(gap_s)), key=gap_s.__getitem__)}
-    picks = sorted(set(range(0, len(gap_s), GAP_STRIDE)) | keep_gap)
+    window = r["smoothing_window"]
     return {
         "beta1": beta1,
         "beta2": beta2,
+        "eps": inspect.signature(adam.adam_by_hand).parameters["eps"].default,
         # How many steps each average roughly remembers: 1 / (1 − β).
         "memory": {"m": 1 / (1 - beta1), "v": 1 / (1 - beta2)},
         **nums,
@@ -704,8 +744,10 @@ def _page_bias(b: dict) -> dict:
         "horizon": r["horizon"],
         "smoothing_window": window,
         "settles_at_step": r["settles_at_step"],
-        "steps_inside_noise": len(inside),
-        "gap": [{"step": i + 1, "gap": _sig(gap_s[i]), "noise": _sig(noise_s[i])} for i in picks],
+        "gap": [
+            {"step": i + 1, "gap": _sig(g), "noise": _sig(n)}
+            for i, (g, n) in enumerate(zip(gap_s, noise_s, strict=True))
+        ],
         "final_gap": gap_s[-1],
         "final_noise": noise_s[-1],
         "final_signed": _trailing_mean(signed, window)[-1],
@@ -735,9 +777,10 @@ def _page_ratios(b: dict) -> dict:
             {
                 "name": name,
                 "label": _short_name(name),
-                # `n` is the update's ordinal, 1-based, so the first update sits on a log axis.
-                "warmup": [[i + 1, _sig(w_curve[i])] for i in picks],
-                "none": [[i + 1, _sig(c_curve[i])] for i in picks],
+                # Step indices are 0-based, as `settles_at` and RESULTS.md count them, so a
+                # label and the mark it labels name the same step; the page plots log(step + 1).
+                "warmup": [[i, _sig(w_curve[i])] for i in picks],
+                "none": [[i, _sig(c_curve[i])] for i in picks],
                 "settles": warm["settles_at"][name],
                 "settles_none": cold["settles_at"][name],
                 "peak_warmup": warm["peak_early"][name],
@@ -811,6 +854,17 @@ def _page_schedules(b: dict) -> dict:
         "peaks": sorted({float(p) for k in r["tuning"] for p in r["tuning"][k]}),
         "tuning": r["tuning"],
         "shapes": shapes,
+        # The average rate over the steps both models trained before the stop point: the page's
+        # reading of why the cosine planned for it ends worse than the longer cosine cut there.
+        "mean_rate_to_stop": {
+            "cosine": _mean(cos[:stop]),
+            "planned": _mean(
+                [
+                    schedules.cosine(s, stop, best["cosine_planned"], warmup=warmup)
+                    for s in range(stop)
+                ]
+            ),
+        },
         **schedule_numbers(r),
     }
 

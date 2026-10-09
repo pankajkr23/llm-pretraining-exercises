@@ -277,6 +277,29 @@ figcaption b {
 
 /* Drawn 660 wide so a figure fits a 768px tablet without scrolling, and capped so it does not swell
  * on a desktop: at full column width a 660 drawing scaled its 11px labels to nearly 19px. */
+/* The cue under a drawing that scrolls. Hidden where the drawings fit — they are 660 wide, and the
+ * width-sweep panels 380 — and shown, in the text colour, wherever one does not. */
+.scroll-cue {
+  display: none;
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+@media (max-width: 760px) {
+  .scrollable > .scroll-cue {
+    display: block;
+  }
+}
+
+@media (max-width: 470px) {
+  .opt > .scroll-cue {
+    display: block;
+  }
+}
+
 .fig-svg {
   display: block;
   width: 100%;
