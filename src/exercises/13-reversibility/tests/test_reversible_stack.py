@@ -408,3 +408,34 @@ def test_the_blends_float32_gradients_really_are_approximate() -> None:
     ids = torch.randint(0, cfg.vocab_size, (2, 33), generator=torch.Generator().manual_seed(0))
     found = rebuild_agreement(ChainedGPT(cfg, "blend", h=0.5, a=FULL.blend_a, seed=0), ids)
     assert found["gradient_error"] > 1e-3
+
+
+@pytest.mark.parametrize("variant", ["standard", "midpoint", "blend", "leapfrog"])
+def test_measuring_saved_bytes_leaves_nothing_alive(variant: str) -> None:
+    """After `saved_bytes`, the measured model can be collected — no forward graph survives.
+
+    A pack hook that returned the tensor itself kept every run's first forward graph alive: the
+    reversible Function saves its own outputs, so a hook holding an output held its autograd node,
+    whose ctx held the saved states and the blocks — a cycle Python's collector cannot see. Each
+    rate check at the largest batch leaked one, and the third ran the capped process out of memory.
+    """
+    import weakref
+
+    def measure() -> weakref.ref:
+        model = ChainedGPT(
+            ModelConfig(vocab_size=50, width=64, depth=3, seq_len=10), variant, h=0.5
+        )
+        saved_bytes(lambda: model.loss(_ids(4)))
+        return weakref.ref(model.blocks[0])
+
+    block = measure()
+    gc.collect()
+    assert block() is None, "the measured forward graph is still alive and holds the blocks"
+
+
+def test_a_measured_forward_cannot_be_backwarded() -> None:
+    model = ChainedGPT(ModelConfig(vocab_size=50, width=64, depth=2, seq_len=10), "midpoint", h=0.5)
+    kept = []
+    saved_bytes(lambda: kept.append(model.loss(_ids(2))) or kept[-1])
+    with pytest.raises(RuntimeError, match="cannot be backwarded"):
+        kept[0].backward()

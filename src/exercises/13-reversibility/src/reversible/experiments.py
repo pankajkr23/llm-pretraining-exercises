@@ -26,6 +26,7 @@ full run, on the run's device and dtype.
 last, in their own process (`tools/run_experiments.py` does this).
 """
 
+import gc
 from pathlib import Path
 
 import numpy as np
@@ -41,6 +42,7 @@ from .memory import (
     device_limit_bytes,
     fits,
     largest,
+    release,
     saved_bytes,
     state_bytes,
 )
@@ -338,6 +340,8 @@ def max_batch_run(preset: Preset, corpus: Corpus, device: str, choice: dict, bat
             tokens=check_tokens,
             batch=batch,
         )
+        gc.collect()
+        release(device)  # the next run starts from an empty cache, under the same cap
     finite = {k: v for k, v in checks.items() if not v["diverged"]}
     if not finite:
         raise RuntimeError("every rate checked at the largest batch diverged")

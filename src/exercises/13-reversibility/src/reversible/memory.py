@@ -91,15 +91,29 @@ def saved_bytes(forward: Callable[[], torch.Tensor]) -> int:
         Total bytes.
     """
     storages: dict[int, int] = {}
+    held: list[torch.Tensor] = []
 
-    def pack(tensor: torch.Tensor):
+    # The graph keeps nothing; this list keeps the saved tensors alive until the forward ends.
+    # Returning the tensor to autograd leaked the whole forward graph: the reversible Function saves
+    # its own outputs, an output held in the graph keeps its autograd node alive, and that node's
+    # ctx holds the saved states and the blocks — a cycle through C++ objects Python's collector
+    # cannot break. Every run leaked one graph, and three rate checks in one memory-capped process
+    # ran it out of memory. Holding nothing at all fails differently: each saved tensor is freed at
+    # once, its memory is reused, and a later tensor at the same address overwrites its count. A
+    # plain list held outside the graph does neither, and is cleared before returning. The forward
+    # is never backwarded, so unpacking is refused rather than answered with a wrong tensor.
+    def pack(tensor: torch.Tensor) -> None:
         storage = tensor.untyped_storage()
         storages[storage.data_ptr()] = storage.nbytes()
-        return tensor
+        held.append(tensor)
 
-    with torch.autograd.graph.saved_tensors_hooks(pack, lambda t: t):
+    def unpack(_: None) -> torch.Tensor:
+        raise RuntimeError("saved_bytes measures a forward pass; it cannot be backwarded")
+
+    with torch.autograd.graph.saved_tensors_hooks(pack, unpack):
         loss = forward()
     del loss
+    held.clear()
     return sum(storages.values())
 
 
