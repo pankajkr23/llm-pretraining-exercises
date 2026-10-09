@@ -380,3 +380,53 @@ def test_every_end_state_is_painted_under_reduced_motion(site):
         assert _state(view, "#fig-cost .budget", "k") == str(data["config"]["top_k"])
     finally:
         ctx.close()
+
+
+#: What a phone shows of a figure: every label inside the drawing's own visible box, and no box in
+#: the figure wider than itself. An internal scroll is not a fix here — at 390px the balance figure
+#: showed four of its eight experts and cut every panel title, with nothing to say more was hidden.
+PHONE_JS = """(ids) => {
+  const out = [];
+  for (const id of ids) {
+    const fig = document.getElementById(id);
+    for (const svg of fig.querySelectorAll('svg')) {
+      // The VISIBLE box: the drawing, cut to whatever scrolling box holds it.
+      const own = svg.getBoundingClientRect();
+      const clip = (svg.closest('.chart-scroll') || fig).getBoundingClientRect();
+      const left = Math.max(own.left, clip.left);
+      const right = Math.min(own.right, clip.right);
+      for (const t of svg.querySelectorAll('text')) {
+        if (!t.textContent || getComputedStyle(t).display === 'none') continue;
+        const r = t.getBoundingClientRect();
+        if (r.left < left - 1 || r.right > right + 1) {
+          out.push(`${id}: "${t.textContent}" ${r.left.toFixed(0)}..${r.right.toFixed(0)} ` +
+                   `outside ${left.toFixed(0)}..${right.toFixed(0)}`);
+        }
+      }
+    }
+    for (const e of [fig, ...fig.querySelectorAll('*')]) {
+      if (e instanceof HTMLElement && e.scrollWidth > e.clientWidth + 1) {
+        out.push(`${id}: ${e.tagName.toLowerCase()}.${e.className} scrolls ` +
+                 `${e.scrollWidth} > ${e.clientWidth}`);
+      }
+    }
+  }
+  return out;
+}"""
+
+
+@pytest.mark.parametrize("width", [390, 320])
+def test_the_balance_and_cost_figures_fit_a_phone_whole(site, width):
+    """Every label of figures 2 and 4 inside its drawing, and nothing in them scrolling sideways."""
+    browser, url = site
+    view = browser.new_page(viewport={"width": width, "height": 900})
+    try:
+        view.goto(url)
+        view.wait_for_selector("section#reproduce", timeout=10_000)
+        for k in ("1", "8"):  # the cost figure's longest labels appear at either end of k
+            view.fill("#fig-cost input#bud-k", k)
+            view.dispatch_event("#fig-cost input#bud-k", "input")
+            problems = view.evaluate(PHONE_JS, ["fig-balance", "fig-cost"])
+            assert not problems, f"at {width}px, k={k}: " + "; ".join(problems)
+    finally:
+        view.close()

@@ -896,6 +896,12 @@ function chapterExpected(M, W) {
  * Two sources, and the figure keeps them apart. The bars are the FIRST block's per-expert loads,
  * which only the log records, every `log_every` steps. The trace and the idle strip are the bundle's
  * figures over EVERY block at EVERY step. The caption says so; it is the easiest thing here to blur.
+ *
+ * **Small multiples, drawn for a phone first.** Three narrow drawings, each under its own HTML
+ * label, with the per-expert values in an HTML row. One 480-unit drawing with its titles and values
+ * inside it showed four of its eight experts at 390px and cut every title, because a drawing cannot
+ * shrink without its labels shrinking below legibility. At 228 units every label fits a 320px screen
+ * at its own size, and the labels that needed room are HTML, which wraps.
  */
 function balanceFigure(M, W) {
   const cfg = M.config;
@@ -904,17 +910,16 @@ function balanceFigure(M, W) {
   const total = M.continuation.steps;
   const n = cfg.n_experts;
 
-  const WD = 480;
-  const H = 384;
-  const X0 = 84;
-  const X1 = 472;
+  const WD = 228;
+  const X0 = 40;
+  const X1 = WD - 4;
   const slot = (X1 - X0) / n;
-  const barW = slot * 0.56;
+  const barW = slot * 0.62;
   /* The load axis runs to the largest load the log records, not to 1: no load reached 1 in the
    * first block, and an axis to 1 left a band above the bars that nothing ever entered. */
-  const A = { top: 30, base: 150, max: M.layer0_max_load };
-  const T = { top: 222, base: 282 };
-  const D = { top: 322, base: 356 };
+  const A = { top: 8, base: 112, max: M.layer0_max_load };
+  const T = { top: 8, base: 58 };
+  const D = { top: 6, base: 36 };
   const yLoad = (v) => A.base - (v / A.max) * (A.base - A.top);
   const xStep = (s) => X0 + ((s - 1) / (total - 1)) * (X1 - X0);
   const yViol = (v) => T.base - (v / b.ceiling) * (T.base - T.top);
@@ -958,52 +963,73 @@ function balanceFigure(M, W) {
     show(at);
   });
 
-  const node = svg('svg', {
-    viewBox: `0 0 ${WD} ${H}`,
+  const panel = (label, node) => {
+    const box = el('div', 'acc-panel');
+    const lab = el('p', 'acc-lab');
+    lab.innerHTML = label;
+    box.append(lab, scroller(node));
+    return box;
+  };
+
+  /* Panel A — the first block's loads. */
+  const svgA = svg('svg', {
+    viewBox: `0 0 ${WD} ${A.base + 20}`,
     class: 'chart accfig',
     role: 'img',
     'aria-label':
-      'Per-expert loads in the first block at the chosen step, against an even share; below, the ' +
-      'largest imbalance over every block at every step, and the steps that had idle experts.',
+      'Per-expert loads in the first block at the chosen step, against a dashed line at an even share.',
   });
-
-  /* Panel A — the first block's loads. Values sit in their own row under the expert names, clear of
-   * the dashed even-share line they used to be drawn across. */
-  node.append(svgText(X0, 16, 'fig-lab', 'first block only · share of tokens per expert'));
   for (const [v, label] of [
     [0, '0'],
-    [b.even_share, `even ${b.even_share}`],
+    [b.even_share, 'even'],
     [A.max, String(A.max)],
   ]) {
-    node.append(
+    svgA.append(
       svg('line', { x1: X0, x2: X1, y1: yLoad(v), y2: yLoad(v), class: v === b.even_share ? 'acc-even' : 'gridline' }),
-      svgText(X0 - 6, yLoad(v) + 4, 'ax end', label)
+      svgText(X0 - 4, yLoad(v) + 4, 'ax end', label)
     );
   }
   const bars = [];
-  const vals = [];
   for (let i = 0; i < n; i += 1) {
     const cx = X0 + slot * i + slot / 2;
-    const r = svg('rect', { x: cx - barW / 2, y: A.base, width: barW, height: 0, rx: 3, class: 'acc-bar' });
-    const v = svgText(cx, A.base + 30, 'acc-v mid', '');
+    const r = svg('rect', { x: cx - barW / 2, y: A.base, width: barW, height: 0, rx: 2, class: 'acc-bar' });
     bars.push(r);
-    vals.push(v);
-    node.append(r, v, svgText(cx, A.base + 15, 'ax mid', `E${i + 1}`));
+    svgA.append(r, svgText(cx, A.base + 15, 'ax mid', `E${i + 1}`));
   }
+  const vals = el('div', 'acc-vals');
+  const valEls = Array.from({ length: n }, (_, i) => {
+    const v = el('span', 'acc-val');
+    v.dataset.e = `E${i + 1}`;
+    vals.append(v);
+    return v;
+  });
 
   /* Panel B — the largest imbalance over every block, every step. */
-  node.append(svgText(X0, T.top - 12, 'fig-lab', 'every block · largest imbalance at each step'));
-  node.append(
+  const svgB = svg('svg', {
+    viewBox: `0 0 ${WD} ${T.base + 6}`,
+    class: 'chart accfig',
+    role: 'img',
+    'aria-label': 'The largest imbalance over every block at every step, with a marker at the chosen step.',
+  });
+  svgB.append(
     svg('line', { x1: X0, x2: X1, y1: T.base, y2: T.base, class: 'gridline' }),
     svg('line', { x1: X0, x2: X1, y1: T.top, y2: T.top, class: 'gridline' }),
-    svgText(X0 - 6, T.base + 4, 'ax end', '0'),
-    svgText(X0 - 6, T.top + 4, 'ax end', String(b.ceiling))
+    svgText(X0 - 4, T.base + 4, 'ax end', '0'),
+    svgText(X0 - 4, T.top + 4, 'ax end', String(b.ceiling))
   );
   const d = b.violation.map((v, i) => `${i ? 'L' : 'M'}${xStep(i + 1).toFixed(1)},${yViol(v).toFixed(1)}`).join(' ');
-  node.append(svg('path', { d, class: 'acc-trace' }));
+  svgB.append(svg('path', { d, class: 'acc-trace' }));
+  const cursorB = svg('line', { x1: X0, x2: X0, y1: T.top - 4, y2: T.base + 4, class: 'acc-cursor' });
+  const dot = svg('circle', { cx: X0, cy: T.base, r: 3.5, class: 'acc-dot' });
+  svgB.append(cursorB, dot);
 
   /* Panel C — idle experts, every block, every step; veiled until the reader guesses. */
-  node.append(svgText(X0, D.top - 12, 'fig-lab', 'every block · experts idle at each step'));
+  const svgC = svg('svg', {
+    viewBox: `0 0 ${WD} ${D.base + 22}`,
+    class: 'chart accfig',
+    role: 'img',
+    'aria-label': 'The steps at which experts were idle, over every block; hidden until a guess is made.',
+  });
   const strip = svg('g', { class: 'acc-idle' });
   strip.append(svg('line', { x1: X0, x2: X1, y1: D.base, y2: D.base, class: 'gridline' }));
   b.dead.forEach((count, i) => {
@@ -1012,15 +1038,15 @@ function balanceFigure(M, W) {
     const h = (count / b.worst_dead) * (D.base - D.top);
     strip.append(svg('line', { x1: x, x2: x, y1: D.base, y2: D.base - h, class: count === b.worst_dead ? 'acc-tick worst' : 'acc-tick' }));
   });
-  const veil = svgText((X0 + X1) / 2, D.base - 10, 'acc-veil mid', 'hidden until you guess, above');
-  node.append(strip, veil);
-  node.append(
-    svgText(X0, H - 6, 'ax', 'step 1'),
-    svgText(X1, H - 6, 'ax end', `step ${int(total)}`)
+  const veil = svgText((X0 + X1) / 2, D.base - 10, 'acc-veil mid', 'hidden until you guess');
+  const cursorC = svg('line', { x1: X0, x2: X0, y1: D.top - 4, y2: D.base + 4, class: 'acc-cursor' });
+  svgC.append(
+    strip,
+    veil,
+    cursorC,
+    svgText(X0, D.base + 18, 'ax', 'step 1'),
+    svgText(X1, D.base + 18, 'ax end', `step ${int(total)}`)
   );
-  const cursor = svg('line', { x1: X0, x2: X0, y1: T.top - 6, y2: D.base + 4, class: 'acc-cursor' });
-  const dot = svg('circle', { cx: X0, cy: T.base, r: 4, class: 'acc-dot' });
-  node.append(cursor, dot);
 
   /* The scrubber. */
   const ctl = el('div', 'acc-ctl');
@@ -1074,12 +1100,15 @@ function balanceFigure(M, W) {
       r.setAttribute('y', yLoad(st.loads[e]).toFixed(1));
       r.setAttribute('height', (A.base - yLoad(st.loads[e])).toFixed(1));
       r.classList.toggle('top', e === st.busiest);
-      vals[e].textContent = st.loads[e].toFixed(3);
+      valEls[e].textContent = st.loads[e].toFixed(3);
+      valEls[e].classList.toggle('top', e === st.busiest);
     });
-    const x = xStep(st.step);
-    cursor.setAttribute('x1', x.toFixed(1));
-    cursor.setAttribute('x2', x.toFixed(1));
-    dot.setAttribute('cx', x.toFixed(1));
+    const x = xStep(st.step).toFixed(1);
+    for (const c of [cursorB, cursorC]) {
+      c.setAttribute('x1', x);
+      c.setAttribute('x2', x);
+    }
+    dot.setAttribute('cx', x);
     dot.setAttribute('cy', yViol(st.violation).toFixed(1));
     where.textContent = `after step ${int(st.step)} of ${int(total)}`;
     wrap.classList.toggle('revealed', revealed);
@@ -1107,7 +1136,19 @@ function balanceFigure(M, W) {
     revealed = true;
     show(rows.length - 1);
   };
-  wrap.append(ask, scroller(node), ctl, read);
+  wrap.append(
+    ask,
+    panel(
+      `<b>First block only</b> · the share of its tokens each expert took; the dashed line is an even
+       share, ${b.even_share}`,
+      svgA
+    ),
+    vals,
+    panel('<b>Every block</b> · the largest imbalance at each step', svgB),
+    panel('<b>Every block</b> · experts idle at each step', svgC),
+    ctl,
+    read
+  );
   show(0);
   const refute =
     b.last_idle === null
@@ -1244,6 +1285,10 @@ function validationFigure(M) {
  * them. The reader moves k and watches what a token pays climb towards what is stored. Only the
  * run's own k was trained and timed: every other k is arithmetic from the counted parameters, drawn
  * hatched, and has no speed at all rather than an invented one.
+ *
+ * Drawn 228 units wide, with each row's name and value on a line ABOVE its bar rather than beside
+ * it: beside it, the values were clipped mid-number on a phone ("31,159,04"), because a bar that
+ * fills the row leaves its label nowhere to go. Above the bar, a label's room does not depend on k.
  */
 function costFigure(M) {
   const p = M.params;
@@ -1252,13 +1297,14 @@ function costFigure(M) {
   const n = cfg.n_experts;
   const chunk = p.per_expert * cfg.depth; // one expert in every block
 
-  const W = 480;
-  const H = 312;
-  const X0 = 116;
-  const X1 = 466;
+  const W = 228;
+  const X0 = 2;
+  const X1 = W - 2;
   const px = (v) => (v / p.total) * (X1 - X0);
-  const ROW = { stored: 40, used: 118, dense: 178 };
-  const BAR = 30;
+  const BAR = 20;
+  const ROW = { stored: 18, used: 96, dense: 144 };
+  const SP = { label: 186, dense: 192, conv: 210, h: 12 };
+  const H = 228;
 
   let k = cfg.top_k;
 
@@ -1280,8 +1326,12 @@ function costFigure(M) {
   defs.append(pat);
   node.append(defs);
 
-  const label = (y, text) => svgText(X0 - 10, y + BAR / 2 + 4, 'bud-k end', text);
-  node.append(label(ROW.stored, 'stored'), label(ROW.used, 'one token uses'), label(ROW.dense, 'the dense model'));
+  /* A row's name on the left and its value on the right, on the line above its bar. */
+  const head = (y, name, value) => {
+    const v = svgText(X1, y - 6, 'bud-v end', value);
+    node.append(svgText(X0, y - 6, 'bud-k', name), v);
+    return v;
+  };
 
   /* Stored: shared, then every expert-slot across all blocks. Dividers make the slots countable. */
   const segs = (y, experts, cls) => {
@@ -1294,35 +1344,34 @@ function costFigure(M) {
     }
     return g;
   };
+  head(ROW.stored, 'stored', int(p.total));
   node.append(segs(ROW.stored, n, 'expert'));
-  node.append(svgText(X1, ROW.stored - 6, 'bud-v end', int(p.total)));
+  node.append(
+    svgText(X0, ROW.stored + BAR + 14, 'bud-cap', 'shared: attention, embeddings, norms'),
+    svgText(X0, ROW.stored + BAR + 27, 'bud-cap', `slots: one expert in all ${cfg.depth} blocks`)
+  );
+  const usedVal = head(ROW.used, 'one token uses', '');
   const used = svg('g');
   node.append(used);
-  const usedVal = svgText(X0, ROW.used + BAR / 2 + 4, 'bud-v', '');
-  node.append(usedVal);
-  const denseG = svg('g');
-  denseG.append(
+  head(ROW.dense, 'the dense model', int(p.dense));
+  node.append(
     svg('rect', { x: X0, y: ROW.dense, width: px(p.shared), height: BAR, class: 'seg shared' }),
     svg('rect', { x: X0 + px(p.shared), y: ROW.dense, width: px(chunk), height: BAR, class: 'seg dense' })
   );
-  node.append(denseG, svgText(X0 + px(p.dense) + 8, ROW.dense + BAR / 2 + 4, 'bud-v', int(p.dense)));
-  node.append(
-    svgText(X0, ROW.stored + BAR + 14, 'ax', 'shared: attention, embeddings, norms'),
-    svgText(X0, ROW.stored + BAR + 28, 'ax', `then one slot per expert, each across all ${cfg.depth} blocks`)
-  );
 
-  /* Speed, only where it was measured. */
-  const SP = { y: 248, h: 14 };
+  /* Speed, only where it was measured. Scaled to leave room for the label after each bar. */
   const fastest = Math.max(cont.tokens_per_second.dense, cont.tokens_per_second.moe);
-  const sx = (v) => (v / fastest) * (X1 - X0) * 0.7;
-  node.append(svgText(X0 - 10, SP.y - 2, 'bud-k end', 'tokens a second'));
+  const sx = (v) => (v / fastest) * (X1 - X0) * 0.45;
+  node.append(svgText(X0, SP.label, 'bud-k', 'tokens a second'));
   node.append(
-    svg('rect', { x: X0, y: SP.y - SP.h, width: sx(cont.tokens_per_second.dense), height: SP.h, class: 'seg dense' }),
-    svgText(X0 + sx(cont.tokens_per_second.dense) + 6, SP.y - 3, 'bud-v', `dense ${int(cont.tokens_per_second.dense)}`)
+    svg('rect', { x: X0, y: SP.dense, width: sx(cont.tokens_per_second.dense), height: SP.h, class: 'seg dense' }),
+    svgText(X0 + sx(cont.tokens_per_second.dense) + 5, SP.dense + 10, 'bud-v', `dense ${int(cont.tokens_per_second.dense)}`)
   );
   const speed = svg('g');
   node.append(speed);
 
+  const legend = el('p', 'acc-lab');
+  legend.innerHTML = '<b>Hatched</b>: arithmetic from the counted parameters, not a run.';
   const ctl = el('div', 'acc-ctl');
   const slider = el('input');
   slider.type = 'range';
@@ -1351,27 +1400,18 @@ function costFigure(M) {
     }
     const st = stateFor(kk);
     used.replaceChildren(segs(ROW.used, kk, st.run ? 'expert' : 'expert hatched'));
-    usedVal.textContent = `${int(st.active)}${st.run ? '' : ' · arithmetic'}`;
-    /* Beside the bar's end while there is room, above it once the bar fills the row. */
-    const end = X0 + px(st.active) + 8;
-    /* Estimated from the character count (11px mono is about 0.6em a glyph), because the first
-     * call runs before the figure is in the document, where a measured text length is zero. */
-    const fits = end + usedVal.textContent.length * 6.8 <= W - 4;
-    usedVal.setAttribute('x', fits ? end : X1);
-    usedVal.setAttribute('y', fits ? ROW.used + BAR / 2 + 4 : ROW.used - 6);
-    usedVal.setAttribute('class', fits ? 'bud-v' : 'bud-v end');
+    usedVal.textContent = int(st.active);
     kOut.textContent = `k = ${kk}${st.run ? ' — the run’s own setting' : ''}`;
     speed.replaceChildren();
-    const y2 = SP.y + 22;
     if (st.run) {
       speed.append(
-        svg('rect', { x: X0, y: y2 - SP.h, width: sx(cont.tokens_per_second.moe), height: SP.h, class: 'seg expert' }),
-        svgText(X0 + sx(cont.tokens_per_second.moe) + 6, y2 - 3, 'bud-v', `converted ${int(cont.tokens_per_second.moe)}`)
+        svg('rect', { x: X0, y: SP.conv, width: sx(cont.tokens_per_second.moe), height: SP.h, class: 'seg expert' }),
+        svgText(X0 + sx(cont.tokens_per_second.moe) + 5, SP.conv + 10, 'bud-v', `converted ${int(cont.tokens_per_second.moe)}`)
       );
     } else {
       speed.append(
-        svg('line', { x1: X0, x2: X0 + 60, y1: y2 - 2, y2: y2 - SP.h, class: 'slash' }),
-        svgText(X0 + 70, y2 - 3, 'ax', `converted: not run with k = ${kk}, so no speed`)
+        svg('line', { x1: X0, x2: X0 + 28, y1: SP.conv + SP.h, y2: SP.conv, class: 'slash' }),
+        svgText(X0 + 34, SP.conv + 10, 'ax', 'not run at this k: no speed')
       );
     }
     wrap.dataset.k = String(kk);
@@ -1387,7 +1427,7 @@ function costFigure(M) {
   }
 
   wrap.playAll = () => show(cfg.top_k);
-  wrap.append(scroller(node), ctl, read);
+  wrap.append(scroller(node), legend, ctl, read);
   show(k);
   const ratio = cont.slowdown > 1 ? `${cont.slowdown.toFixed(1)}× slower` : `${(1 / cont.slowdown).toFixed(1)}× faster`;
   const fig = figure(

@@ -67,6 +67,9 @@ From the published run (commit `6b222e4`). `RESULTS.md` is the authority.
   trailing. Positions are now level when equal at the four decimals `RESULTS.md` prints.
 - The title no longer says the experts "drift apart": nothing here measures how far their weights
   moved, only which experts the router chose.
+- **On a phone the balance figure showed four of its eight experts**, and the cost figure clipped
+  its values mid-number. Both are now drawn 228 units wide, labels above bars or in HTML, and a
+  browser test at 390 and 320px fails if any label leaves its drawing or anything scrolls sideways.
 
 ### 2026-10-10 — the page
 
