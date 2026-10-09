@@ -109,7 +109,9 @@ def rebuild_agreement(model: ChainedGPT, batch: torch.Tensor) -> dict[str, float
         twin.memory = memory
         twin.zero_grad(set_to_none=True)
         twin.loss(batch).backward()
-        grads.append([p.grad.double() for p in twin.parameters()])
+        # Compared in float64 on the CPU: MPS has no float64, and the comparison should not add
+        # rounding of its own to the error it measures.
+        grads.append([p.grad.detach().cpu().double() for p in twin.parameters()])
         del twin
     rebuilt, stored = grads
     diff = [(a - b).norm() for a, b in zip(rebuilt, stored, strict=True)]
