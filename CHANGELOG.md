@@ -12,6 +12,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 14 — a dense model upcycled into a mixture of experts, trained on.** Exercise 13's
+  trained 21M-parameter model becomes eight copied experts per block behind a float32 router, with
+  bias-only load balancing. The conversion changes the validation loss by exactly nothing, and the
+  MoE keeps training below its starting point on 10M further tokens, beside a dense control on the
+  same tokens; both rise first with the re-warmed rate, which the page explains from the control.
+  The router is chosen on one half of the validation split and everything is reported on the
+  other; the bundle is tied to exercise 13's committed results by digest; the training log is in
+  the repository. A device-only bug — balancing buffers on the CPU under a GPU model — was found by
+  a GPU smoke run and is now guarded.
 - **Exercise 13 — reversible residual stacks, measured.** Three reversible update rules chain the
   same 21M-parameter model, with a custom autograd function that rebuilds every layer's input in the
   backward pass instead of storing it. Against the standard model on the same 50M tokens, the chosen

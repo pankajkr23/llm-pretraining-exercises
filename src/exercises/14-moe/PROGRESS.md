@@ -18,13 +18,52 @@ against this yet; that is PK's, before submitting.
 | O1 | **Scaffold** | **done** | Created by `tools/new_exercise.py`. |
 | O2 | **Upcycling** | **done** | Every expert a copy of the trained feed-forward layer, top-k weights renormalised in the model's dtype; the converted model matches the dense one to 1e-12 in float64 (`test_moe_layer.py`). |
 | O3 | **Routing and balancing** | **done** | Float32 router at a tenth of the usual scale; softmax or sigmoid chosen by a short trial; selection bias balancing with no auxiliary loss. |
-| O4 | **Published run** | **pending — after exercise 13** | `FULL` starts from exercise 13's trained baseline and its trial-chosen rate, so it runs once 13's has. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` only once the published run exists. |
+| O4 | **Published run** | **done** | Commit `6b222e4`, Apple M4 GPU, 19:28–19:54 with no watchdog pause, from exercise 13's published baseline. A test ties the bundle to 13's committed results by digest; `RESULTS.md` is its render; the training log is `submission_artifacts/run.log`. |
+| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` after the published run; the executed copy sits beside the builder. |
 | O6 | **Submission** | **PK's** | The README link, once merged and public. |
 
 ---
 
+## Every process run on this machine for this exercise
+
+Times are IST, 2026-10-09; GPU means the Apple M4 through MPS, outside the sandbox.
+
+| when | process | why | outcome |
+| --- | --- | --- | --- |
+| ~09:33 | SMOKE run (GPU) | test every path on the device before a full run | **crashed**: the balancing buffers were on the CPU under a GPU model; fixed |
+| ~09:35 | SMOKE run (GPU) | confirm the fix | passed |
+| ~19:27 | SMOKE run (GPU) | test on the device before the full run | passed |
+| 19:28–19:54 | full run (GPU, `caffeinate`) | publish | completed in 1,592 s |
+| 19:28–19:54 | vitals watchdog (CPU, one sample a minute) | thermal state, memory pressure, swap, GPU, power; pause if stressed | no pause |
+| ~19:58 | notebook at `LITE` (CPU, 33 s) | check it runs end to end against the published results | 9 of 9 code cells, 0 errors; its FULL section reads the published numbers |
+
+## The full record — ablations, with the published numbers
+
+From the published run (commit `6b222e4`). `RESULTS.md` is the authority.
+
+| ablation | what changed | held fixed | outcome |
+| --- | --- | --- | --- |
+| Conversion | the feed-forward layer → 8 copied experts and a router | weights, data, the validation half | validation loss unchanged to the last digit (3.052571 both); largest logit difference 1.6e-5 |
+| Router scoring | softmax vs sigmoid, 2M tokens each | the converted model, data, rate | softmax 3.0675, sigmoid 3.0682 — a choice, not a ranking (one run each) |
+| MoE vs dense continuation | the converted model vs the unconverted one | the same 10M further tokens, schedule (peak 0.0005 = half the dense model's rate) | both rise first with the re-warmed rate, then fall; the MoE ends at 3.0172, the dense control at 3.0240 (−0.0068, one run each) |
+| Load balancing | bias-only, no auxiliary loss | — | final largest violation 0.314; at worst 3 experts idle during the run, none at the end |
+| Cost | — | — | 90.3M parameters in total, 31.2M active per token, against 21.3M dense; 14,719 against 35,932 tokens per second in a reference implementation that runs experts in a Python loop |
+
 ## Change log
+
+### 2026-10-09 — published
+
+- One full run, from exercise 13's published baseline, with no pause. The conversion changed nothing
+  measurable, the MoE kept training below its starting loss, and the page now says why both arms
+  rose first (the re-warmed rate, which the unconverted control shows too).
+- **Found on the device, not in the tests:** the balancing buffers were created on the CPU while the
+  experts and router moved to the GPU, so routing on MPS added a CPU bias to GPU scores and crashed. A
+  meta-device test now holds the buffers to the experts' device, watched red against the old code.
+- **The confidentiality gate refused a commit**: one sentence in `layer.py` ran twelve words in
+  common with the reference material. Rewritten in our own words before it entered any commit.
+- `test_moe_results.py` (no torch, runs in CI's plain job) holds the bundle to today's code and
+  settings, to exercise 13's committed results by digest, and to its render, and requires the
+  training log to cover both continuations.
 
 ### 2026-10-09 — independent audit, before the published run
 

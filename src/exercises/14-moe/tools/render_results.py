@@ -25,6 +25,30 @@ def _val(trace: dict) -> list[tuple[int, float]]:
     return sorted((int(k), v) for k, v in trace["val"].items())
 
 
+def _rise_note(moe_val: list, dense_val: list, start: float) -> list[str]:
+    """Say why the loss rose before it fell, when it did — computed from both arms.
+
+    Both continuations re-warm the learning rate, so both can rise at first. When the dense control
+    rises too, the rise belongs to the schedule, not to the conversion; when only the MoE rises, it
+    does not, and the note says so instead.
+    """
+    moe_peak = max(v for _, v in moe_val)
+    dense_peak = max(v for _, v in dense_val)
+    if moe_peak <= start:
+        return []
+    if dense_peak > start:
+        return [
+            f"- **Both arms rise first** — the MoE to {moe_peak:.4f}, the dense control to "
+            f"{dense_peak:.4f}, from the same {start:.4f} — because both re-warm the learning rate "
+            "after a model that had finished its schedule. The rise belongs to the schedule, not "
+            "to the conversion, since the unconverted model shows it too."
+        ]
+    return [
+        f"- **Only the MoE rises first** (to {moe_peak:.4f}; the dense control never exceeds its "
+        f"start of {start:.4f}), so the rise comes from the conversion, not the schedule."
+    ]
+
+
 def render(results: Path = RESULTS) -> str:
     """The whole document."""
     path = results / "upcycle.json"
@@ -116,6 +140,7 @@ def render(results: Path = RESULTS) -> str:
         f"- **The MoE's validation loss went from {start:.4f} to {moe_end:.4f}** "
         f"({moe_end - start:+.4f})"
         + (", falling at every measurement." if falling else ", though not at every measurement."),
+        *_rise_note(moe_val, dense_val, start),
         f"- The dense model on the same tokens reached {dense_end:.4f}; the MoE ends "
         f"**{moe_end - dense_end:+.4f}** against it — with {cont['parameters_moe_total']:,} "
         "parameters "
