@@ -32,6 +32,14 @@ settling) · `train.py` (the one loop) · `sweep.py` (minima, power law, predict
   flag on; if that test fails, every bias-correction number is suspect.
 - **Copy a model and its optimiser in one `deepcopy`.** Separate copies leave the optimiser updating
   parameters the copied model does not hold, and a branch silently never trains. A test catches it.
+- **Compare at an equal budget, and tune both sides.** The first schedule comparison let a branch
+  train 30 steps past the model it beat, and left the other side untuned; reading the code against
+  the sentence it rendered found it. `test_the_two_finished_models_see_exactly_the_stop_points_budget`
+  records every training call's last step.
+- **Measure the floor, every run.** SP and muP are bit-identical at the base width, so their gap is
+  the device's own nondeterminism; it moved from 1.08× to 1.01× between two full runs.
+- **A test file that imports a torch-importing module must be torch-gated**, even when the functions
+  it tests are pure numpy: CI's plain job has no torch and fails collection, which no local run shows.
 - **The MPS backend is hidden inside the sandbox.** A run that reports `cpu` when an M-series GPU is
   present was started inside it; publish from outside.
 - **muP's rules are the paper's Table 3, read from the downloaded paper** (arXiv:2203.03466v2) —
