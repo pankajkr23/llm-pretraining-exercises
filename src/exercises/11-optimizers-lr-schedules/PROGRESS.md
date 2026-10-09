@@ -84,6 +84,24 @@ is why they are measured each time rather than assumed.
 
 ## Change log
 
+### 2026-10-10 — the page
+
+- **`web/`, on the spine, from the published bundles alone.** No experiment was re-run. Six figures,
+  four of them driven by the reader. `tools/render_results.py` gained `render_page_data`, and the
+  verdicts its sentences used to compute inline — the schedule comparison, the sweep's floors and
+  drifts, the bias peak, the warmup count — moved into `*_numbers` functions that both `RESULTS.md`
+  and `web/data.js` call. `RESULTS.md` regenerates byte-identical; a test fails if `data.js` drifts.
+- **Curves the bundles do not store are recomputed, and refused if they disagree.** The bias
+  curve, the WSD branch and the planned cosine are drawn by `optimizers.adam` and
+  `optimizers.schedules`, and the renderer raises unless those functions reproduce the values the
+  bundles did store. The bias figure smooths the losses as the experiment did; a torch-gated test
+  holds the renderer's copy of that arithmetic to `ratios.smooth`.
+- **Found while building it:** the uncorrected run is not merely "outside the noise". It is ahead
+  for a dozen steps, then falls behind, and its smoothed gap dips inside the seed gap for stretches
+  without ever staying there — the page states that precisely. `RESULTS.md`'s sentence "it never
+  falls inside that noise within 600 steps" is looser than the measure it reports, which is "never
+  *stays* inside"; left unchanged here, because this change keeps that document byte-identical.
+
 ### 2026-10-09 — published, after two corrections
 
 - **The schedule comparison was not at an equal budget.** WSD's branch was taken at step 200 and
