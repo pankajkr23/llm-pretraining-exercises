@@ -19,14 +19,29 @@ local like every other topic notebook.
 | O1 | **Scaffold** | **done** | Created by `tools/new_exercise.py`. |
 | O2 | **The corpus** | **done** | FineWeb-Edu slice, licence checked on the card at fetch time, disjoint validation and training rows; shared with exercises 13 and 14 (`DECISIONS.md` D1–D3). |
 | O3 | **The five experiments** | **done** | `optimizers.experiments`; each tested end to end at the `SMOKE` preset on a synthetic corpus. |
-| O4 | **Published run** | **pending** | `FULL` preset on an Apple M4 GPU; `RESULTS.md` rendered from `results/*.json`. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Built and executed end to end at `LITE`. |
+| O4 | **Published run** | **done** | `FULL` preset on an Apple M4 GPU; `RESULTS.md` rendered from `results/*.json`. A test fails if any bundle's code digest or settings differ from today's, or if `RESULTS.md` differs from a fresh render. |
+| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Built and executed end to end at `LITE` after the published run; the executed copy sits beside the builder. |
 | O6 | **muP checked against the authors' code** | **not done** | The rules are the paper's Table 3; no comparison with the `mup` package (README limits). |
 | O7 | **Submission** | **PK's** | The README link, once merged and public. |
 
 ---
 
 ## Change log
+
+### 2026-10-09 — published, after two corrections
+
+- **The schedule comparison was not at an equal budget.** WSD's branch was taken at step 200 and
+  decayed to step 230, so it trained 30 steps longer than the cosine planned for 200 it was compared
+  with; and that cosine borrowed the 300-step cosine's peak rather than being tuned. Found by reading
+  the code against the sentence it produced, before anything was published. The branch now starts
+  at step 170 and ends on step 200, the planned cosine is tuned, and a test records each training
+  call's last step. With the budgets equal, the decay itself buys almost nothing this early in
+  training — the document now says so, computed.
+- **A noise floor came for free.** At the base width SP and muP are the same model bit for bit, yet
+  their GPU runs differ: that gap is the device's run-to-run nondeterminism, and every optimum shift
+  is now set against it and against the seed spread.
+- **The machine hibernated mid-run** (battery at 1%, 02:40 to 08:39). The width sweep was re-run on
+  its own so its recorded wall time is real; the other four bundles had finished before it.
 
 ### 2026-10-09 — built
 

@@ -259,6 +259,16 @@ def schedule_section(b: dict) -> list[str]:
             if abs(_mean(branch) - _mean(planned)) > max(_spread(branch), _spread(planned))
             else "**within the seed spread**, so this does not rank them."
         ),
+        "- **What the decay itself bought:** the branch ends "
+        f"{_mean(branch) - _mean(wsd_stop):+.4f} "
+        f"against WSD left at its peak to the same step, with a seed spread of "
+        f"{max(_spread(branch), _spread(wsd_stop)):.4f}"
+        + (
+            " — inside the noise. This early in training, a short decay gives back about as much "
+            "as the progress it costs."
+            if abs(_mean(branch) - _mean(wsd_stop)) <= max(_spread(branch), _spread(wsd_stop))
+            else "."
+        ),
         "",
     ]
 
