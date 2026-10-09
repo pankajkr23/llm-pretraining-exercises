@@ -5,8 +5,14 @@ running log is `PROGRESS.md`, the measured evidence is `RESULTS.md` (generated),
 `REQUIREMENTS.md` is the requirements (local only, gitignored).
 
 **Status: built, awaiting review.** The simulator, all four stages, the measurements, the producer,
-the renderer and the tests are done; the topic notebook is built and executed locally. Nothing is
-deployed — this exercise has no `web/`.
+the renderer and the tests are done; the topic notebook is built and executed locally. The page is
+`web/` (`index.html`, `chapters.js`, the generated `data.js`, `page-extra.css` and a vendored
+`_shared/`); it reaches readers only once production is promoted, which is PK's gate.
+
+- **The page holds no number of its own.** `tools/render_results.py` writes `web/data.js` beside
+  `RESULTS.md`, and every ratio or verdict the page's prose quotes is computed there, in
+  `page_numbers()`. `test_the_page_data_is_regenerated_and_matches_the_tracked_copy` fails if the
+  tracked copy is stale; `tests/test_zerosim_render.py` is the browser test (integration-marked).
 
 ## The rules this exercise adds, each learned by getting it wrong
 

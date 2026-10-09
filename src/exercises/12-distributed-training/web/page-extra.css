@@ -1,0 +1,1059 @@
+/* Page-specific styles for 12, started from exercise 10's sheet and trimmed to what this page
+ * emits.
+ *
+ * Every colour here is a token from /_shared/tokens.css. Nothing is a literal, because a literal
+ * would be correct in one of the six themes and wrong in the other five — and the theme picker
+ * makes that visible immediately.
+ */
+
+/* The fluid scale, from `docs/DESIGN.md`. The lever is SIZE, not measure: the column keeps its
+ * characters per line and the type grows with the screen. `tests/test_prose_measure_repo_wide.py`
+ * records which pages are on the scale and fails in both directions.
+ */
+#main {
+  font-size: clamp(19px, 1.2vw + 1.7px, 22px);
+}
+
+.say {
+  /* On the element that CARRIES the type, never on an ancestor: `ch` resolves against the
+   * element's own computed size, so a cap on a parent at a different size is the trap
+   * `docs/DESIGN.md` calls this repository's most expensive recurring bug. */
+  font-size: inherit;
+  max-width: 70ch;
+  margin: 0 0 16px;
+  line-height: 1.62;
+  color: var(--ink);
+}
+
+.say.small {
+  font-size: 0.82em;
+  color: var(--muted);
+}
+
+.say code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--track);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+/* Wide tables scroll inside their own box; the page body must never scroll sideways. */
+.tablewrap {
+  overflow-x: auto;
+  margin: 22px 0 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+table.grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82em;
+}
+
+/* **`normal`, not `nowrap`, and the `.prose` modifier was only ever half the fix.** `nowrap` is
+ * right for a column of figures and catastrophic for one of sentences, and this page has both in
+ * the same tables. Marking one table `prose` fixed the audit trail and left the other five: at
+ * 390px, 3,154px of text across `method`, `expected`, `results`, `problem` and `reproduce` sat
+ * behind horizontal scrollbars, and the `method` table's second column ran at 104 characters a line
+ * at every width from 390 to 2560.
+ *
+ * Measured with every cell wrapping: total hidden width goes to **zero** at 2560, 1440, 1180, 900
+ * and 768, and the page grows 25px. Nothing was clipped before — every table is in a `.tablewrap`
+ * that scrolls by design — which is exactly why no guard could see it and why a reader met a
+ * sentence that stopped mid-word with no scrollbar to explain it. */
+table.grid th,
+table.grid td {
+  text-align: left;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--line);
+  white-space: normal;
+}
+
+/* `--ink`, because `--muted` is calibrated against `--bg` and this puts it on the darker `--track`:
+ * measured at **4.15:1** in the default light theme, the only pair on the page below AA in any of
+ * the six. The repo-wide theme guard cannot see it — it reads `body.color` against the body
+ * background, one pair per page, so six green cases sat over a live failure. Column heads carry
+ * meaning in the audit table: "AS FIRST PUBLISHED" against "WHAT IT BECAME" *is* its argument. */
+table.grid th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--track);
+}
+
+table.grid td:first-child {
+  white-space: normal;
+  min-width: 16ch;
+}
+
+/* Digits in a column have to line up, or the reader compares lengths instead of values. */
+table.grid td:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}
+
+table.grid tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The `table.grid tr.good/bad td` rules that sat here moved no pixels: `.grid tr.good td`
+ * below has the same specificity and is written later, so source order decided and this
+ * block lost every declaration it shared. Editing it would have changed nothing, which is
+ * the failure `AGENTS.md` records under source order. Deleted rather than left to mislead. */
+
+/* The shared `section` rule sets bottom spacing only — `padding-bottom` and `margin-bottom`, no
+ * top. Exercises 05 and 06 never notice because both put a summary panel between the lede actions
+ * and the first chapter. This page goes straight into chapter one, so the first heading sat flush
+ * against the buttons: measured 0px here against 46px on 06. Matched to 06 rather than guessed.
+ */
+main > section:first-child {
+  margin-top: 46px;
+}
+
+/* ==== storytelling elements: tiles, glossary, figures, expected-vs-found ==== */
+
+/* --- headline tiles ---------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  /* **340, measured across seven widths rather than chosen.** At 200px four columns held down to
+   * 900px and the tile labels read at 18-27 characters a line, against `docs/DESIGN.md`'s floor of
+   * 42 and exercise 08's 39-61. The sweep: 300px and 340px both give 34-46 everywhere, 380px puts
+   * 768 at 78, 420px puts 900 at 93. 340 is the only value that never exceeds 46 and never falls
+   * below 34. `min(340px, 100%)` and not a bare 340px, because an auto-fit track cannot shrink
+   * below its own minimum and pushes a 320px phone sideways. */
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+  gap: 14px;
+  margin: 26px 0 18px;
+}
+
+.tile {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  border-top: 3px solid var(--line);
+}
+
+.tile.good {
+  border-top-color: var(--grade-a);
+}
+
+.tile.bad {
+  border-top-color: var(--grade-x);
+}
+
+.tile-v {
+  font-family: var(--mono);
+  font-size: 1.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.tile.good .tile-v {
+  color: var(--grade-a);
+}
+
+.tile.bad .tile-v {
+  color: var(--grade-x);
+}
+
+.tile-k {
+  margin-top: 6px;
+  font-size: 0.74em;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+/* --- glossary ---------------------------------------------------------------------------------- */
+
+.gloss {
+  margin: 20px 0 8px;
+  /* The cap that sat here was `74ch` on the `dl`, whose own size is the inherited body
+   * size while every `dd` inside it renders smaller — the `ch` trap in its documented
+   * form. It belongs on the element that carries the type. */
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 10px 22px;
+}
+
+.gloss dt {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.gloss dd {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.82em;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .gloss {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .gloss dd {
+    margin: 0 0 14px;
+  }
+}
+
+/* --- figures ----------------------------------------------------------------------------------- */
+
+figure {
+  margin: 26px 0 30px;
+  padding: 20px 20px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+figcaption {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.63em;
+  line-height: 1.55;
+  color: var(--muted);
+  max-width: 78ch;
+}
+
+/* --- section role eyebrow, sub-heads, and the closing lists ------------------------------ */
+
+.role {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+section h3 {
+  margin: 34px 0 12px;
+  font-size: 0.92em;
+  font-weight: 600;
+}
+
+/* The measure goes on the `li`, never the `ul`: `ch` resolves against the element's own size. */
+.limitlist,
+.nextlist {
+  margin: 18px 0;
+  padding-left: 22px;
+}
+
+.nextlist li {
+  max-width: 70ch;
+  margin: 0 0 12px;
+  line-height: 1.6;
+}
+
+/* --- notices: apparatus that stops wearing display type (docs/DESIGN.md) ------------------------
+ *
+ * Exercise 08's rule, copied: the limits are consulted rather than followed, so they take a 21px
+ * heading and a tight list — and stay fully visible, never inside a `<details>`. */
+.notice > h2 {
+  font-size: 21px !important;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+}
+
+.limitlist li {
+  margin: 0 0 11px;
+  max-width: 72ch;
+  font-size: 0.82em;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.limitlist li b {
+  color: var(--ink);
+}
+
+/* `watch` is neither a win nor a failure: a number to read with care. */
+.tile.watch {
+  border-top-color: var(--grade-b);
+}
+
+.tile.watch .tile-v {
+  color: var(--grade-b);
+}
+
+/* --- Prose devices --------------------------------------------------------- */
+
+.takeaway {
+  margin: 22px 0 0;
+  padding: 18px 20px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.88em;
+  line-height: 1.6;
+  max-width: 66ch;
+}
+.grid tr.warn td {
+  background: color-mix(in srgb, var(--grade-b) 7%, transparent);
+}
+
+.grid tr.warn td:first-child {
+  border-left: 3px solid var(--grade-b);
+}
+
+.grid tr.bad td {
+  background: color-mix(in srgb, var(--grade-x) 6%, transparent);
+}
+
+.grid tr.bad td:first-child {
+  border-left: 3px solid var(--grade-x);
+}
+
+.grid tr.good td {
+  background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+.grid tr.good td:first-child {
+  border-left: 3px solid var(--grade-a);
+}
+
+/* --- the rail stays at the page edge, and the reading column centres beside it ------------------
+ *
+ * **There was an override here that moved the rail inward and it was wrong.** It read
+ * `left: max(0px, calc((100vw - 1500px) / 2))`, so above 1440px the rail travelled with the centred
+ * wrap and sat 24px from the text — which put 24px of air on the left of the reading column and
+ * 554px on its right at 2560. The column was no longer centred in the space the rail leaves, and a
+ * reader described the result as the page having walked away from its own contents.
+ *
+ * `AGENTS.md` records the identical mistake being made once before, on exercise 08, for the
+ * identical reason: a complaint about a wide-screen layout was read as "the rail is too far left"
+ * when what the reader was reporting was the column being off centre. That time a guard was written
+ * demanding the broken version. This time the override shipped on three pages — 07, 09 and 10 — and
+ * `max(0px, …)` clamps below 1440, so every width a laptop opens looked correct.
+ *
+ * The rule is now the shared one and there is no override: `_shared/page.css` pins the rail at the
+ * left edge and reserves 260px of gutter on `.wrap`, which centres the column in what is left.
+ * `tests/test_rail_geometry_repo_wide.py` asserts the symmetry on every deployable page, so the
+ * next attempt to place a rail by eye reds instead of shipping.
+ */
+
+/* --- a long identifier must not push the page sideways -------------------------------------------
+ *
+ * Inline `code` holds paths and identifiers, and mono does not hyphenate. At the old fixed 16px the
+ * longest of them happened to fit a 320px phone; at the scale's 19px floor it does not, and one
+ * `<code>` was enough to make the whole document scroll horizontally by 19px — the failure
+ * `AGENTS.md` names as the one the page body must never have.
+ *
+ * `anywhere` rather than `break-word`: a path has no break opportunities at all, so the weaker
+ * value leaves it intact and overflowing. Found by the guard, at 320px, after the type change.
+ */
+code {
+  overflow-wrap: anywhere;
+}
+
+/* --- the opening paragraph is part of the page, not a caption under the title ---------------------
+ *
+ * `_shared/components.css` sets `.lede { font-size: 1.06rem; color: var(--muted) }`, pinned to the
+ * 16px root and greyed — and `.lede` is a SIBLING of `#main`, so the fluid ramp above never reaches
+ * it. Left alone, the type change makes this worse rather than better: the page's opening sentence
+ * ends up smaller than its own figure captions, which is the "hierarchy reads as a rendering fault"
+ * that `docs/DESIGN.md` warns about. Found on exercise 09 by a first-time reader, who described
+ * skipping past it to the button.
+ *
+ * Slightly above the body ramp, because a standfirst that merely matches the paragraphs under it is
+ * not a standfirst; `62ch` keeps it flush with the reading column rather than out-denting it.
+ */
+.lede {
+  max-width: 62ch;
+  font-size: clamp(20px, 1.3vw + 2px, 25px);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+/* --- a table of PROSE wraps; a table of figures does not -----------------------------------------
+ *
+ * `table.grid` sets `white-space: nowrap` on every cell but the first, which is right for a table
+ * of numbers and catastrophic for one of sentences. The audit table at `negatives` carries cells of
+ * up to 433 characters, and without this it laid out **3,635px wide inside a 1,156px wrapper** —
+ * every cell a single unwrapped line, the reader given a fragment and a horizontal scrollbar, on the
+ * section whose own standfirst says "the gap between the two columns is the whole argument".
+ *
+ * **Exercise 09 hit this, fixed it, and this page copied the markup without the fix.** Its
+ * `chapters.js` builds the same table with the same `'grid prose'` class list, and no stylesheet
+ * linked here defined `.prose` at all — so the modifier was inert and looked deliberate.
+ *
+ * Neither overflow guard could see it, which is why it survived: the page-level one measures
+ * `documentElement`, and `.tablewrap` absorbs the width by design; the element-level one skips
+ * anything whose computed `overflow-x` is `auto`, which is exactly `.tablewrap`; and the `td`
+ * itself grows to its content, so its own `scrollWidth` equals its `clientWidth`. A browser guard
+ * for it is below in `tests/test_trainloop_render.py`.
+ */
+table.grid.prose td {
+  white-space: normal;
+}
+
+table.grid.prose td:first-child {
+  width: 24%;
+}
+
+/* --- below 640px a table becomes a list of cards --------------------------------------------------
+ *
+ * **Wrapping every cell fixed the desktop and left the phone worse in a new shape.** A table whose
+ * three columns are sentences cannot be narrow: at 390px this page's six tables measured
+ * **8,455px** of vertical space — ten screens — with prose cells at **12 to 19 characters a line**,
+ * and the audit table alone was 4,959px with a 1,020px row. `vertical-align: middle` then started
+ * that row's first cell 388px down, so a reader met a large empty panel with a coloured bar down it
+ * and scrolled a third of a screen before any text appeared.
+ *
+ * A 3,635px-wide table of 330-character lines and a 4,959px-tall one of 13-character lines are not
+ * better and worse; they are the same content failing in two directions, and neither is a table a
+ * phone can show. So below 640px it stops being one: each row becomes a card, each cell a labelled
+ * block. `.gloss` and `.expect` already collapse at this width, so the breakpoint is the page's own
+ * rather than a new one.
+ *
+ * `data-head` is set by `table()` in `chapters.js`, because hiding the `thead` takes the only thing
+ * that said which column a value belonged to — and in the audit table the two columns ARE the
+ * argument: "as first published" against "what it became" is the figure.
+ */
+@media (max-width: 640px) {
+  .tablewrap {
+    /* Nothing overflows any more, so the scroll affordance is a scrollbar with nothing to scroll —
+     * and on a platform with overlay scrollbars it is an invisible one. */
+    overflow-x: visible;
+  }
+
+  table.grid thead {
+    /* Hidden from sight and from the accessibility tree together: the head is repeated on every
+     * cell below, and a screen reader that announced both would read each column name twice. */
+    display: none;
+  }
+
+  table.grid,
+  table.grid tbody,
+  table.grid tr,
+  table.grid td {
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+
+  table.grid tr {
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.grid tr:last-child {
+    border-bottom: 0;
+  }
+
+  /* **`white-space` is the half that matters and it is easy to leave out.** `table.grid td` is
+   * `nowrap` — right for a column of figures, meaningless in a card, which has no columns to scroll
+   * between. Left in place it laid one of exercise 07's cells out 3,222px wide in a 337px box: nine
+   * tenths of the sentence past the right edge, no ellipsis, no scrollbar of its own, and the
+   * `overflow-x: auto` on the wrapper above making it read as a wide table behaving correctly. Same
+   * specificity as the `nowrap` rule (0,1,1), so it wins on source order alone — which is why this
+   * block belongs at the end of the file. */
+  table.grid td {
+    padding: 0 14px 10px;
+    border-bottom: 0;
+    white-space: normal;
+  }
+
+  /* **The two rules that pin the first column, reset at a specificity that actually beats them.**
+   * `table.grid td { min-width: 0 }` above is (0,1,1) and lost to `table.grid td:first-child
+   * { min-width: 16ch }` at (0,1,2), so the stacked audit table had two full-width cells and a
+   * 157px one — 16 characters a line under a 36-character sibling, which reads as a broken layout
+   * rather than a narrow column. `table.grid.prose td:first-child { width: 24% }` is (0,2,2) and
+   * needs the `.prose` in the selector to be beaten at all. Both are column geometry, and there are
+   * no columns here. */
+  table.grid td:first-child,
+  table.grid.prose td:first-child {
+    min-width: 0;
+    width: auto;
+  }
+
+  /* The label the hidden `thead` used to carry. Same type as `th` so the two read as one system.
+   * Selected on `[data-head]` rather than on every cell with a `:not([data-head])` rule to undo it:
+   * an empty `attr()` still paints a 3px block, and the undo rule matched nothing on any of the
+   * three pages — a selector that cannot fire reads as coverage exactly the way a dead guard does. */
+  table.grid td[data-head]::before {
+    content: attr(data-head);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* The row's status mark runs down the whole card rather than beside one cell of it, because the
+   * card IS the row now. */
+  .grid tr.good td:first-child,
+  .grid tr.bad td:first-child,
+  .grid tr.warn td:first-child {
+    border-left: 0;
+  }
+
+  .grid tr.good {
+    border-left: 3px solid var(--grade-a);
+  }
+
+  .grid tr.bad {
+    border-left: 3px solid var(--grade-x);
+  }
+
+  .grid tr.warn {
+    border-left: 3px solid var(--grade-b);
+  }
+}
+
+/* ============================================================
+ * Exercise 12's own figures.
+ *
+ * One colour rule for the whole page: a byte is coloured by the stage that first splits it, and a
+ * stage's line is the same colour. s0 is data parallelism (the accent), s1 ZeRO-1 (optimiser
+ * state), s2 ZeRO-2 (gradients), s3 ZeRO-3 (weights). Every stage ALSO carries a text label and,
+ * in line charts, a marker shape — so nothing on the page is told apart by hue alone, which matters
+ * in high-contrast, where `--muted` equals `--ink`.
+ * ============================================================ */
+
+.figsvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* A viewBox scales its labels UP as well as down; capped so an 11px label never paints at twice
+   * the size of the prose beside it on a wide screen. The floor is set per drawing in chapters.js. */
+  max-width: 960px;
+}
+
+.ringfig {
+  max-width: 720px;
+}
+
+.figscroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.figsvg text {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+.figsvg .mid {
+  text-anchor: middle;
+}
+
+.figsvg .end {
+  text-anchor: end;
+}
+
+.figsvg .lab.strong {
+  fill: var(--ink);
+  font-weight: 700;
+}
+
+.figsvg .lab.faint {
+  fill: var(--faint);
+}
+
+.figsvg .val {
+  fill: var(--ink);
+  font-weight: 700;
+}
+
+.figsvg .s0-t { fill: var(--accent); }
+.figsvg .s1-t { fill: var(--part-k); }
+.figsvg .s2-t { fill: var(--part-v); }
+.figsvg .s3-t { fill: var(--part-store); }
+
+.figsvg .gridline {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+/* --- Figure: the bytes of one weight, per stage ------------------------------------------------- */
+
+.stagefig .byte {
+  stroke-width: 1.5;
+}
+
+.stagefig .byte.whole.s0,
+.budgetfig .seg.s0 { fill: var(--accent); stroke: var(--accent); }
+.stagefig .byte.whole.s1,
+.budgetfig .seg.s1 { fill: var(--part-k); stroke: var(--part-k); }
+.stagefig .byte.whole.s2,
+.budgetfig .seg.s2 { fill: var(--part-v); stroke: var(--part-v); }
+.stagefig .byte.whole.s3,
+.budgetfig .seg.s3 { fill: var(--part-store); stroke: var(--part-store); }
+
+/* A split byte is an OUTLINE with a dashed edge: form, not just a paler hue. */
+.stagefig .byte.split {
+  fill: var(--panel);
+  stroke-dasharray: 3 2;
+}
+.stagefig .byte.split.s1 { stroke: var(--part-k); }
+.stagefig .byte.split.s2 { stroke: var(--part-v); }
+.stagefig .byte.split.s3 { stroke: var(--part-store); }
+
+/* --- Figure: the ring ---------------------------------------------------------------------------- */
+
+/* `--fill` is the share of the sum a cell holds, set per cell by chapters.js; declared here with
+ * its starting value so no theme ever falls back to an undeclared property. */
+.ringfig .chunk {
+  --fill: 0;
+  fill: var(--accent);
+  fill-opacity: calc(0.12 + 0.6 * var(--fill));
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  transition: fill-opacity 550ms ease;
+}
+
+.ringfig .chunk.full {
+  fill-opacity: 1;
+  stroke-width: 2;
+}
+
+.ringfig .chunk.stale {
+  fill-opacity: 0.05;
+  stroke-dasharray: 3 3;
+}
+
+.ringfig .chunk-t {
+  fill: var(--ink);
+  font-weight: 700;
+}
+
+.ringfig .chunk-t.on {
+  fill: var(--on-accent);
+}
+
+.ringfig .arrow {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.ringfig .arrow.wrapback {
+  stroke-dasharray: 5 3;
+}
+
+.ring-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0 0 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.ring-ctl input[type='range'] {
+  flex: 1 1 200px;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.ring-out {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 7ch;
+}
+
+.ring-read,
+.ladder-read,
+.adv-read,
+.predict-v {
+  margin-top: 12px;
+  font-size: 0.74em;
+  line-height: 1.55;
+  color: var(--ink);
+  max-width: 76ch;
+}
+
+.ring-bytes {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+/* --- Figure: the per-device budget --------------------------------------------------------------- */
+
+.budget-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 28px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  margin: 0 0 14px;
+}
+
+.tabs button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin: 0 18px -1px 0;
+  padding: 9px 0 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  cursor: pointer;
+}
+
+.tabs button:hover {
+  color: var(--ink);
+}
+
+/* Pressed is carried by the underline AND by the weight of the ink, not by colour alone. */
+.tabs button[aria-pressed='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.tabs button:focus-visible,
+.adv-cell:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.budgetfig .seg {
+  stroke-width: 0.6;
+  stroke: var(--panel);
+}
+
+.budgetfig .seg-t {
+  fill: var(--on-accent);
+  font-weight: 700;
+}
+
+.budgetfig .ghost {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+
+.budgetfig .ftick {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.budgetfig .brow {
+  opacity: 0.45;
+  transition: opacity 200ms ease;
+}
+
+.budgetfig .brow.on {
+  opacity: 1;
+}
+
+.budget-read {
+  margin-top: 6px;
+}
+
+/* Scrolls inside its own box at every width. The phone rule for prose tables sets `.tablewrap`
+ * to `overflow-x: visible` because a stacked table no longer needs it; this one is never stacked,
+ * so it keeps its scroller, at a higher specificity than that rule. */
+.budget-read .tablewrap {
+  margin: 10px 0 8px;
+  overflow-x: auto;
+}
+
+/* A table of FIGURES keeps its columns on a phone (docs/DESIGN.md); only a table of sentences
+ * becomes cards. Four short numeric columns fit 320px, so this one is never stacked. */
+table.mini {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.72em;
+  font-variant-numeric: tabular-nums;
+}
+
+table.mini th,
+table.mini td {
+  text-align: left;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+@media (max-width: 640px) {
+  table.mini th,
+  table.mini td {
+    padding: 6px 5px;
+  }
+  table.mini th {
+    letter-spacing: 0;
+  }
+}
+
+table.mini th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--track);
+}
+
+table.mini tr.good td {
+  background: color-mix(in srgb, var(--grade-a) 6%, transparent);
+}
+
+table.mini tr.bad td {
+  background: color-mix(in srgb, var(--grade-x) 6%, transparent);
+}
+
+/* --- line charts: scaling and the ladder --------------------------------------------------------- */
+
+.linefig .series {
+  fill: none;
+  stroke-width: 2.2;
+}
+.linefig .series.s0 { stroke: var(--accent); }
+.linefig .series.s1 { stroke: var(--part-k); }
+.linefig .series.s2 { stroke: var(--part-v); }
+.linefig .series.s3 { stroke: var(--part-store); }
+
+/* Predicted, never run: dashed, so a prediction never looks like a measurement. */
+.linefig .series.predicted {
+  stroke-dasharray: 7 4;
+}
+
+.linefig .mk {
+  stroke: var(--panel);
+  stroke-width: 1.2;
+}
+.linefig .mk.s0 { fill: var(--accent); }
+.linefig .mk.s1 { fill: var(--part-k); }
+.linefig .mk.s2 { fill: var(--part-v); }
+.linefig .mk.s3 { fill: var(--part-store); }
+
+.linefig .floor {
+  stroke-width: 1.3;
+  stroke-dasharray: 1 4;
+  stroke-linecap: round;
+}
+.linefig .floor.s1 { stroke: var(--part-k); }
+.linefig .floor.s2 { stroke: var(--part-v); }
+
+.linefig .padline {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.ladderfig .nofit {
+  fill: var(--grade-x);
+  fill-opacity: 0.06;
+}
+
+.ladderfig .cardline {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.ladderfig .cursor {
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+
+.ladderfig .hollow {
+  fill: var(--panel);
+  stroke-width: 2.4;
+}
+.ladderfig .hollow.s0 { stroke: var(--accent); }
+.ladderfig .hollow.s1 { stroke: var(--part-k); }
+.ladderfig .hollow.s2 { stroke: var(--part-v); }
+.ladderfig .hollow.s3 { stroke: var(--part-store); }
+
+.ladderfig .answer {
+  stroke: var(--grade-a);
+  stroke-width: 2;
+}
+
+.ladderfig .guess {
+  stroke: var(--grade-b);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+
+.predict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 0 0 6px;
+  font-size: 0.74em;
+  color: var(--ink);
+}
+
+.predict label {
+  flex: 1 1 260px;
+  font-weight: 600;
+}
+
+.predict input {
+  width: 6ch;
+  font: inherit;
+  font-family: var(--mono);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 0;
+  border-radius: 980px;
+  padding: 7px 18px;
+  cursor: pointer;
+}
+
+.ladder-read {
+  display: grid;
+  gap: 4px;
+}
+
+.lrow {
+  display: grid;
+  grid-template-columns: 9ch 10ch 1fr;
+  gap: 10px;
+  font-family: var(--mono);
+}
+
+.lrow .lk {
+  font-weight: 700;
+}
+.lrow .s0-t { color: var(--accent); }
+.lrow .s1-t { color: var(--part-k); }
+.lrow .s2-t { color: var(--part-v); }
+.lrow .s3-t { color: var(--part-store); }
+
+.lrow.fit .lf {
+  color: var(--grade-a);
+}
+
+.lrow.nofit .lf {
+  color: var(--grade-x);
+  font-weight: 700;
+}
+
+/* --- the adversary ------------------------------------------------------------------------------- */
+
+.adv-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.adv-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.adv-mode {
+  flex: 0 0 15ch;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.adv-cell {
+  min-width: 13ch;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink);
+  background: var(--track);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.adv-cell.same {
+  border: 1px solid var(--grade-a);
+  background: var(--panel);
+}
+
+/* The page's one red mark in this figure: the only comparison that differs. */
+.adv-cell.diff {
+  border: 2px solid var(--grade-x);
+  background: var(--panel);
+}
+
+.adv-v {
+  display: block;
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.adv-cell.same .adv-v {
+  color: var(--grade-a);
+}
+
+.adv-cell.diff .adv-v {
+  color: var(--grade-x);
+}
+
+@media (max-width: 640px) {
+  .lrow {
+    grid-template-columns: 8ch 9ch;
+  }
+  .lrow .lf {
+    grid-column: 1 / -1;
+  }
+  .adv-mode {
+    flex-basis: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringfig .chunk,
+  .budgetfig .brow {
+    transition: none;
+  }
+}
+
+/* Print paints every figure's end state (chapters.js), so the controls have nothing left to do. */
+@media print {
+  .ring-ctl,
+  .budget-ctl,
+  .predict {
+    display: none;
+  }
+}

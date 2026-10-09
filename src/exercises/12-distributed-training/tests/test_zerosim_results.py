@@ -186,3 +186,205 @@ def test_every_step_of_the_published_run_sent_the_same_bytes() -> None:
             assert comm["every_step_identical"], (mode, key)
             assert len(set(comm["sent_by_step"])) == 1, (mode, key)
             assert comm["sent_by_step"][0] == comm["per_step_sent"]["total"], (mode, key)
+
+
+# ----------------------------------------------------------------------------------- the page
+#
+# The page reads every number from `web/data.js`, which the renderer generates from the same
+# bundle. These three guards are copied from exercises 10 and 08 and run with no browser, so they
+# hold in the ordinary CI job.
+
+WEB = EXERCISE / "web"
+
+
+def test_the_page_data_is_regenerated_and_matches_the_tracked_copy() -> None:
+    """`web/data.js` is what the page draws, and it must still be what the bundle produces.
+
+    Copied from exercise 10, whose page claimed this test existed for weeks before it did.
+    `data.js` is generated, so a hand-edit to it would survive every other check here.
+    """
+    tracked = (WEB / "data.js").read_text(encoding="utf-8")
+    expected = render_results.render_page_data(_run())
+    assert tracked == expected, (
+        "web/data.js differs from what the bundle regenerates. Re-render rather than editing it:\n"
+        "  uv run python src/exercises/12-distributed-training/tools/render_results.py"
+    )
+
+
+def test_the_page_ladder_agrees_with_the_published_ladder() -> None:
+    """The slider's ladder is computed by the renderer; at the published sizes it must BE the
+    published one, so the page cannot show a fit the bundle does not."""
+    run = _run()
+    slider = render_results.page_numbers(run)["slider"]
+    for row in run["ladder"]["rows"]:
+        i = slider["world_sizes"].index(row["world_size"])
+        assert slider["fits"][str(row["stage"])][i] == row["fits"], row
+        assert abs(slider["gib"][str(row["stage"])][i] - row["gib"]) < 1e-3 * row["gib"] + 1e-9
+
+
+def test_no_heading_or_rail_label_types_a_count() -> None:
+    """A count in a heading or a rail label must be derived, never typed.
+
+    Ported from exercise 10 (which took it from 08) with its reason intact: inside a heading or a
+    rail label a spelled number is always a count of that section's own contents, so it goes stale
+    the moment the contents change. `one` is excluded and only `one`. A template literal counts as
+    derived only if it interpolates (`${`); a backtick alone is an ordinary literal.
+    """
+    numbers = (
+        r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen"
+        r"|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)\b"
+    )
+    source = (WEB / "chapters.js").read_text(encoding="utf-8")
+
+    labels: list[str] = []
+    labels += re.findall(r"\b(?:short|sub):\s*'([^']*)'", source)
+    labels += re.findall(r"\b(?:short|sub):\s*`([^`]*)`", source)
+    labels += re.findall(
+        r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*'([^']*)'",
+        source,
+        re.S,
+    )
+    labels += re.findall(
+        r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*`([^`]*)`",
+        source,
+        re.S,
+    )
+    # The page's sub-heads are `el('h3', null, …)`; they are headings too.
+    labels += re.findall(r"\bel\(\s*'h3',\s*null,\s*'([^']*)'", source)
+    labels += re.findall(r"\bel\(\s*'h3',\s*null,\s*`([^`]*)`", source)
+    assert labels, "no headings or rail labels matched; the patterns have gone stale"
+    labels = [label for label in labels if "${" not in label]
+
+    offenders = [label for label in labels if re.search(numbers, label, re.I)]
+    assert not offenders, (
+        "a heading or rail label types a count instead of deriving it: "
+        f"{offenders}. Use spell()/Spell() over the list itself, or drop the count."
+    )
+
+
+def _string_literals(source: str) -> list[tuple[int, str]]:
+    """Every string literal's own text in a JS file, with its starting line, interpolations removed.
+
+    A scanner rather than a line regex, and the difference was watched: exercise 08's version looks
+    for a quote and the word on the SAME line, so a count inside a template literal that began on an
+    earlier line — which is how nearly every paragraph on these pages is written — passed it. A
+    deliberate `sixteen bytes` planted mid-paragraph here went through green. Comments are skipped;
+    `${…}` is code, so its contents are not literal text (nested templates inside it are scanned).
+    """
+    out: list[tuple[int, str]] = []
+    i, line, n = 0, 1, len(source)
+    stack: list[str] = []  # "`" for an open template, "{" for an open interpolation
+    buf: list[str] = []
+    start = 0
+
+    def flush() -> None:
+        if buf:
+            out.append((start, "".join(buf)))
+            buf.clear()
+
+    while i < n:
+        c = source[i]
+        top = stack[-1] if stack else None
+        if top == "`":
+            if c == "\\":
+                buf.append(source[i : i + 2])
+                i += 2
+                continue
+            if c == "`":
+                flush()
+                stack.pop()
+            elif source.startswith("${", i):
+                flush()
+                stack.append("{")
+                i += 2
+                continue
+            else:
+                buf.append(c)
+                line += c == "\n"
+            i += 1
+            continue
+        # code: either the top level or inside an interpolation
+        if source.startswith("//", i):
+            while i < n and source[i] != "\n":
+                i += 1
+            continue
+        if source.startswith("/*", i):
+            close = source.index("*/", i + 2)
+            line += source.count("\n", i, close)
+            i = close + 2
+            continue
+        if c in "'\"":
+            j = i + 1
+            while source[j] != c:
+                j += 2 if source[j] == "\\" else 1
+            out.append((line, source[i + 1 : j]))
+            i = j + 1
+            continue
+        if c == "`":
+            stack.append("`")
+            start = line
+        elif c == "{" and top == "{":
+            stack.append("{")
+        elif c == "}" and top == "{":
+            stack.pop()
+            start = line
+        line += c == "\n"
+        i += 1
+    return out
+
+
+def test_no_count_is_typed_into_the_page_as_a_word() -> None:
+    """The page may not carry a large spelled count as a source literal; it must derive it.
+
+    Ported from exercise 08, which said "twenty-three" in six places and saw all six go wrong at
+    once, and strengthened (see `_string_literals`) after the port let a planted count through. This
+    page's subject is a fixed bill of sixteen bytes and a thirty-billion-weight ladder, and both are
+    numbers in `M`, so "sixteen" and "thirty" must come from `spell(M…)` or a template, never be
+    typed. Lexical on purpose: a runtime check cannot tell a derived word from a typed one.
+    """
+    numbers = (
+        "eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
+        "|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty|sixty"
+    )
+    offenders = []
+    for path in sorted(WEB.rglob("*.js")):
+        if path.name == "data.js" or "_shared" in path.parts:
+            continue
+        source = path.read_text(encoding="utf-8")
+        speller = re.search(r"const SPELLED = \[.*?\];", source, re.S)
+        if speller:  # the speller's own table is the one place these words belong as literals
+            source = source.replace(speller.group(0), "")
+        for line, text in _string_literals(source):
+            if re.search(rf"\b({numbers})\b", text, re.I):
+                offenders.append(f"{path.name}:{line}: {' '.join(text.split())[:88]}")
+    assert offenders == [], "spelled counts typed into page prose:\n  " + "\n  ".join(offenders)
+
+
+def test_the_literal_scanner_finds_a_count_the_line_regex_missed() -> None:
+    """The twin: the scanner sees a count deep inside a multi-line template, and skips comments
+    and interpolations."""
+    js = (
+        "const a = `first line\n  then sixteen bytes ${spell(n)}`;\n"
+        "// sixteen in a comment\n"
+        "const b = `x ${cond ? `nested twelve` : ''} y`;\n"
+        "/* twelve */ const c = 'plain';\n"
+    )
+    texts = [t for _, t in _string_literals(js)]
+    assert any("sixteen bytes" in t for t in texts), texts
+    assert any("nested twelve" in t for t in texts), texts
+    assert not any("comment" in t for t in texts), texts
+    assert "plain" in texts and not any("spell(n)" in t for t in texts), texts
+
+
+def test_the_index_shell_carries_no_number() -> None:
+    """`index.html` is outside `M`'s reach, so any figure in it would be typed. It carries none."""
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    visible = re.sub(r"<(script|style)\b.*?</\1>", "", html, flags=re.S)
+    visible = re.sub(r'href="data:[^"]*"', "", visible)
+    title = re.search(r"<title>(.*?)</title>", visible, re.S).group(1)
+    lede = re.search(r'<p class="lede">(.*?)</p>', visible, re.S).group(1)
+    description = re.search(r'name="description"\s+content="([^"]*)"', visible, re.S).group(1)
+    words = r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|sixteen|thirty)\b"
+    for name, text in (("title", title), ("lede", lede), ("description", description)):
+        assert not re.search(r"\d", text), f"the {name} carries a digit: {text!r}"
+        assert not re.search(words, text, re.I), f"the {name} carries a count word: {text!r}"
