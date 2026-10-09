@@ -531,6 +531,16 @@ def page_numbers(run: dict) -> dict:
             key: {
                 "floor": float(formulas.floor_bytes_per_weight(int(key), mode)),
                 "sharded": {c: int(key) >= formulas.SHARDED_FROM[c] for c in CATEGORIES},
+                # The formula's own value at the run's N, per category and in total, so the page
+                # can set it beside the ledger's reading rather than print the ledger twice.
+                "at_world": {
+                    c: float(v) for c, v in formulas.bytes_per_weight(int(key), world, mode).items()
+                },
+                # Optimiser state sharded but gradients not: the device keeps its whole gradient
+                # buffer, yet after the reduce-scatter only its own slice holds the summed
+                # gradient, and only that slice is read by its update (stages._optimizer_view).
+                "grad_slice_only": int(key) >= formulas.SHARDED_FROM["master"]
+                and int(key) < formulas.SHARDED_FROM["grads"],
             }
             for key in blocks
         }
@@ -602,6 +612,11 @@ def page_numbers(run: dict) -> dict:
         },
         "first_fit": first_fit,
         "first_headroom": first_headroom,
+        # True where the first size that fits fills the card to the byte, leaving nothing for
+        # activations — so the page may say so only when it is so.
+        "exact_fill": {
+            k: first_fit[k] is not None and first_headroom[k] != first_fit[k] for k in first_fit
+        },
     }
 
     return {
@@ -633,6 +648,62 @@ def page_numbers(run: dict) -> dict:
         },
         "formula": formula,
         "key_bias_drifted_further": key_bias_drifted_further(run["equivalence"]),
+        # One run, one seed, one bare `>`: the ratio is reported so the page can say how far apart
+        # the two maxima are, and that no noise floor was measured for it.
+        "key_bias_ratio": (
+            run["equivalence"]["fp32_weights_max_abs_key_bias"]
+            / run["equivalence"]["fp32_weights_max_abs_except_key_bias"]
+            if run["equivalence"]["fp32_weights_max_abs_except_key_bias"]
+            else None
+        ),
+        "reference_differs": run["equivalence"]["fp32_weights_max_abs_except_key_bias"] > 0
+        or run["equivalence"]["fp32_weights_max_abs_key_bias"] > 0,
+        "all_memory_equal": all(
+            block["memory"]["measured"][c] == block["memory"]["predicted"][c]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+            for c in categories
+        ),
+        "all_comm_equal": all(
+            block["communication"]["per_step_sent"]["total"]
+            == block["communication"]["predicted"]["total"]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+        ),
+        "all_ranks_identical": all(
+            block["memory"]["ranks_identical"] and block["communication"]["ranks_identical"]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+        )
+        and all(
+            block["compute"]["flops_ranks_identical"]
+            and block["compute"]["optimizer_elements_ranks_identical"]
+            for block in stages.values()
+        ),
+        "all_identical_to_dp": all(d == 0 for d in differences),
+        "zero12_send_same_as_dp": all(
+            stages[k]["communication"]["per_step_sent"]["total"]
+            == stages["0"]["communication"]["per_step_sent"]["total"]
+            for k in ("1", "2")
+        ),
+        "padded_world_sizes": sorted(
+            {r["world_size"] for r in run["scaling"]["rows"] if r["measured"] != r["measured_real"]}
+        ),
+        # Whether a stage's two kinds of transient buffer were held at the same moment: its peak
+        # above the persistent total is their sum if so, the larger alone if not.
+        "transient_together": {
+            mode: {
+                key: min(block["memory"]["transient_peak"].values()) > 0
+                and block["memory"]["peak_total"] - block["memory"]["measured"]["total"]
+                == sum(block["memory"]["transient_peak"].values())
+                for key, block in blocks.items()
+            }
+            for mode, blocks in run["modes"].items()
+        },
+        "passes_per_unit": {
+            key: block["communication"]["collectives_per_step"] / len(run["model"]["units"])
+            for key, block in stages.items()
+        },
         "ring": ring,
         "slider": slider,
     }

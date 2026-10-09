@@ -947,6 +947,10 @@ export const M = {
     }
   },
   "page": {
+    "all_comm_equal": true,
+    "all_identical_to_dp": true,
+    "all_memory_equal": true,
+    "all_ranks_identical": true,
     "comm_multiple": {
       "bf16-mixed": {
         "0": 2.0,
@@ -965,7 +969,16 @@ export const M = {
     "formula": {
       "bf16-mixed": {
         "0": {
+          "at_world": {
+            "adam_m": 4.0,
+            "adam_v": 4.0,
+            "grads": 2.0,
+            "master": 4.0,
+            "params": 2.0,
+            "total": 16.0
+          },
           "floor": 16.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": false,
             "adam_v": false,
@@ -975,7 +988,16 @@ export const M = {
           }
         },
         "1": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 2.0,
+            "master": 0.125,
+            "params": 2.0,
+            "total": 4.375
+          },
           "floor": 4.0,
+          "grad_slice_only": true,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -985,7 +1007,16 @@ export const M = {
           }
         },
         "2": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 0.0625,
+            "master": 0.125,
+            "params": 2.0,
+            "total": 2.4375
+          },
           "floor": 2.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -995,7 +1026,16 @@ export const M = {
           }
         },
         "3": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 0.0625,
+            "master": 0.125,
+            "params": 0.0625,
+            "total": 0.5
+          },
           "floor": 0.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -1007,7 +1047,16 @@ export const M = {
       },
       "fp32": {
         "0": {
+          "at_world": {
+            "adam_m": 4.0,
+            "adam_v": 4.0,
+            "grads": 4.0,
+            "master": 0.0,
+            "params": 4.0,
+            "total": 16.0
+          },
           "floor": 16.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": false,
             "adam_v": false,
@@ -1017,7 +1066,16 @@ export const M = {
           }
         },
         "1": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 4.0,
+            "master": 0.0,
+            "params": 4.0,
+            "total": 8.25
+          },
           "floor": 8.0,
+          "grad_slice_only": true,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -1027,7 +1085,16 @@ export const M = {
           }
         },
         "2": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 0.125,
+            "master": 0.0,
+            "params": 4.0,
+            "total": 4.375
+          },
           "floor": 4.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -1037,7 +1104,16 @@ export const M = {
           }
         },
         "3": {
+          "at_world": {
+            "adam_m": 0.125,
+            "adam_v": 0.125,
+            "grads": 0.125,
+            "master": 0.0,
+            "params": 0.125,
+            "total": 0.5
+          },
           "floor": 0.0,
+          "grad_slice_only": false,
           "sharded": {
             "adam_m": true,
             "adam_v": true,
@@ -1063,6 +1139,7 @@ export const M = {
       }
     },
     "key_bias_drifted_further": true,
+    "key_bias_ratio": 3.396836349449442,
     "max_abs_vs_dp": 0.0,
     "memory_equal": {
       "bf16-mixed": {
@@ -1140,6 +1217,15 @@ export const M = {
       "2": 32.0,
       "3": 32.0
     },
+    "padded_world_sizes": [
+      3
+    ],
+    "passes_per_unit": {
+      "0": 2.0,
+      "1": 2.0,
+      "2": 2.0,
+      "3": 3.0
+    },
     "per_weight": {
       "bf16-mixed": {
         "0": {
@@ -1210,6 +1296,7 @@ export const M = {
         }
       }
     },
+    "reference_differs": true,
     "ring": {
       "chunk_bytes": 333280,
       "padding": 0,
@@ -1220,6 +1307,12 @@ export const M = {
     },
     "scaling_all_match": true,
     "slider": {
+      "exact_fill": {
+        "0": false,
+        "1": false,
+        "2": true,
+        "3": true
+      },
       "first_fit": {
         "0": null,
         "1": null,
@@ -1857,6 +1950,21 @@ export const M = {
         "3": 1284224
       }
     },
+    "transient_together": {
+      "bf16-mixed": {
+        "0": false,
+        "1": false,
+        "2": false,
+        "3": false
+      },
+      "fp32": {
+        "0": false,
+        "1": false,
+        "2": false,
+        "3": false
+      }
+    },
+    "zero12_send_same_as_dp": true,
     "zero3_sent_over_dp": 1.5,
     "zero_runs_compared": 6
   },

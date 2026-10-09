@@ -40,6 +40,7 @@ login-walled preview does not satisfy it. Both submission and merging are PK's.
 | O2 | Register the torch-gated test files in `.github/workflows/ci.yml` and `tests/test_ci_shards_cover_everything.py::OPTIONAL_DEPENDENCY_GATES` | **done** | By the lead, in the same pull request. |
 | O3 | Root README row summary | **done** | By the lead, in the same pull request. |
 | O4 | A browser page | **done** | `web/`, built after the exercise merged; see the change log. Production promotion is PK's gate. |
+| O5 | `tests/test_shared_layer.py` counts a vendored file as "referenced" when the page merely **names** it — a comment is enough | **open — PK** | This page vendors `_shared/explainer.css` (required by `tests/test_vendored_shared_layer.py`) without linking it, as exercise 07 does; the comment in `web/index.html` is what clears the orphan gate. The two repo-wide guards disagree about an unlinked vendored file, and resolving that is a repo-wide change, out of this page's scope. |
 
 ---
 
@@ -87,6 +88,20 @@ it had survived, and the cause was a stale `.pyc`, not a weak test.
   rounding, not to the bit.
 
 ## Change log
+
+### 2026-10-10 — the page, after review
+
+- **Every verdict word on the page is now decided by the data.** "Never fits", "fills the card
+  exactly", "equal", "identical", "held" and the key-bias exception each read a flag that
+  `page_numbers()` computes; a browser test renders the page from a reversed bundle and checks the
+  words flip. The first version typed several of them, including the opening failure tile's class.
+- **ZeRO-1's gradient is drawn as what the simulator does**: the whole buffer is kept, but only the
+  device's own slice is summed and read. The page now says the ZeRO-1/2 all-gather carries updated
+  weights, not gradients.
+- The stages figure sets the formula beside the ledger, so its stated refutation can happen; the
+  ladder no longer names its answer before "Reveal"; drawings wider than a phone say so.
+- Formatters return a dash for a missing value rather than throwing or printing `null`; a plain
+  test drives them, and the ring's port of `collectives.py`, under node.
 
 ### 2026-10-09 — the page
 

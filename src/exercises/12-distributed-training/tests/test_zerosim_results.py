@@ -388,3 +388,133 @@ def test_the_index_shell_carries_no_number() -> None:
     for name, text in (("title", title), ("lede", lede), ("description", description)):
         assert not re.search(r"\d", text), f"the {name} carries a digit: {text!r}"
         assert not re.search(words, text, re.I), f"the {name} carries a count word: {text!r}"
+
+
+# ------------------------------------------------------------- the page's own verdicts and helpers
+
+
+def _reladdered(run: dict, params: float) -> dict:
+    """The bundle with the ladder re-sized to `params` weights, its rows rebuilt by `formulas`."""
+    import copy
+
+    out = copy.deepcopy(run)
+    ladder = out["ladder"]
+    ladder["params"] = params
+    rows = formulas.ladder(
+        int(params),
+        tuple(out["config"]["ladder_world_sizes"]),
+        out["main_mode"],
+        ladder["card_bytes"],
+    )
+    ladder["rows"] = rows
+    return out
+
+
+def test_the_first_sizes_that_fit_are_the_formulas() -> None:
+    """21, 6 and 22 checked independently: by exact fractions here, not by `page_numbers`."""
+    run = _run()
+    slider = render_results.page_numbers(run)["slider"]
+    ladder = run["ladder"]
+    for stage in range(4):
+        floor = formulas.floor_bytes_per_weight(stage, run["main_mode"])
+        sharded = formulas.bytes_per_weight(stage, 1, run["main_mode"])["total"] - floor
+        need = [
+            n
+            for n in slider["world_sizes"]
+            if (floor + sharded / n) * ladder["params"] <= ladder["card_bytes"]
+        ]
+        room = [
+            n
+            for n in slider["world_sizes"]
+            if (floor + sharded / n) * ladder["params"] < ladder["card_bytes"]
+        ]
+        assert slider["first_fit"][str(stage)] == (need[0] if need else None), stage
+        assert slider["first_headroom"][str(stage)] == (room[0] if room else None), stage
+        assert slider["never_fits"][str(stage)] == (floor * ladder["params"] > ladder["card_bytes"])
+    assert (slider["first_fit"]["2"], slider["first_fit"]["3"]) == (21, 6)
+    assert slider["first_headroom"]["2"] == 22
+
+
+def test_a_smaller_model_flips_zero_1_to_fitting() -> None:
+    """At 10 billion weights ZeRO-1's floor is under the card, so the page must stop saying it
+    never fits — the tile's words and class both read this flag."""
+    slider = render_results.page_numbers(_reladdered(_run(), 10e9))["slider"]
+    assert slider["never_fits"]["1"] is False and slider["first_fit"]["1"] is not None
+
+
+def test_a_model_whose_first_fit_has_room_says_so() -> None:
+    """At 31 billion weights no first size fills the card exactly, so "exactly" must not appear."""
+    slider = render_results.page_numbers(_reladdered(_run(), 31e9))["slider"]
+    assert slider["exact_fill"]["2"] is False and slider["exact_fill"]["3"] is False
+    assert slider["first_fit"]["2"] == slider["first_headroom"]["2"]
+
+
+def _node(script: str) -> str:
+    import shutil
+    import subprocess
+
+    node = shutil.which("node")
+    assert node, "node is required: CI's plain job installs it for the JS syntax gate"
+    done = subprocess.run(
+        [node, "--input-type=module", "-e", script],
+        cwd=WEB,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert done.returncode == 0, done.stderr
+    return done.stdout
+
+
+def test_the_page_formatters_never_throw_and_never_print_null() -> None:
+    """A formatter that throws on `null` aborts the page half way; one that prints it lies."""
+    out = json.loads(
+        _node(
+            "import {FORMAT as F} from './chapters.js';"
+            "console.log(JSON.stringify({"
+            " a: F.bpw(null), b: F.gib(undefined), c: F.sci(null), d: F.devices(null),"
+            " e: F.sci(0), f: F.sci(6.0051e-6), g: F.sci(1234567), h: F.sci(0.0269),"
+            " i: F.bpw(4.375), j: F.devices(21), k: F.usec(NaN), l: F.listing(['a','b','c'])}))"
+        )
+    )
+    assert out["a"] == out["b"] == out["c"] == out["k"] == "—"
+    assert out["d"] == "no number of devices" and out["j"] == "21 devices"
+    assert out["e"] == "0" and out["h"] == "0.0269" and out["i"] == "4.375"
+    assert out["f"] == "6.01 × 10<sup>−6</sup>"
+    assert out["g"] == "1.23 × 10<sup>6</sup>", "a large value must not print a stray tag"
+    assert out["l"] == "a, b and c"
+
+
+def test_the_ring_figure_ends_where_the_simulator_says_it_does() -> None:
+    """The page's ring is a port of `collectives.py`'s loops. Checked against the property that
+    module documents: after N − 1 steps rank r holds the complete sum of chunk r, after 2(N − 1)
+    every rank holds every chunk, and every step sends exactly one chunk per device."""
+    out = json.loads(
+        _node(
+            "import {ringStateFor} from './chapters.js';"
+            "const res = [];"
+            "for (const n of [2, 3, 4, 5, 8]) {"
+            " const half = ringStateFor(n, n - 1, 10);"
+            " const end = ringStateFor(n, 2 * (n - 1), 10);"
+            " const steps = [...Array(2 * (n - 1)).keys()].map((t) => ringStateFor(n, t + 1, 10));"
+            " res.push({n, own: half.sets.map((row, r) => row[r].length),"
+            "  done: end.done.flat().every(Boolean), sent: end.sentBytes,"
+            "  per: steps.map((s) => new Set(s.sends.map((x) => x.src)).size),"
+            "  chunks: steps.map((s) => s.sends.map((x) => [x.src, x.chunk]))}); }"
+            "console.log(JSON.stringify(res));"
+        )
+    )
+    for case in out:
+        n = case["n"]
+        assert case["own"] == [n] * n, case
+        assert case["done"], case
+        assert case["sent"] == 2 * (n - 1) * 10, case
+        assert case["per"] == [n] * (2 * (n - 1)), case
+        # Which chunk each arrow carries, from the indices in collectives.py: in the
+        # reduce-scatter's step s rank r forwards its partial sum of chunk r − s − 1; in the
+        # all-gather's step s it forwards chunk r − s, the one it most recently completed.
+        for t, sends in enumerate(case["chunks"], start=1):
+            for src, chunk in sends:
+                s = t - 1 if t <= n - 1 else t - n
+                want = (src - s - 1) % n if t <= n - 1 else (src - s) % n
+                assert chunk == want, (n, t, src, chunk, want)

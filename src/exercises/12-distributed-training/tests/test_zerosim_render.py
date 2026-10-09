@@ -15,6 +15,8 @@ never touches a control still sees every figure's conclusion.
 
 import functools
 import http.server
+import importlib.util
+import json
 import os
 import socketserver
 import subprocess
@@ -29,6 +31,7 @@ from playwright.sync_api import sync_playwright  # noqa: E402
 REPO = Path(__file__).resolve().parents[4]
 PUBLIC = REPO / "public"
 SLUG = "12-distributed-training"
+EXERCISE = Path(__file__).resolve().parents[1]
 
 pytestmark = pytest.mark.integration
 
@@ -64,13 +67,19 @@ def site():
         httpd.shutdown()
 
 
-def _open(site, **context):
+def _open(site, data_js: str | None = None, **context):
+    """Open the page; with `data_js`, serve that in place of the tracked `data.js`."""
     browser, url = site
     ctx = browser.new_context(viewport={"width": 1280, "height": 900}, **context)
     view = ctx.new_page()
     problems: list[str] = []
     view.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
     view.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
+    if data_js is not None:
+        view.route(
+            f"**/{SLUG}/data.js*",
+            lambda route: route.fulfill(body=data_js, content_type="application/javascript"),
+        )
     view.goto(url)
     view.wait_for_selector("section#reproduce", timeout=10_000)
     view.console_problems = problems
@@ -310,11 +319,104 @@ def test_every_glossary_entry_carries_a_number_from_the_run(page):
     assert not numberless, f"these glossary entries carry no figure from the run: {numberless}"
 
 
+def _page_data() -> dict:
+    """The tracked `data.js` as a dict — what the page under test was built from."""
+    text = (EXERCISE / "web" / "data.js").read_text(encoding="utf-8")
+    return json.loads(
+        text[text.index("export const M = ") + len("export const M = ") :].rstrip()[:-1]
+    )
+
+
 def test_the_opening_tiles_lead_with_a_failure(page):
-    """A page that shows only its wins has not earned them: one tile must be a failure."""
+    """A page that shows only its wins has not earned them: one tile must be a failure — and the
+    failure tile's colour must come from the data, not from a literal class in the source."""
     marks = page.eval_on_selector_all(".tiles .tile", "els => els.map(e => e.className)")
     assert 3 <= len(marks) <= 4, marks
     assert sum("bad" in m for m in marks) >= 1, f"no failure among the opening tiles: {marks}"
+    never = _page_data()["page"]["slider"]["never_fits"]["1"]
+    assert ("bad" in marks[-1]) == never, f"the ZeRO-1 tile is {marks[-1]!r}, never_fits={never}"
+
+
+def _reversed_data_js() -> str:
+    """The real bundle with the three verdicts the page states turned the other way round.
+
+    A 13-billion-weight ladder puts ZeRO-1's floor under the card and makes no first size fill it
+    exactly; halving the key-bias difference stops it drifting further than the rest. Built by the
+    real renderer, so `page_numbers()` decides every flag exactly as it does for the tracked page.
+    """
+    import copy
+
+    from zerosim import formulas
+
+    spec = importlib.util.spec_from_file_location(
+        "zerosim_render_for_flip", EXERCISE / "tools" / "render_results.py"
+    )
+    renderer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(renderer)
+    run = copy.deepcopy(
+        json.loads((EXERCISE / "results" / "zero.json").read_text(encoding="utf-8"))
+    )
+    run["ladder"]["params"] = 13_000_000_000
+    run["ladder"]["rows"] = formulas.ladder(
+        run["ladder"]["params"],
+        tuple(run["config"]["ladder_world_sizes"]),
+        run["main_mode"],
+        run["ladder"]["card_bytes"],
+    )
+    eq = run["equivalence"]
+    # Both to zero: the key bias no longer drifts further, and the single device no longer differs.
+    eq["fp32_weights_max_abs_key_bias"] = 0.0
+    eq["fp32_weights_max_abs_except_key_bias"] = 0.0
+    return renderer.render_page_data(run)
+
+
+def test_the_words_flip_when_the_data_does(site):
+    """Every verdict the review found typed — "never fits", "fills the card exactly", the key bias
+    "drifting further" — must change when the data changes. Rendered twice: the tracked data, then
+    a reversed copy. A sentence that reads the same both times was typed, whatever it looks like."""
+
+    def read(view) -> dict:
+        view.click(".predict button")
+        view.click(".adv-cell.ref")
+        return view.evaluate(
+            """() => ({
+                 text: document.querySelector('main').textContent,
+                 tile: document.querySelector('.tiles .tile:last-child').className,
+                 tileText: document.querySelector('.tiles .tile:last-child').textContent,
+                 verdict: document.querySelector('.predict-v').textContent,
+                 expected: document.querySelector('section[data-role="expected"]').textContent,
+                 ref: document.querySelector('.adv-cell.ref').className,
+               })"""
+        )
+
+    ctx, real = _open(site)
+    try:
+        before = read(real)
+    finally:
+        ctx.close()
+    ctx, flipped = _open(site, data_js=_reversed_data_js())
+    try:
+        after = read(flipped)
+        assert flipped.console_problems == []
+    finally:
+        ctx.close()
+
+    assert "never fits" in before["tileText"] and "bad" in before["tile"]
+    assert "never fits" not in after["tileText"] and "bad" not in after["tile"]
+    assert "fits from" in after["tileText"]
+
+    assert "fill the card exactly" in before["text"] and "exactly" in before["verdict"]
+    assert (
+        "fill the card exactly" not in after["text"]
+        and "fills the card exactly" not in after["text"]
+    )
+    assert "exactly" not in after["verdict"]
+
+    assert "drift further" not in before["text"]
+    assert "did not drift further" in after["text"]
+    assert "held, except" in before["expected"] and "held, except" not in after["expected"]
+
+    assert "diff" in before["ref"] and "diff" not in after["ref"] and "same" in after["ref"]
 
 
 def test_the_limits_are_in_the_open(page):
@@ -458,8 +560,42 @@ def test_the_adversary_reveals_what_it_is_asked(page):
 
 
 def test_the_adversary_end_state_is_painted_under_reduced_motion(still):
-    """Every run revealed: the ZeRO runs identical, the single device the only red one."""
+    """Every run revealed, and each one's red or green decided by the data: the ZeRO runs by their
+    own difference from data parallelism, the single device by whether it differs at all."""
+    page_data = _page_data()["page"]
+    expected_diff = sum(
+        not same
+        for mode in page_data["identical_to_dp"].values()
+        for k, same in mode.items()
+        if k != "0"
+    ) + int(page_data["reference_differs"])
     same = still.locator(".adv-cell.same").count()
     diff = still.locator(".adv-cell.diff").count()
-    assert same >= 1 and diff == 1, (same, diff)
+    assert diff == expected_diff and same >= 1, (same, diff, expected_diff)
     assert still.locator(".adv-cell:not(.same):not(.diff)").count() == 0
+
+
+def test_a_drawing_that_scrolls_says_so_on_a_phone(page):
+    """At 390 and 320 the drawings are wider than the screen by design — they keep a legible label
+    size by scrolling inside their own box. That is only honest if the reader is told: every box
+    that overflows shows its cue, no box that fits shows one, and no figure itself overflows."""
+    for width in (390, 320):
+        page.set_viewport_size({"width": width, "height": 900})
+        page.wait_for_timeout(250)
+        state = page.evaluate(
+            """() => ({
+                 boxes: [...document.querySelectorAll('.figscroll')].map((b) => ({
+                   over: b.scrollWidth > b.clientWidth + 1,
+                   cue: !b.parentElement.querySelector('.scrollcue').hidden,
+                 })),
+                 figures: [...document.querySelectorAll('main figure')]
+                   .filter((f) => f.scrollWidth > f.clientWidth + 1).length,
+               })"""
+        )
+        assert state["boxes"], "no drawing scrollers found; the selector has gone stale"
+        wrong = [b for b in state["boxes"] if b["over"] != b["cue"]]
+        assert not wrong, f"at {width}px a scroll cue disagrees with its box: {wrong}"
+        assert any(b["over"] for b in state["boxes"]), f"nothing overflows at {width}px?"
+        assert state["figures"] == 0, f"at {width}px a figure itself overflows"
+    page.set_viewport_size({"width": 1280, "height": 900})
+    page.wait_for_timeout(250)
