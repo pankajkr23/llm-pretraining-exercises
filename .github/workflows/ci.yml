@@ -276,6 +276,12 @@ jobs:
             src/exercises/10-training-loop/tests/test_trainloop_provenance.py \
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py \
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_adamw.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_collectives.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_model.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_precision.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_producer.py \
+            src/exercises/12-distributed-training/tests/test_zerosim_stages.py \
             src/exercises/13-reversibility/tests/test_reversible_stack.py \
             src/exercises/13-reversibility/tests/test_reversible_pipeline.py \
             src/exercises/14-moe/tests/test_moe_layer.py \
