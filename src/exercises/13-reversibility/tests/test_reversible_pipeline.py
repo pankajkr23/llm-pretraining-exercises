@@ -228,3 +228,20 @@ def test_with_no_eligible_rule_the_trials_refuse_rather_than_choose(tmp_path) ->
     strict = dataclasses.replace(SMOKE, gradient_tolerance=0.0)
     with pytest.raises(RuntimeError, match="rebuilt its gradients"):
         experiments.trials(strict, open_corpus(root), "cpu")
+
+
+def test_every_bundle_records_the_corpus_it_actually_read(produced) -> None:
+    """The digest is of the synthetic corpus the fixture built, not of the default location.
+
+    The tool once called `provenance` without the corpus root, so every bundle recorded whatever sat
+    at `data/fineweb-edu/` — the real corpus on a machine that has it, and an error in CI.
+    """
+    from reversible.runs import corpus_digest
+
+    out, _ = produced
+    root = next(p for p in out.parent.glob("corpus*") if (p / "manifest.json").is_file())
+    expected = corpus_digest(root)
+    for path in sorted(out.glob("*.json")):
+        assert (
+            json.loads(path.read_text(encoding="utf-8"))["provenance"]["corpus_digest"] == expected
+        ), path.name

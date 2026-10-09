@@ -74,6 +74,16 @@ and 81/496 after it: the measurement's own leaked graphs had been taking memory 
 
 ## Change log
 
+### 2026-10-09 — CI found the tool recording the wrong corpus
+
+CI's torch job failed ten pipeline tests with `data/fineweb-edu/val.bin` missing. The tool called
+`provenance` without the corpus it had opened, so every bundle's corpus digest described the
+default location: on this machine the real corpus, even for a SMOKE run on a synthetic one, and in
+CI, which has none, an error. The published bundles were unaffected — a FULL run reads the default
+location, so the digest they carry is the right one — and the fix is in the tool, so their code
+digest still holds. A test now requires every bundle's corpus digest to be that of the corpus the
+run read, watched red with the fix reverted on a machine that has the real corpus.
+
 ### 2026-10-09 — attempt 4 found a memory leak in the measurement itself
 
 The fourth attempt ran with the machine calm — thermal state 1, memory pressure normal, no swap and

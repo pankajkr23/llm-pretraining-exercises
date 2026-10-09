@@ -56,7 +56,9 @@ def _bundle(
             "longest_run_epochs": corpus.epochs(longest),
         },
         "result": result,
-        "provenance": provenance({"task": name, "preset": preset}, device),
+        # The corpus this run read, not the default location: a SMOKE run on a synthetic corpus once
+        # recorded the real corpus's digest, and in CI, where there is none, it could not run.
+        "provenance": provenance({"task": name, "preset": preset}, device, corpus.root),
     }
 
 
