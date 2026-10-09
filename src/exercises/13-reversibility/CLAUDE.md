@@ -21,8 +21,17 @@ reference, rebuild error) · `model.py` (`ChainedGPT`, exercise 11's model chain
   memory-saving backward pass to plain autograd through the same recurrence, for every rule, in
   float64. If it fails, every memory and speed number is a number about wrong gradients.
 - **float64 agreement is not float32 agreement.** The blend's inversion divides by `a` at every
-  layer, so its float32 gradients at depth 12 are a few percent off stored ones (D10). The run
-  records `rebuild_agreement`; read it before trusting a run that chose the blend.
+  layer, so its float32 gradients at depth 12 are a few percent off stored ones (D10). The trials
+  measure `rebuild_agreement` on the run's own device and make any candidate above
+  `gradient_tolerance` (1%) ineligible; a test watches the gate go red when removed.
+- **Run a SMOKE preset on the GPU before every full run.** All tests run on the CPU; the first full
+  run died three minutes in on float64, which MPS lacks — a two-minute GPU smoke would have caught it.
+- **Never train at the exact edge the memory search found.** It passed batch 447 and the run there
+  ran out of memory: the probe now runs two real steps (clipping included) and the run uses
+  `max_batch_run_fraction` of what was found.
+- **Speed is only a finding outside the machine's own spread.** The same baseline model ran 1.4×
+  apart across its trials under a weak charger; `render_results.throughput_floor` measures that
+  spread from the trials and the speed verdict refuses to rank inside it.
 - **Choose on one half of the validation split, report on the other** (`experiments.validation_half`).
 - **`saved_bytes` cannot see a tensor kept on `ctx` or allocated during backward.** The tests
   cross-check it with a liveness instrument; the reversible backward's re-run block is measured
