@@ -5,7 +5,16 @@ description = "Exercise 12 — Distributed training: ZeRO on 32 simulated GPUs"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
+    "exercise-09-loss-functions-output-heads",
 ]
+
+[project.optional-dependencies]
+train = [
+    "torch>=2.6",
+]
+
+[tool.uv.sources]
+exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
