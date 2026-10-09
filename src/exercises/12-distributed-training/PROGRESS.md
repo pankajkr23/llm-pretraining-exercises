@@ -43,6 +43,49 @@ login-walled preview does not satisfy it. Both submission and merging are PK's.
 
 ---
 
+## The full record — what was tried, what held, what failed
+
+Figures are from `results/zero.json`; `RESULTS.md` is the authority and this is the history around
+it. Each failure below also became a rule in `CLAUDE.md`.
+
+### Ablations — each changes one thing
+
+| ablation | what changed | held fixed | outcome |
+| --- | --- | --- | --- |
+| The four stages | what each rank keeps: everything (DP), optimiser state sharded (1), plus gradients (2), plus weights (3) | model, data, world of 32, precision | at N = 32, 16 / 4.375 / 2.4375 / 0.5 bytes per weight, each equal to its formula; DP, ZeRO-1 and ZeRO-2 send 2·P·(N−1)/N per step, ZeRO-3 3·P·(N−1)/N |
+| World size | N = 1, 2, 3, 4, 8, 16, 32 | stage, model, one step | every stage equals its formula at every N; N = 3 included because it is the only size here where padding is non-zero |
+| Precision | bf16-mixed against fp32 | stage, model, data | both precisions, every stage, end on bit-identical weights to DP; bf16-mixed against an fp32 single device: loss within 5.4e-5 relative, total-update cosine 0.99986 |
+| Distributed against one device | 32 ranks against one device on the whole global batch with `torch.optim.AdamW` | fp32, data, steps | loss within 5.7e-8 relative; weights within 6.0e-6, except the 64 attention key-bias weights at 2.0e-5 — their true gradient is zero, so AdamW turns rounding into steps (D8) |
+
+### Guards watched failing
+
+Every guard was broken on purpose and seen to go red before it was trusted: **30** deliberate
+breaks in the build pass, **13** more in the audit-fix pass. Each original held in memory, restored in
+`finally`, its sha256 verified, under a fresh `PYTHONPYCACHEPREFIX` — one break first looked as if
+it had survived, and the cause was a stale `.pyc`, not a weak test.
+
+### Failures, in the order they happened
+
+1. **Fused optimiser kernels are not slicing-invariant on this CPU.** ZeRO-1 disagreed with DP by
+   about 1e-6 until AdamW was rebuilt from single-rounding operations (D7).
+2. **The key bias drifts against a single-device reference**, for a reason the test now asserts
+   rather than widening a tolerance (D8).
+3. **A twin probed the property after the event it was meant to observe** and failed for the wrong
+   reason; it now holds its reference from inside the all-gather.
+4. **An independent audit found four claims that only read as checked**: the ledger charged views,
+   not storage; the leak test could not fail; the bundle was checked only against itself; the README
+   overclaimed "every byte". All fixed, each with a break watched red (the audit-fixes entry below).
+5. **CI's coverage ledger was red** until the six torch-gated test files were registered in the
+   `train` job — they would otherwise have run nowhere.
+
+### What this exercise did not do
+
+- Run on real GPUs or a real network: devices and links are simulated in one process, so the time
+  column is a model (450 / 50 GB/s, no overlap), not a measurement.
+- Count activations or allocator overhead in memory.
+- Test any all-reduce other than a ring: with a tree all-reduce, DP and ZeRO would agree only to
+  rounding, not to the bit.
+
 ## Change log
 
 ### 2026-10-09 — audit fixes
