@@ -52,6 +52,22 @@ From the published run (commit `6b222e4`). `RESULTS.md` is the authority.
 
 ## Change log
 
+### 2026-10-10 — the page, after review
+
+- **The page typed its verdicts** while generating its numbers: "It does.", which model was ahead,
+  which router was kept, every tile's colour. They are chosen by `wording(M)` in `chapters.js` now,
+  and `test_moe_page_wording.py` feeds it a reversed run through Node and asserts the words flip —
+  watched red before the function existed.
+- **`RESULTS.md` said every figure was on the second half of the validation split**; the router
+  trial's two losses are on the first. Corrected in the renderer. **Known overclaim left in place:**
+  `experiments._windows`'s docstring says "everything published is measured on the second", which
+  has the same exception; changing it would change the package's code digest and so void the
+  published bundle's provenance.
+- A tie at the reported precision (step 200: both 3.1116) was counted as the converted model
+  trailing. Positions are now level when equal at the four decimals `RESULTS.md` prints.
+- The title no longer says the experts "drift apart": nothing here measures how far their weights
+  moved, only which experts the router chose.
+
 ### 2026-10-10 — the page
 
 - `web/` built on exercise 10's template: the conversion as a figure the reader can try to break,

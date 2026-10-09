@@ -34,6 +34,7 @@ LAYER0_TOLERANCE = (
     0.003  # rounding allowance when layer 0's own imbalance is held under every layer's
 )
 SIGNIFICANT = 5  # significant figures a page series keeps; scalars keep full precision
+VAL_DECIMALS = 4  # the precision RESULTS.md reports validation loss at; equal there is level
 
 
 def _val(trace: dict) -> list[tuple[int, float]]:
@@ -159,8 +160,8 @@ def render(results: Path = RESULTS) -> str:
         f"- **{rt['choice']}** is used for the continuation, by "
         f"{n['router_margin']:.4f}. One short run each "
         "and no seed spread measured, so this decides which router is used, not which is better. "
-        "It was chosen on the first half of the validation split; every figure on this page is "
-        "measured on the second half.",
+        "It was chosen on the first half of the validation split, and the two losses above are "
+        "measured there; every other figure here is measured on the second half.",
         "",
         f"## 3 · Training on after the conversion ({cont['n_experts']} experts, "
         f"top-{cont['top_k']}, {cont['router']})",
@@ -329,11 +330,28 @@ def page_data(bundle: dict, log_text: str) -> dict:
         for step in sorted(moe_val)
         if step in dense_val
     ]
-    gaps = [(p["step"], p["moe"] - p["dense"]) for p in val]
-    behind = [(s, g) for s, g in gaps if g > 0]
+
+    # Two losses equal at the precision RESULTS.md reports them are level, not one ahead: a gap of
+    # 0.0001 between numbers both printed as 3.1116 is not a lead anyone could read off the table.
+    def position(moe_v: float, dense_v: float) -> str:
+        if f"{moe_v:.{VAL_DECIMALS}f}" == f"{dense_v:.{VAL_DECIMALS}f}":
+            return "level"
+        return "ahead" if moe_v < dense_v else "behind"
+
+    for p in val:
+        p["position"] = position(p["moe"], p["dense"])
+    after = [p for p in val if p["step"] > 0]
+    behind = [(p["step"], p["moe"] - p["dense"]) for p in after if p["position"] == "behind"]
     ahead_from = next(
-        (s for i, (s, _) in enumerate(gaps) if s > 0 and all(g < 0 for _, g in gaps[i:])), None
+        (
+            p["step"]
+            for i, p in enumerate(after)
+            if all(q["position"] == "ahead" for q in after[i:])
+        ),
+        None,
     )
+    by_router = c["by_router"]
+    largest_router = max(by_router, key=lambda k: by_router[k]["largest_logit_difference"])
 
     # Balance at every step, over every layer.
     steps = sorted(int(k) for k in moe["balance"])
@@ -382,6 +400,10 @@ def page_data(bundle: dict, log_text: str) -> dict:
             "by_router": c["by_router"],
             "tolerance": CONTINUITY_TOLERANCE,
             "holds": n["continuity_holds"],
+            # Which router the largest difference above came from, and the one the run used.
+            "largest_router": largest_router,
+            "used_router": cont["router"],
+            "used_router_difference": by_router[cont["router"]]["largest_logit_difference"],
         },
         "params": {
             "dense": dense_p,
@@ -430,6 +452,9 @@ def page_data(bundle: dict, log_text: str) -> dict:
             # `_rise_note`'s condition: the control rising too makes the rise the schedule's.
             "both_rise": n["moe_peak"] > n["start"] and n["dense_peak"] > n["start"],
             "val": val,
+            "val_decimals": VAL_DECIMALS,
+            "end_position": position(n["moe_end"], n["dense_end"]),
+            "level_steps": [p["step"] for p in after if p["position"] == "level"],
             "behind_steps": [s for s, _ in behind],
             "most_behind": max((g for _, g in behind), default=0.0),
             "most_behind_step": max(behind, key=lambda p: p[1])[0] if behind else None,
@@ -451,6 +476,9 @@ def page_data(bundle: dict, log_text: str) -> dict:
         },
         "balance": {
             "violation": [_sig(v) for v in violation],
+            "first_violation": violation[0],
+            "peak_violation": max(violation),
+            "fell": n["end_violation"] < max(violation),
             "dead": dead,
             "ceiling": ceiling,
             "even_share": top_k / n_experts,
@@ -468,6 +496,7 @@ def page_data(bundle: dict, log_text: str) -> dict:
         },
         "layer0": loads0,
         "layer0_min_load": min(min(row["loads"]) for row in loads0),
+        "layer0_max_load": max(max(row["loads"]) for row in loads0),
         "corpus": bundle["corpus"],
         "dense_origin": r["dense_origin"],
         "device": bundle["device"],
@@ -479,8 +508,9 @@ def page_data(bundle: dict, log_text: str) -> dict:
 def render_page_data(results: Path = RESULTS, log: Path = LOG) -> str:
     """Generate `web/data.js` — every number the page draws, read from the bundle and its log.
 
-    **The page holds no number of its own.** `chapters.js` reads `M.*` and types nothing, so a
-    re-run changes the page by changing this file and nothing else.
+    **The page holds no number of its own.** `chapters.js` reads `M.*` and types nothing, and
+    every verdict it states — which model is ahead, whether the start was exact, which router was
+    kept — is chosen from these fields, so a re-run changes the page by changing this file alone.
     """
     bundle = json.loads((results / "upcycle.json").read_text(encoding="utf-8"))
     data = page_data(bundle, log.read_text(encoding="utf-8"))

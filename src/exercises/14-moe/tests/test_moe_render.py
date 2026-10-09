@@ -223,13 +223,48 @@ def test_every_number_on_the_page_came_from_the_run(page):
     text = page.inner_text("main")
     for poison in ("undefined", "NaN", "[object Object]", "null"):
         assert poison not in text, f"the page rendered {poison!r} — a figure came from nowhere"
+    #: A missing step formats as 0 through `int(null)`, so "after step 0" is the same defect in a
+    #: form that reads as a fact. Real steps here start at 1; the start of training is "start".
+    #: "step 0." ending a sentence is the defect; "bias step 0.001" is a step size, not a step.
+    zero = re.findall(r".{0,30}\bstep 0(?!\d|\.\d).{0,20}", text)
+    assert not zero, f"a missing step was printed as step 0: {zero}"
+
+
+#: Markup that means a formatting step was skipped: a source token printed instead of applied.
+MARKUP_LEAKS = ("[[", "**", "`", "<b>", "</b>", "<i>", "&amp;", "&lt;", "&gt;")
+
+#: Every region the page writes text into. `textContent`, not `innerText`: the rail's sub-labels
+#: are hidden at desktop widths and shown on a phone, so `innerText` cannot see a leak in them.
+#: Taken from exercise 13's guard, which found that by planting one there.
+PAGE_TEXT_JS = """() => ['.wrap > .eyebrow', 'h1', '.lede', 'main', '#rail', '#foot']
+  .flatMap((s) => [...document.querySelectorAll(s)])
+  .map((e) => e.textContent)
+  .join(' ')"""
 
 
 def test_no_markup_reaches_the_reader_as_literal_text(page):
     """Markdown or escaped HTML that leaks through `innerHTML` shows as its own characters."""
-    text = page.inner_text("main")
-    for bad in ("[[", "**", "`", "<b>", "</b>", "<i>", "&amp;", "&lt;"):
-        assert bad not in text, f"{bad!r} is rendered as literal text"
+    text = page.evaluate(PAGE_TEXT_JS)
+    assert len(text) > 10_000, "the page text came back nearly empty; the selectors have gone stale"
+    leaked = [m for m in MARKUP_LEAKS if m in text]
+    assert not leaked, f"the rendered page shows raw markup: {leaked}"
+
+
+def test_the_markup_guard_can_fail(page):
+    """Its twin: a planted escaped `<b>` and a literal `**`, hidden in the rail, are both caught."""
+    planted = page.evaluate(
+        """(js) => {
+             const p = document.createElement('span');
+             p.textContent = 'a <b>planted</b> **leak**';
+             p.style.display = 'none';
+             document.querySelector('#rail').append(p);
+             const text = (0, eval)(js)();
+             p.remove();
+             return text;
+           }""",
+        PAGE_TEXT_JS,
+    )
+    assert [m for m in MARKUP_LEAKS if m in planted] == ["**", "<b>", "</b>"]
 
 
 def test_every_glossary_entry_carries_a_number_from_the_run(page):
@@ -270,6 +305,7 @@ def test_the_conversion_figure_changes_what_it_draws(page):
     """Rescaling must change the converted output; a wrong selection must be refused, not drawn."""
     wrap = "#fig-conversion .dx"
     out = "#fig-conversion rect.dx-out.conv"
+    assert _state(page, wrap) == "same", "the figure must open on the state the model runs"
     page.click("#fig-conversion button:has-text('used as scored')")
     scored = float(page.get_attribute(out, "width"))
     assert _state(page, wrap) == "different"
@@ -307,8 +343,8 @@ def test_the_balance_scrubber_changes_what_it_draws(page):
     page.wait_for_timeout(700)
     shown = page.eval_on_selector("#fig-balance line.acc-tick", "e => getComputedStyle(e).opacity")
     assert shown == "1"
-    answer = page.inner_text("#fig-balance .acc-answer")
-    assert str(data["balance"]["worst_dead"]) in answer, answer
+    most = page.inner_text("#fig-balance .acc-answer b.acc-most")
+    assert most == str(data["balance"]["worst_dead"]), most
 
 
 def test_the_budget_slider_changes_what_it_draws(page):

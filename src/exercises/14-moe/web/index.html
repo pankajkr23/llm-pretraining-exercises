@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>One layer, copied into experts that then drift apart</title>
+    <title>One layer, copied into experts the router learns to share</title>
     <meta
       name="description"
-      content="A trained dense model becomes a mixture of experts without changing a single output, then trains on beside an unconverted control on the same text — with the router's balance, the parameters each token pays for, and a speed figure that belongs to a reference implementation."
+      content="A trained dense model becomes a mixture of experts with its outputs unchanged to rounding, then trains on beside an unconverted control on the same text — with the router's balance, the parameters each token pays for, and a speed figure that belongs to a reference implementation."
     />
     <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
     <link
@@ -48,12 +48,13 @@
         </div>
       </div>
       <p class="eyebrow">14 · Mixture of experts</p>
-      <h1>One layer, copied into experts that then drift apart</h1>
+      <h1>One layer, copied into experts the router learns to share</h1>
       <p class="lede">
-        A trained model is turned into a mixture of experts by copying one of its layers many
-        times over. <b>At the moment of conversion nothing changes</b> — not a single output — and
-        from there the copies are trained apart. Beside it, the unconverted model trains on exactly
-        the same text, so what the experts bought can be told apart from what more training bought.
+        A trained model is turned into a mixture of experts by copying the feed-forward layer of
+        every block many times over. <b>At the moment of conversion its outputs are unchanged</b>,
+        to rounding — and from there a router learns to share the tokens among the copies. Beside
+        it, the unconverted model trains on exactly the same text, so what the experts bought can be
+        told apart from what more training bought.
       </p>
       <p class="lede-actions">
         <a class="jump" href="#results">Skip to what happened <span aria-hidden="true">→</span></a>

@@ -175,9 +175,132 @@ function scroller(node) {
 const reduced = () =>
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* ============================================================== the verdicts
+ *
+ * **Every sentence that states a result is chosen here, from the data, and nowhere else.** The
+ * first version of this page generated its numbers and typed its verdicts — "It does.", "pulls ahead
+ * late", "Softmax kept over sigmoid", every tile's colour — so a re-run that came out the other way
+ * would have printed new numbers under the old conclusions. This function holds no DOM and no layout,
+ * which is what lets `tests/test_moe_page_wording.py` feed it a fabricated, reversed run through
+ * Node and assert that the words move with the numbers.
+ */
+export function wording(M) {
+  const c = M.continuity;
+  const b = M.balance;
+  const cont = M.continuation;
+  const rt = M.router_trial;
+  const exact = c.holds;
+  const pos = cont.end_position; // 'ahead' | 'level' | 'behind', at the precision RESULTS.md reports
+  const trailed = cont.behind_steps.length > 0;
+  const allUsed = b.end_dead === 0;
+  const settled = b.end_violation < 1; // the busiest expert anywhere under twice an even share
+  const slower = cont.slowdown > 1;
+  const other = Object.keys(rt.final_val).find((name) => name !== rt.choice);
+  const cap = (w) => w[0].toUpperCase() + w.slice(1);
+  const idleTail =
+    b.worst_dead === 0
+      ? 'no expert was ever idle'
+      : allUsed
+        ? `none after step ${int(b.last_idle)}`
+        : `${spell(b.end_dead)} still idle at the end`;
+
+  return {
+    thesisTitle: exact
+      ? 'Nothing changes at the conversion, and that is the point'
+      : 'The conversion changes the model, and every comparison inherits it',
+    startVerdict: exact
+      ? 'It does.'
+      : `It does not: the loss moved by ${signed(c.val_difference, 6)}, more than rounding, so every
+         comparison below is measured from a different place.`,
+    lopsided:
+      b.last_twice_share === null
+        ? 'the router never put twice an even share on any expert'
+        : `the router keeps giving some expert twice an even share or more as late as step ${int(b.last_twice_share)}`,
+    finish: { ahead: 'final lead over', level: 'level finish with', behind: 'final deficit against' }[pos],
+    marks: {
+      start: exact ? 'good' : 'bad',
+      idle: allUsed ? (b.worst_dead > 0 ? 'watch' : 'good') : 'bad',
+      gap: pos === 'behind' ? 'bad' : 'watch',
+      speed: slower ? 'bad' : 'good',
+    },
+    idleKey: `experts idle in a single step at worst, out of the model's ${int(M.params.experts_stored)}
+      — ${idleTail}${allUsed ? '. Every expert kept receiving tokens' : ''}`,
+    gapKey:
+      `the converted model's validation loss minus the dense control's at the end. Lower is better, so
+       ${{
+         ahead: 'the converted model finished ahead',
+         level: 'the two finished level at the precision reported',
+         behind: 'the converted model finished behind',
+       }[pos]}${trailed && pos === 'ahead' ? ', after trailing in the middle of the run' : ''}. One
+       run each: a measurement of two runs, not a ranking`,
+    speedKey: `tokens a second, against the dense model's ${int(cont.tokens_per_second.dense)} —
+      <b>${slower ? `${cont.slowdown.toFixed(1)}× slower` : `${(1 / cont.slowdown).toFixed(1)}× faster`}</b>,
+      in a reference implementation that runs its experts one after another in a Python loop`,
+    expected: [
+      exact
+        ? { outcome: `<b>held</b> — a difference of ${c.val_difference.toFixed(6)} in validation loss`, mark: 'good' }
+        : { outcome: `<b>did not hold</b> — the loss moved by ${signed(c.val_difference, 6)}`, mark: 'bad' },
+      allUsed
+        ? { outcome: `<b>held</b> — at worst ${spell(b.worst_dead)} idle in one step; ${idleTail}`, mark: 'good' }
+        : { outcome: `<b>did not hold</b> — ${idleTail}`, mark: 'bad' },
+      {
+        ahead: {
+          outcome: trailed
+            ? `<b>held, narrowly</b> — ${signed(cont.end_gap)} at the end, but behind at
+               ${spell(cont.behind_steps.length)} validation checks in the middle, from one run each`
+            : `<b>held</b> — ${signed(cont.end_gap)} at the end, from one run each`,
+          mark: 'warn',
+        },
+        level: { outcome: `<b>did not hold</b> — the two ended level at the precision reported`, mark: 'warn' },
+        behind: { outcome: `<b>did not hold</b> — ${signed(cont.end_gap)} at the end`, mark: 'bad' },
+      }[pos],
+      slower
+        ? {
+            outcome: `<b>held</b> — ${cont.slowdown.toFixed(1)}× slower. A token uses
+              ${M.params.active_over_dense.toFixed(2)}× the dense model's parameters, but that count
+              includes embeddings and is not a measure of compute, so how much of the gap the extra
+              arithmetic explains was not measured`,
+            mark: 'bad',
+          }
+        : { outcome: `<b>did not hold</b> — it ran ${(1 / cont.slowdown).toFixed(1)}× faster`, mark: 'good' },
+    ],
+    routerRow: `${cap(rt.choice)} kept over ${other} scoring`,
+    resultsTitle: `${settled ? 'The router evens out' : 'The router stays lopsided'}, and the converted
+      model ${{ ahead: trailed ? 'pulls ahead late' : 'stays ahead', level: 'ends level', behind: 'ends behind' }[pos]}`,
+    conclusionTitle: `${exact ? 'An exact start' : 'An inexact start'}, ${settled ? 'a balanced router' : 'a lopsided router'},
+      and ${{ ahead: 'a lead too small to rank', level: 'no gap to rank', behind: 'a deficit too small to rank' }[pos]}`,
+    conclusion: [
+      `Copying a trained layer into experts and rescaling the kept mixing weights to add up to one
+       ${exact
+         ? 'converts a model without changing it beyond rounding — measured here, not assumed'
+         : `should convert a model without changing it, and here it did not: the validation loss moved by ${signed(c.val_difference, 6)}`}.
+       ${settled
+         ? `From that start ${b.last_twice_share === null ? 'the router stayed close to even' : `the router piled tokens onto a few experts until step ${int(b.last_twice_share)} and then evened out`}`
+         : 'The router was still lopsided at the end'}${allUsed && b.last_idle !== null ? `, with no expert idle after step ${int(b.last_idle)}` : ''}.`,
+      `${{
+        ahead: `The converted model ends ${signed(cont.end_gap)} against an unconverted model given the same training${trailed ? ', after trailing it in the middle' : ''}.`,
+        level: 'The converted model ends level with an unconverted model given the same training.',
+        behind: `The converted model ends ${signed(cont.end_gap)} behind an unconverted model given the same training.`,
+      }[pos]} That is a result about these two runs. Whether it is a result about the design needs
+       more than one seed.`,
+    ],
+    longer: {
+      ahead: trailed
+        ? "Whether the converted model's late lead grows, holds or closes"
+        : "Whether the converted model's lead grows, holds or closes",
+      level: 'Whether the two models stay level or part',
+      behind: "Whether the converted model's deficit closes",
+    }[pos],
+    balanceHead: b.fell
+      ? `The largest imbalance fell over the run while the bias was adjusting by ${M.config.bias_rate} a
+         step.`
+      : 'The largest imbalance did not fall over the run.',
+  };
+}
+
 /* ============================================================== 1 · thesis */
 
-function chapterThesis(M) {
+function chapterThesis(M, W) {
   const c = M.continuity;
   const b = M.balance;
   const cont = M.continuation;
@@ -185,45 +308,33 @@ function chapterThesis(M) {
     'thesis',
     'thesis',
     'Converted, not retrained',
-    'Nothing changes at the conversion, and that is the point',
+    W.thesisTitle,
     [
       `Every claim below rests on one before-and-after. The converted model has to start exactly
-       where the dense one stopped, or "it kept learning" is measured from somewhere else. <b>It
-       does.</b> What happens next is less tidy: the router spends its first few hundred steps
-       piling tokens onto a few experts, and the converted model's final lead over the dense control
-       is the evidence of a single run.`,
+       where the dense one stopped, or "it kept learning" is measured from somewhere else.
+       <b>${W.startVerdict}</b> What happens next is less tidy: ${W.lopsided}, and the converted
+       model's ${W.finish} the dense control is the evidence of a single run.`,
     ],
     { short: 'The claim', sub: 'an exact start, then a single run' }
   );
 
+  const routerNote =
+    c.largest_router === c.used_router
+      ? `under the ${c.used_router} router the run used`
+      : `under the ${c.largest_router} router, which was tried and not used; under the
+         ${c.used_router} router the run used it was ${sci(c.used_router_difference)}`;
   const tiles = el('div', 'tiles');
   for (const [v, k, mark] of [
     [
       c.val_difference.toFixed(6),
-      `change in validation loss from the conversion — <b>${c.val_dense.toFixed(6)}</b> before and
-       after. The largest change in any output score on a probe batch was
-       ${sci(c.largest_logit_difference)}: rounding, not a different model`,
-      'good',
+      `change in validation loss from converting — <b>${c.val_dense.toFixed(6)}</b> before,
+       <b>${c.val_upcycled.toFixed(6)}</b> after. The largest change in any next-token score on a fixed
+       test batch was ${sci(c.largest_logit_difference)}, ${routerNote}`,
+      W.marks.start,
     ],
-    [
-      `${int(b.worst_dead)} → ${int(b.end_dead)}`,
-      `experts sitting idle in a single step at worst, out of the model's ${int(M.params.experts_stored)}
-       — and none at all after step ${int(b.last_idle)}. The copies did drift apart`,
-      'watch',
-    ],
-    [
-      signed(cont.end_gap),
-      `the converted model's validation loss against the dense control at the end. It trailed in the
-       middle of the run, and with one run each this is a measurement of two runs, not a ranking`,
-      'watch',
-    ],
-    [
-      int(cont.tokens_per_second.moe),
-      `tokens a second, against the dense model's ${int(cont.tokens_per_second.dense)} —
-       <b>${cont.slowdown.toFixed(1)}× slower</b>, in a reference implementation that runs its
-       experts one after another in a Python loop`,
-      'bad',
-    ],
+    [`${int(b.worst_dead)} → ${int(b.end_dead)}`, W.idleKey, W.marks.idle],
+    [signed(cont.end_gap), W.gapKey, W.marks.gap],
+    [int(cont.tokens_per_second.moe), W.speedKey, W.marks.speed],
   ]) {
     const tile = el('div', `tile ${mark}`);
     const value = el('div', 'tile-v');
@@ -236,10 +347,15 @@ function chapterThesis(M) {
   s.append(tiles);
 
   const note = el('p', 'say small');
-  note.innerHTML = `The red tile is a failure of this implementation rather than of the idea, and it
-    is on the first screen deliberately: a page that shows only its wins has not earned the ones it
-    shows. An optimised mixture of experts does not loop over its experts in Python, so this speed
-    says nothing about one.`;
+  note.innerHTML = `The <b>dense control</b> is the unconverted model, trained on exactly the same
+    further text in the same order, so a difference between the two is the experts' doing rather
+    than more training's.${
+      W.marks.speed === 'bad'
+        ? ` The red tile is a failure of this implementation rather than of the idea, and it is on the
+           first screen deliberately: an optimised mixture of experts does not loop over its experts in
+           Python, so this speed says nothing about one.`
+        : ''
+    }`;
   s.append(note);
 }
 
@@ -250,12 +366,18 @@ function chapterGlossary(M) {
   const p = M.params;
   const b = M.balance;
   const cont = M.continuation;
+  const rt = M.router_trial;
   /* Built BEFORE the section, so the heading can count them. */
   const entries = [
     [
       'a dense model',
       `One where every token passes through the same layers. Ours has ${cfg.depth} blocks, each
        ${cfg.width} numbers wide, and ${int(p.dense)} parameters in all.`,
+    ],
+    [
+      'the dense control',
+      `The dense model, left unconverted and trained on exactly the same ${int(cont.tokens)} further
+       tokens in the same order — so what it gains is what more training buys, without experts.`,
     ],
     [
       'feed-forward layer',
@@ -268,15 +390,36 @@ function chapterGlossary(M) {
        model stores ${int(p.experts_stored)} of them.`,
     ],
     [
-      'the router',
-      `A small layer that scores every expert for every token — ${int(p.router_per_layer)} weights per
-       block, ${cfg.width} inputs by ${cfg.n_experts} experts. It starts small, so its first choices
-       are close to even.`,
+      'load',
+      `The share of a block's tokens that chose an expert in one step. Each token picks
+       ${cfg.top_k}, so a block's loads add up to ${cfg.top_k} and an even split is
+       ${b.even_share} each.`,
     ],
     [
-      'top-k',
-      `Each token goes to its ${cfg.top_k} best-scoring experts and pays for those alone. Their scores
-       are rescaled to add up to one, which is what makes the conversion exact.`,
+      'imbalance',
+      `How far a block's busiest expert sits above an even split, counted in even shares: its load
+       divided by ${b.even_share}, minus one. 0 is perfectly even; ${b.ceiling} means one expert was
+       chosen by every token in its block. The largest over every block ended this run at
+       ${b.end_violation.toFixed(3)}.`,
+    ],
+    [
+      'the router',
+      `A small layer that scores every expert for every token — ${int(p.router_per_layer)} router
+       parameters per block, ${cfg.width} inputs by ${cfg.n_experts} experts. They start small, so
+       its scores start nearly equal; but the top scores still decide, and after the first step the
+       largest imbalance was already ${b.first_violation.toFixed(2)}.`,
+    ],
+    [
+      'softmax or sigmoid',
+      `${Spell(Object.keys(rt.final_val).length)} ways the router can turn raw scores into scores between zero and one: softmax makes the
+       experts compete, so a token's scores over all ${cfg.n_experts} add up to one; sigmoid scores
+       each expert on its own. Each was tried for ${int(rt.tokens)} tokens, and ${rt.choice} was kept.`,
+    ],
+    [
+      'mixing weights',
+      `Each token goes to its ${cfg.top_k} best-scoring experts and pays for those alone. Their scores,
+       rescaled to add up to one, are the mixing weights its output is blended by — and the rescaling
+       is what makes the conversion exact.`,
     ],
     [
       'upcycling',
@@ -289,27 +432,15 @@ function chapterGlossary(M) {
        ${int(p.active)} here, ${pct(p.active_share, 0)} of what the model stores.`,
     ],
     [
-      'load',
-      `The share of a block's tokens that chose an expert in one step. Each token picks
-       ${cfg.top_k}, so a block's loads add up to ${cfg.top_k} and an even split is
-       ${b.even_share} each.`,
-    ],
-    [
-      'imbalance',
-      `How far the busiest expert sits above an even split, as a multiple of it: ${b.ceiling} means
-       one expert was chosen by every token in its block, 0 is perfectly even. Taken over every
-       block at once, it ended this run at ${b.end_violation.toFixed(3)}.`,
-    ],
-    [
       'an idle expert',
       `One that received no tokens at all in a step, so learned nothing from it. Counted across all
        ${int(p.experts_stored)}; the worst step had ${int(b.worst_dead)}.`,
     ],
     [
       'the balancing bias',
-      `A number per expert added to its score <b>only when choosing</b>. After every step a busy
-       expert's bias drops by ${cfg.bias_rate} and a quiet one's rises by the same, with no extra
-       term in the loss.`,
+      `A number per expert added to its score <b>only when choosing</b>, never to its mixing weight.
+       After every step a busy expert's bias drops by ${cfg.bias_rate} and a quiet one's rises by the
+       same, with no extra term in the loss.`,
     ],
     [
       'validation loss',
@@ -349,16 +480,22 @@ function chapterGlossary(M) {
 
 function chapterProblem(M) {
   const p = M.params;
+  const cfg = M.config;
   const s = section(
     'problem',
     'problem',
     'The problem',
     'A bigger model usually means starting over',
     [
-      `More parameters normally means a new training run from nothing, and the run already paid for
-       is thrown away. Converting the trained model avoids that only if the conversion is
-       <b>exact</b>. If it changes what the model computes, even slightly, the new model starts
-       somewhere the old one never was and has to earn its way back.`,
+      `<b>A mixture of experts stores far more parameters than any one token pays for.</b> Each block
+       keeps several copies of its feed-forward layer — the experts — and sends each token through
+       only a few of them. Here the model stores ${int(p.total)} parameters and each token uses
+       ${int(p.active)}: ${cfg.top_k} of the ${cfg.n_experts} experts in each of its ${cfg.depth}
+       blocks, plus everything the blocks share.`,
+      `Building one normally means a new training run from nothing, and the run already paid for is
+       thrown away. Converting a trained model avoids that only if the conversion is <b>exact</b>. If
+       it changes what the model computes, even slightly, the new model starts somewhere the old one
+       never was and has to earn its way back.`,
       `An exact start is not the end of it. The copies are identical, so if the router keeps sending
        every token to the same few, the rest never receive a gradient and stay copies for good. And
        a model that stores ${p.total_over_dense.toFixed(1)}× the parameters is expected to do better
@@ -387,11 +524,12 @@ function chapterProblem(M) {
  *
  * Family: Diff (EXPLAINER_PROMPT §10) — "these look equivalent and are not", run in the direction
  * this exercise needs: two blocks that look different (one layer against eight experts and a
- * router) and are the same, PROVIDED the kept weights are rescaled. The reader feeds both the same
- * token, picks any experts, and flips the rescaling. Opening on the wrong answer (§12) is spent here.
+ * router) and are the same, PROVIDED the kept mixing weights are rescaled. The reader feeds both the
+ * same token, picks any experts, and can switch the rescaling off to see what it prevents.
  *
- * The weights are CONSTRUCTED: a router that scores every expert alike, which is close to where a
- * small router starts. The figure says so on its face, and the measured difference sits beside it.
+ * It opens on the rescaled state, the one the model actually runs, so the caption's claim is the
+ * first thing drawn. The mixing weights are CONSTRUCTED — a router that scores every expert alike —
+ * and the drawing says so beside them; the measured difference sits in the pill.
  */
 function conversionFigure(M) {
   const cfg = M.config;
@@ -405,17 +543,17 @@ function conversionFigure(M) {
    * was 680 units wide, so on a phone the converted block — the half the figure is about — sat
    * behind a horizontal scroll. Stacked it is 300, which a 390px screen shows whole. */
   const W = 300;
-  const H = 340;
   const LEFT = 4;
   const UNIT = 280; // the width the dense output is drawn at; a scale, not a datum
   const GAP = 5;
   const BOXW = (W - 2 * LEFT - (n - 1) * GAP) / n;
   const boxX = (i) => LEFT + i * (BOXW + GAP);
   const TOP2 = 164; // where the converted block begins
+  const H = TOP2 + 226;
 
   /* 3. STATE — the minimum that cannot be derived. */
   let chosen = new Set(Array.from({ length: k }, (_, i) => i));
-  let mode = 'scored';
+  let mode = 'rescaled';
 
   const wrap = el('div', 'dx');
   wrap.setAttribute('role', 'group');
@@ -426,8 +564,9 @@ function conversionFigure(M) {
     class: 'chart dxfig',
     role: 'img',
     'aria-label':
-      'A dense block and its converted copy fed the same token. Each expert is a copy of the ' +
-      'dense layer, so the converted output is the dense output times the sum of the kept weights.',
+      'A dense block and its converted copy fed the same token. A router keeps the best-scoring ' +
+      'experts; each is a copy of the dense layer, so the converted output is the dense output ' +
+      'times the sum of the mixing weights.',
   });
   node.append(
     svgText(LEFT, 14, 'fig-lab', 'dense block'),
@@ -437,25 +576,34 @@ function conversionFigure(M) {
     svg('rect', { x: LEFT, y: 86, width: UNIT, height: 22, rx: 5, class: 'dx-out dense' }),
     svgText(LEFT, 126, 'dx-lab', 'output = dense(x)'),
     svg('line', { x1: LEFT, x2: W - LEFT, y1: TOP2 - 22, y2: TOP2 - 22, class: 'gridline' }),
-    svgText(LEFT, TOP2, 'fig-lab', 'converted block')
+    svgText(LEFT, TOP2, 'fig-lab', 'converted block'),
+    svg('rect', { x: LEFT, y: TOP2 + 10, width: W - 2 * LEFT, height: 26, rx: 6, class: 'dx-box' }),
+    svgText(W / 2, TOP2 + 27, 'dx-t mid', `router: keeps the ${spell(k)} best of ${n}`)
   );
 
   const boxes = [];
   const weights = [];
   for (let i = 0; i < n; i += 1) {
-    const r = svg('rect', { x: boxX(i), y: TOP2 + 10, width: BOXW, height: 36, rx: 6, class: 'dx-ex' });
-    const t = svgText(boxX(i) + BOXW / 2, TOP2 + 32, 'dx-t mid', `E${i + 1}`);
-    const w = svgText(boxX(i) + BOXW / 2, TOP2 + 62, 'dx-w mid', '');
+    const r = svg('rect', { x: boxX(i), y: TOP2 + 46, width: BOXW, height: 34, rx: 6, class: 'dx-ex' });
+    const t = svgText(boxX(i) + BOXW / 2, TOP2 + 67, 'dx-t mid', `E${i + 1}`);
+    const w = svgText(boxX(i) + BOXW / 2, TOP2 + 96, 'dx-w mid', '');
     boxes.push(r);
     weights.push(w);
     node.append(r, t, w);
   }
-  const sumText = svgText(LEFT, TOP2 + 86, 'dx-lab', '');
-  const ghost = svg('rect', { x: LEFT, y: TOP2 + 98, width: UNIT, height: 22, rx: 5, class: 'dx-ghost' });
-  const out = svg('rect', { x: LEFT, y: TOP2 + 98, width: UNIT, height: 22, rx: 5, class: 'dx-out conv' });
-  const outText = svgText(LEFT, TOP2 + 138, 'dx-lab', '');
-  const verdictText = svgText(LEFT, TOP2 + 162, 'dx-verdict', '');
-  node.append(sumText, ghost, out, outText, verdictText);
+  const sumText = svgText(LEFT, TOP2 + 132, 'dx-lab', '');
+  const ghost = svg('rect', { x: LEFT, y: TOP2 + 142, width: UNIT, height: 22, rx: 5, class: 'dx-ghost' });
+  const out = svg('rect', { x: LEFT, y: TOP2 + 142, width: UNIT, height: 22, rx: 5, class: 'dx-out conv' });
+  const outText = svgText(LEFT, TOP2 + 182, 'dx-lab', '');
+  const verdictText = svgText(LEFT, TOP2 + 206, 'dx-verdict', '');
+  node.append(
+    svgText(LEFT, TOP2 + 112, 'dx-note', `illustrative mixing weights: all ${n} scored alike`),
+    sumText,
+    ghost,
+    out,
+    outText,
+    verdictText
+  );
 
   /* The controls. Ordinals rather than hues: eight experts are more things than this palette has
    * colours, so the chosen ones are marked by outline and fill weight, and named E1…E8. */
@@ -480,14 +628,14 @@ function conversionFigure(M) {
   pickRow.append(pick);
 
   const modeRow = el('div', 'dx-row');
-  modeRow.append(el('span', 'dx-k', 'the kept weights are'));
+  modeRow.append(el('span', 'dx-k', 'the mixing weights are'));
   const modes = el('div', 'tabs');
   modes.setAttribute('role', 'group');
-  modes.setAttribute('aria-label', 'How the kept weights are used');
+  modes.setAttribute('aria-label', 'How the mixing weights are used');
   const modeBtns = {};
   for (const [key, label] of [
-    ['scored', 'used as scored'],
     ['rescaled', 'rescaled to add up to one'],
+    ['scored', 'used as scored'],
   ]) {
     const btn = el('button', null, label);
     btn.type = 'button';
@@ -500,7 +648,8 @@ function conversionFigure(M) {
   const read = el('p', 'dx-read');
   const pill = el('div', 'pill');
   pill.innerHTML = `measured on the real model: validation loss ${c.val_dense.toFixed(6)} →
-    ${c.val_upcycled.toFixed(6)} · largest output-score change ${sci(c.largest_logit_difference)}`;
+    ${c.val_upcycled.toFixed(6)} · largest next-token score change ${sci(c.used_router_difference)}
+    under the ${c.used_router} router`;
 
   /* guard() — the precondition. A token goes to exactly k experts; any other selection has no
    * honest output to draw, and drawing one would invent a routing the model never does. */
@@ -539,20 +688,21 @@ function conversionFigure(M) {
     }
     const st = stateFor(set, m);
     weights.forEach((w, i) => (w.textContent = set.has(i) ? st.each.toFixed(3) : ''));
-    sumText.textContent = `kept weights add up to ${st.sum.toFixed(3)}`;
+    sumText.textContent = `mixing weights add up to ${st.sum.toFixed(3)}`;
     out.setAttribute('width', (UNIT * st.sum).toFixed(1));
     outText.textContent = `output = ${st.sum.toFixed(3)} × dense(x)`;
     verdictText.textContent = st.same ? 'the same output as the dense block' : 'not the dense block';
     verdictText.setAttribute('class', `dx-verdict ${st.same ? 'good' : 'bad'}`);
     wrap.dataset.state = st.same ? 'same' : 'different';
     read.innerHTML = st.same
-      ? `<b>Rescaled, the kept weights always add up to one</b>, so whichever ${spell(k)} experts you
-         pick the block hands back exactly the dense output. That is the conversion, and why it
-         cannot change the model.`
-      : `<b>As scored, the kept weights add up to ${st.sum.toFixed(3)}</b> — a router that scores all
-         ${n} experts alike gives each ${cfg.uniform_score}, and only ${spell(k)} are kept. Every
-         block's feed-forward output would shrink to ${pct(st.sum, 0)} of what it was. Pick other
-         experts: nothing changes, because they are all the same copy.`;
+      ? `<b>Rescaled, the mixing weights add up to one whatever the scores were</b>, so whichever
+         ${spell(k)} experts you pick, the block hands back exactly the dense output. That is the
+         conversion, and why it cannot change the model.`
+      : `<b>In this illustration, used as scored, the mixing weights add up to ${st.sum.toFixed(3)}</b>
+         — a router that scores all ${n} experts alike gives each ${cfg.uniform_score}, and only
+         ${spell(k)} are kept, so every block's feed-forward output would shrink to
+         ${pct(st.sum, 0)} of what it was. This is the case the rescaling exists to prevent; the
+         real model rescales.`;
   }
 
   wrap.playAll = () => show(new Set(Array.from({ length: k }, (_, i) => i)), 'rescaled');
@@ -560,14 +710,13 @@ function conversionFigure(M) {
   show(chosen, mode);
   const fig = figure(
     playable(wrap),
-    `<b>Whichever experts are chosen, the output is the dense model's — once the kept weights are
-     rescaled to add up to one.</b> Every expert starts as the same copy, so the choice cannot matter;
-     only the sum of the weights can. Used as scored, a router that rates all ${n} experts alike (close
-     to where a small router starts) leaves the ${spell(k)} kept ones summing to
-     ${cfg.uniform_kept_sum}, and the block's output is cut by that much. These weights are
-     constructed for illustration; the measured difference in the real model is in the pill.
-     <b>What would refute it:</b> a validation loss after conversion that differed from the dense
-     model's by more than rounding.`
+    `<b>Whichever experts are chosen, the output is the dense model's — once the kept mixing weights
+     are rescaled to add up to one.</b> Every expert starts as the same copy, so the choice cannot
+     matter; only the sum of the mixing weights can. Switch the rescaling off: a router that rates all
+     ${n} experts alike leaves the ${spell(k)} kept ones summing to ${cfg.uniform_kept_sum}, and the
+     block's output is cut by that much. The mixing weights drawn are illustrative; the measured difference
+     in the real model is in the pill. <b>What would refute it:</b> a validation loss after
+     conversion that differed from the dense model's by more than rounding.`
   );
   fig.id = 'fig-conversion';
   return fig;
@@ -583,36 +732,45 @@ function chapterMechanism(M) {
     'Copies that add up to the original',
     [
       `Take one block's trained feed-forward layer and copy it ${spell(cfg.n_experts)} times. Add a
-       router that scores each copy for each token, keep the ${spell(cfg.top_k)} highest, and add
-       their outputs weighted by those scores. Because every copy is the same function, the weighted
-       sum is that function times the sum of the weights — so <b>if the weights add up to one, the
-       block computes exactly what it did before</b>.`,
+       router that scores each copy for each token, keep the ${spell(cfg.top_k)} highest, and blend
+       their outputs by those scores — the <b>mixing weights</b>. Because every copy is the same
+       function, the blend is that function times the sum of the mixing weights, so <b>if the mixing
+       weights add up to one, the block computes exactly what it did before</b>.`,
       `That "if" is the whole conversion. Scores spread over all ${cfg.n_experts} experts do not add up
-       to one over just the ones kept. Below, the same token goes into the dense block and the
-       converted one: pick any experts, and switch the rescaling on and off.`,
+       to one over just the ones kept, so the kept ones are rescaled. Below, the same token goes into
+       the dense block and the converted one: pick any experts, and switch the rescaling off to see
+       what it prevents.`,
     ],
-    { short: 'The conversion', sub: 'copies whose weights add up to one' }
+    { short: 'The conversion', sub: 'copies whose mixing weights add up to one' }
   );
 
   s.append(conversionFigure(M));
 
+  const others = Object.keys(c.by_router).filter((name) => name !== c.used_router);
   const measured = el('p', 'say');
   measured.innerHTML = `Measured on the real model rather than on this drawing, the validation loss is
     <b>${c.val_dense.toFixed(6)}</b> before the conversion and <b>${c.val_upcycled.toFixed(6)}</b>
-    after it, and the largest change in any output score on a probe batch is
-    ${sci(c.largest_logit_difference)}, the worse of the ${spell(Object.keys(c.by_router).length)}
-    routers tried. That is rounding — the order in which a computer adds the same numbers — and not a
-    change in what the model knows.`;
+    after it. The largest change in any next-token score on a fixed test batch is
+    ${sci(c.used_router_difference)} under the ${c.used_router} router the run used${
+      others.length
+        ? `, and ${others.map((name) => `${sci(c.by_router[name].largest_logit_difference)} under ${name}`).join(', ')}, tried and not used`
+        : ''
+    }. ${
+      c.holds
+        ? 'That is rounding — the order in which a computer adds the same numbers — and not a change in what the model knows.'
+        : 'That is more than rounding: the converted model does not start where the dense one stopped.'
+    }`;
   s.append(measured);
 
   const drift = el('p', 'say');
-  drift.innerHTML = `After the conversion the copies stop being identical, because different tokens
-    reach different experts and push them different ways. The risk is a router that keeps choosing
-    the same few, leaving the rest as untouched copies. So each expert carries a bias that is added to
-    its score <b>only when choosing</b> — never to the weights, so the output is still computed from
-    the real scores — and after every step a busy expert's bias goes down by ${cfg.bias_rate} and a
-    quiet one's goes up by the same. There is no extra term in the loss pulling against the language
-    model (the scheme is from arXiv:2408.15664).`;
+  drift.innerHTML = `After the conversion the copies can grow apart, because different tokens reach
+    different experts and push their model weights different ways — this run records which experts
+    were chosen, not how far apart their model weights moved. The risk is a router that keeps choosing the
+    same few, leaving the rest as untouched copies. So each expert carries a bias that is added to its
+    score <b>only when choosing</b> — never to its mixing weight, so the output is still blended by the
+    real scores — and after every step a busy expert's bias goes down by ${cfg.bias_rate} and a quiet
+    one's goes up by the same. There is no extra term in the loss pulling against the language model
+    (the scheme is from arXiv:2408.15664).`;
   s.append(drift);
 }
 
@@ -630,7 +788,7 @@ function chapterMethod(M) {
     'The trained model, converted, then trained on beside itself',
     [
       `Everything starts from the dense model another exercise in this series trained and published,
-       loaded by digest so this run is tied to that one. The converted model and an unconverted copy
+       loaded by digest so this run is tied to that one. The converted model and the dense control
        then train on <b>the same batches in the same order</b> with the same schedule, which is what
        lets the difference between them be read as the experts' doing.`,
     ],
@@ -695,58 +853,33 @@ function chapterMethod(M) {
 
 /* ============================================================== 6 · expected */
 
-function chapterExpected(M) {
-  const c = M.continuity;
-  const b = M.balance;
-  const cont = M.continuation;
+const DECISIONS_URL =
+  'https://github.com/pankajkr23/llm-pretraining-exercises/blob/main/src/exercises/14-moe/DECISIONS.md';
+
+function chapterExpected(M, W) {
   const s = section(
     'expected',
     'expected',
     'What the design predicts',
     'What should happen, if the design is right',
     [
-      `Each line below follows from a decision recorded with the exercise, which means each could
-       have come out the other way. The right-hand column is what the run did.`,
+      `Each line below follows from a decision recorded with the exercise, in its
+       <a href="${DECISIONS_URL}">decisions document</a>, which means each could have come out the
+       other way. The right-hand column is what the run did.`,
     ],
     { short: 'The predictions', sub: 'what the design commits to' }
   );
 
+  const predictions = [
+    'The converted model starts at <b>exactly</b> the dense model’s loss',
+    'Every expert keeps receiving tokens, rather than some going unused for good',
+    'Storing more parameters, the converted model ends below the dense control',
+    'It runs slower than the dense model',
+  ];
   s.append(
     table(
       ['prediction', 'outcome'],
-      [
-        {
-          cells: [
-            'The converted model starts at <b>exactly</b> the dense model’s loss',
-            `<b>held</b> — a difference of ${c.val_difference.toFixed(6)} in validation loss`,
-          ],
-          __mark: 'good',
-        },
-        {
-          cells: [
-            'Identical copies drift apart rather than some going unused for good',
-            `<b>held</b> — at worst ${spell(b.worst_dead)} experts idle in one step, none after step
-             ${int(b.last_idle)}`,
-          ],
-          __mark: 'good',
-        },
-        {
-          cells: [
-            'Storing more parameters, the converted model ends below the dense control',
-            `<b>held, narrowly</b> — ${signed(cont.end_gap)} at the end, but behind it at
-             ${spell(cont.behind_steps.length)} validation checks in the middle, from one run each`,
-          ],
-          __mark: 'warn',
-        },
-        {
-          cells: [
-            'It runs slower than the dense model',
-            `<b>held, and by more than its extra parameters</b> — ${cont.slowdown.toFixed(1)}× slower
-             while each token uses ${M.params.active_over_dense.toFixed(2)}× the parameters`,
-          ],
-          __mark: 'bad',
-        },
-      ]
+      predictions.map((text, i) => ({ cells: [text, W.expected[i].outcome], __mark: W.expected[i].mark }))
     )
   );
 }
@@ -756,30 +889,33 @@ function chapterExpected(M) {
 /* -------------------------------------------------------- Figure: the balance (Accumulator)
  *
  * Family: Accumulator — "this compounds". The balancing bias moves by a fixed step after every
- * training step, so balance is not set, it accumulates; the reader steps through training and
- * watches a lopsided router even out over hundreds of steps. One predict-before-reveal.
+ * training step, so its correction accumulates; the reader steps through training and watches the
+ * routing change over hundreds of steps. One predict-before-reveal. The caption does not claim the
+ * bias caused the change: there is no run without it, and the learning rate was decaying throughout.
  *
  * Two sources, and the figure keeps them apart. The bars are the FIRST block's per-expert loads,
  * which only the log records, every `log_every` steps. The trace and the idle strip are the bundle's
  * figures over EVERY block at EVERY step. The caption says so; it is the easiest thing here to blur.
  */
-function balanceFigure(M) {
+function balanceFigure(M, W) {
   const cfg = M.config;
   const b = M.balance;
   const rows = M.layer0;
   const total = M.continuation.steps;
   const n = cfg.n_experts;
 
-  const W = 480;
-  const H = 416;
+  const WD = 480;
+  const H = 384;
   const X0 = 84;
   const X1 = 472;
   const slot = (X1 - X0) / n;
   const barW = slot * 0.56;
-  const A = { top: 30, base: 190 };
-  const T = { top: 254, base: 314 };
-  const D = { top: 356, base: 390 };
-  const yLoad = (v) => A.base - v * (A.base - A.top);
+  /* The load axis runs to the largest load the log records, not to 1: no load reached 1 in the
+   * first block, and an axis to 1 left a band above the bars that nothing ever entered. */
+  const A = { top: 30, base: 150, max: M.layer0_max_load };
+  const T = { top: 222, base: 282 };
+  const D = { top: 322, base: 356 };
+  const yLoad = (v) => A.base - (v / A.max) * (A.base - A.top);
   const xStep = (s) => X0 + ((s - 1) / (total - 1)) * (X1 - X0);
   const yViol = (v) => T.base - (v / b.ceiling) * (T.base - T.top);
 
@@ -823,7 +959,7 @@ function balanceFigure(M) {
   });
 
   const node = svg('svg', {
-    viewBox: `0 0 ${W} ${H}`,
+    viewBox: `0 0 ${WD} ${H}`,
     class: 'chart accfig',
     role: 'img',
     'aria-label':
@@ -831,12 +967,13 @@ function balanceFigure(M) {
       'largest imbalance over every block at every step, and the steps that had idle experts.',
   });
 
-  /* Panel A — the first block's loads. */
+  /* Panel A — the first block's loads. Values sit in their own row under the expert names, clear of
+   * the dashed even-share line they used to be drawn across. */
   node.append(svgText(X0, 16, 'fig-lab', 'first block only · share of tokens per expert'));
   for (const [v, label] of [
     [0, '0'],
     [b.even_share, `even ${b.even_share}`],
-    [1, 'every token'],
+    [A.max, String(A.max)],
   ]) {
     node.append(
       svg('line', { x1: X0, x2: X1, y1: yLoad(v), y2: yLoad(v), class: v === b.even_share ? 'acc-even' : 'gridline' }),
@@ -848,7 +985,7 @@ function balanceFigure(M) {
   for (let i = 0; i < n; i += 1) {
     const cx = X0 + slot * i + slot / 2;
     const r = svg('rect', { x: cx - barW / 2, y: A.base, width: barW, height: 0, rx: 3, class: 'acc-bar' });
-    const v = svgText(cx, A.base - 4, 'acc-v mid', '');
+    const v = svgText(cx, A.base + 30, 'acc-v mid', '');
     bars.push(r);
     vals.push(v);
     node.append(r, v, svgText(cx, A.base + 15, 'ax mid', `E${i + 1}`));
@@ -906,7 +1043,8 @@ function balanceFigure(M) {
    * is an index outside the log. */
   const guard = (i) => (i >= 0 && i < rows.length ? null : { note: 'No logged step there.' });
 
-  /* stateFor(i) — PURE. */
+  /* stateFor(i) — PURE. The first block's imbalance is computed exactly as the glossary defines
+   * the measure, so the readout and the trace below it are on one scale. */
   const stateFor = (i) => {
     const row = rows[i];
     const busiest = row.loads.indexOf(Math.max(...row.loads));
@@ -915,7 +1053,7 @@ function balanceFigure(M) {
       loads: row.loads,
       busiest,
       busiestLoad: row.loads[busiest],
-      times: row.loads[busiest] / b.even_share,
+      own: row.loads[busiest] / b.even_share - 1,
       violation: b.violation[row.step - 1],
       idle: b.dead[row.step - 1],
       bound: row.step * cfg.bias_rate,
@@ -936,7 +1074,6 @@ function balanceFigure(M) {
       r.setAttribute('y', yLoad(st.loads[e]).toFixed(1));
       r.setAttribute('height', (A.base - yLoad(st.loads[e])).toFixed(1));
       r.classList.toggle('top', e === st.busiest);
-      vals[e].setAttribute('y', (yLoad(st.loads[e]) - 5).toFixed(1));
       vals[e].textContent = st.loads[e].toFixed(3);
     });
     const x = xStep(st.step);
@@ -949,16 +1086,19 @@ function balanceFigure(M) {
     veil.style.display = revealed ? 'none' : '';
     read.innerHTML = `
       <p><span class="acc-k">first block</span> the busiest expert, <b>E${st.busiest + 1}</b>, was
-        chosen by ${st.busiestLoad.toFixed(3)} of its tokens — ${st.times.toFixed(1)}× an even share.</p>
+        chosen by ${st.busiestLoad.toFixed(3)} of its tokens — an imbalance of
+        <b>${st.own.toFixed(2)}</b> in this block alone.</p>
       <p><span class="acc-k">every block</span> largest imbalance <b>${st.violation.toFixed(3)}</b> ·
         idle experts <b>${revealed ? int(st.idle) : 'hidden until you guess'}</b></p>
       <p><span class="acc-k">the bias</span> after ${int(st.step)} steps of ${cfg.bias_rate}, no
         expert's bias can have moved more than ${st.bound.toFixed(3)} — a bound, since the run does
         not record the biases themselves.</p>`;
+    const where2 = b.worst_dead === 0 ? '' : `, after step${b.worst_dead_steps.length > 1 ? 's' : ''} ${steps(b.worst_dead_steps)}`;
     answer.innerHTML = revealed
       ? `${guess === null ? '' : `You guessed <b>${int(guess)}</b>. `}The most was
-         <b>${int(b.worst_dead)}</b>, after steps ${steps(b.worst_dead_steps)}, and none at all after
-         step ${int(b.last_idle)}.`
+         <b class="acc-most">${int(b.worst_dead)}</b>${where2}${
+           b.last_idle === null ? '' : b.end_dead === 0 ? `, and none at all after step ${int(b.last_idle)}` : ''
+         }.`
       : '';
     revealBtn.disabled = revealed;
   }
@@ -969,16 +1109,22 @@ function balanceFigure(M) {
   };
   wrap.append(ask, scroller(node), ctl, read);
   show(0);
+  const refute =
+    b.last_idle === null
+      ? 'there were none at all'
+      : b.end_dead === 0
+        ? `the strip says they stop after step ${int(b.last_idle)}`
+        : 'the strip shows them still appearing at the end';
   const fig = figure(
     playable(wrap),
-    `<b>Balance is not set, it accumulates: a bias step of ${cfg.bias_rate} per step takes hundreds of
-     steps to undo a lopsided router.</b> The bars are the <b>first block only</b> — the one block
-     whose per-expert loads the training log records, every ${cfg.log_every} steps and rounded as the
-     log writes them. The imbalance trace and the idle strip are over <b>every block, at every
-     step</b>, from the results file. So a bar chart that looks even can sit above a trace that is
-     not: another block can be lopsided while the first one is fine. <b>What would refute the
-     balancing:</b> idle experts that keep appearing to the end of the run; the strip says they
-     stop after step ${int(b.last_idle)}.`
+    `<b>${W.balanceHead}</b> That is the two happening together, not one causing the other: there is no
+     run without the bias, and the learning rate was decaying all the while. The bars are the
+     <b>first block only</b> — the one block whose per-expert loads the training log records, every
+     ${cfg.log_every} steps and rounded as the log writes them. The imbalance trace and the idle strip
+     are over <b>every block, at every step</b>, from the results file. So a bar chart that looks even
+     can sit above a trace that is not: another block can be lopsided while the first one is fine.
+     <b>What would refute the balancing:</b> idle experts that keep appearing to the end of the run;
+     ${refute}.`
   );
   fig.id = 'fig-balance';
   return fig;
@@ -1064,23 +1210,26 @@ function validationFigure(M) {
     cv.lr.map((r) => `L${xs(r.step).toFixed(1)},${yc(r.lr).toFixed(1)}`).join(' ') +
     ` L${xs(total).toFixed(1)},${C.base} Z`;
   node.append(svg('path', { d: area, class: 'lr-area' }), svg('line', { x1: X0, x2: X1, y1: C.base, y2: C.base, class: 'gridline' }));
-  node.append(svgText(X0, H - 6, 'ax', 'step 0'), svgText(X1, H - 6, 'ax end', `step ${int(total)}`));
+  node.append(svgText(X0, H - 6, 'ax', 'start'), svgText(X1, H - 6, 'ax end', `step ${int(total)}`));
 
   const rise = cont.both_rise
     ? `<b>Both models get worse before they get better, so the rise belongs to the schedule and not
-       to the conversion</b> — the unconverted control climbs too, to ${cont.dense_peak.toFixed(4)}
+       to the conversion</b> — the dense control climbs too, to ${cont.dense_peak.toFixed(4)}
        against the converted model's ${cont.moe_peak.toFixed(4)}, as the learning rate is raised
        again.`
     : `<b>The two models do not both rise first</b>, so any early rise is not the schedule's alone.`;
+  const level = cont.level_steps.length
+    ? ` They are level, at the precision reported, at step${cont.level_steps.length > 1 ? 's' : ''} ${steps(cont.level_steps)}.`
+    : '';
   const middle =
-    cont.behind_steps.length && cont.ahead_from
+    cont.behind_steps.length && cont.ahead_from !== null
       ? `The converted model then trails from step ${int(cont.behind_steps[0])} to
          ${int(cont.behind_steps.at(-1))} and is ahead at every measurement from step
-         ${int(cont.ahead_from)}, ending ${signed(cont.end_gap)}.`
-      : `The converted model ends ${signed(cont.end_gap)} against the control.`;
+         ${int(cont.ahead_from)}, ending ${signed(cont.end_gap)}.${level}`
+      : `The converted model ends ${signed(cont.end_gap)} against the control.${level}`;
   const fig = figure(
     node,
-    `${rise} ${middle} The middle panel tells the same story from the training batches, where both
+    `${rise} ${middle} The middle panel shows the same comparison on the training batches, where both
      models read identical text, so the batch-to-batch noise cancels. <b>What would refute the
      gain:</b> a spread between seeds as large as the gap itself — which a single run cannot
      measure.`
@@ -1240,21 +1389,24 @@ function costFigure(M) {
   wrap.playAll = () => show(cfg.top_k);
   wrap.append(scroller(node), ctl, read);
   show(k);
+  const ratio = cont.slowdown > 1 ? `${cont.slowdown.toFixed(1)}× slower` : `${(1 / cont.slowdown).toFixed(1)}× faster`;
   const fig = figure(
     playable(wrap),
     `<b>What the model stores and what a token pays are different numbers, and the gap is the point
      of experts.</b> The stored bar is fixed at ${int(p.total)}; a token's share grows by one expert-slot
      per step of k and reaches all of it at k = ${n}, where every token pays for everything. At k = 1
      a token costs the dense model plus the routers. Only the run's k = ${cfg.top_k} was trained and
-     timed; the rest is drawn hatched. The speed gap — ${cont.slowdown.toFixed(1)}× — is wider than
-     the parameter gap of ${p.active_over_dense.toFixed(2)}×, and the rest belongs to a reference
-     implementation that runs its experts one after another in a Python loop.`
+     timed; the rest is drawn hatched. The converted model ran ${ratio} while each token used
+     ${p.active_over_dense.toFixed(2)}× the dense model's parameters — but that count includes
+     embeddings and is not a measure of compute, and what makes up the speed gap was not measured.
+     One known cost is this reference implementation running its experts one after another in a
+     Python loop.`
   );
   fig.id = 'fig-cost';
   return fig;
 }
 
-function chapterResults(M) {
+function chapterResults(M, W) {
   const b = M.balance;
   const cont = M.continuation;
   const rt = M.router_trial;
@@ -1263,7 +1415,7 @@ function chapterResults(M) {
     'results',
     'results',
     'What happened',
-    'The router evens out, and the converted model pulls ahead late',
+    W.resultsTitle,
     [
       `Every figure below is read from the run's results file and its training log, and a test
        regenerates the page's data and fails if the tracked copy differs. First the router: does it
@@ -1272,27 +1424,49 @@ function chapterResults(M) {
     { short: 'What happened', sub: 'balance, loss, and cost' }
   );
 
-  s.append(balanceFigure(M));
+  s.append(balanceFigure(M, W));
 
+  /* Each clause is present only when its step exists: a run with no idle step must not print
+   * "the last of them step 0". */
+  const clauses = [];
+  clauses.push(
+    b.worst_dead === 0
+      ? '<b>The answer to the guess is zero</b>: no expert was ever idle.'
+      : `<b>The answer to the guess is ${spell(b.worst_dead)}</b>, after step${b.worst_dead_steps.length > 1 ? 's' : ''}
+         ${steps(b.worst_dead_steps)}, out of ${int(M.params.experts_stored)}. Steps with any idle
+         expert numbered ${int(b.steps_with_idle)}, the last of them step ${int(b.last_idle)}.`
+  );
+  if (b.last_at_ceiling !== null) {
+    clauses.push(`Early on the router is far from even — at ${int(b.steps_at_ceiling)} steps some
+      block's busiest expert was chosen by every one of its tokens, the last time at step
+      ${int(b.last_at_ceiling)}.`);
+  }
+  if (b.last_twice_share !== null) {
+    clauses.push(`The busiest expert anywhere last reached twice its share at step
+      ${int(b.last_twice_share)}.`);
+  }
+  clauses.push(`By the end the largest imbalance is ${b.end_violation.toFixed(3)}. In the first block,
+    the one the log records, the smallest load at any logged step was ${M.layer0_min_load}${
+      M.layer0_min_load > 0 ? ', so no expert there was ever idle at a logged step' : ''
+    }.`);
   const bal = el('p', 'say');
-  bal.innerHTML = `<b>The answer to the guess is ${spell(b.worst_dead)}</b>, after steps
-    ${steps(b.worst_dead_steps)}, out of ${int(M.params.experts_stored)}. Steps with any idle expert
-    numbered ${int(b.steps_with_idle)}, the last of them step ${int(b.last_idle)}. Early on the router
-    is far from even — at ${int(b.steps_at_ceiling)} steps some block's busiest expert was chosen by
-    every one of its tokens, the last time at step ${int(b.last_at_ceiling)} — and the busiest expert anywhere
-    last reached twice its share at step ${int(b.last_twice_share)}. By the end the largest
-    imbalance is ${b.end_violation.toFixed(3)}. In the first block, the one the log records, no
-    expert's load ever reached zero at a logged step: the smallest was ${M.layer0_min_load}.`;
+  bal.innerHTML = clauses.join(' ');
   s.append(bal);
 
   s.append(validationFigure(M));
 
   const val = el('p', 'say');
   val.innerHTML = `<b>The converted model ends ${signed(cont.end_gap)} against the dense control</b>,
-    at ${cont.moe_end.toFixed(4)} to ${cont.dense_end.toFixed(4)}, having trailed by as much as
-    ${cont.most_behind.toFixed(4)} at step ${int(cont.most_behind_step)}. On the training batches the
-    last ${M.config.log_every}-step mean of the difference is ${signed(cv.paired_end)}. Whether the
-    lopsided routing early on is why it trails in the middle, one run cannot say.`;
+    at ${cont.moe_end.toFixed(4)} to ${cont.dense_end.toFixed(4)}${
+      cont.most_behind_step === null
+        ? ', and was never behind it at a validation check'
+        : `, having trailed by as much as ${cont.most_behind.toFixed(4)} at step ${int(cont.most_behind_step)}`
+    }. On the training batches the last ${M.config.log_every}-step mean of the difference is
+    ${signed(cv.paired_end)}.${
+      cont.most_behind_step === null
+        ? ''
+        : ' Whether the lopsided routing early on is why it trails in the middle, one run cannot say.'
+    }`;
   s.append(val);
 
   s.append(
@@ -1306,8 +1480,8 @@ function chapterResults(M) {
   );
   const router = el('p', 'say small');
   router.innerHTML = `The router was chosen on a short trial before the main run, by
-    ${rt.margin.toFixed(4)}, measured on the half of the validation text kept for choosing. One run each and no second seed, so this decides which router this run
-    uses, not which is better.`;
+    ${rt.margin.toFixed(4)}, measured on the half of the validation text kept for choosing. One run
+    each and no second seed, so this decides which router this run uses, not which is better.`;
   s.append(router);
 
   s.append(costFigure(M));
@@ -1315,99 +1489,89 @@ function chapterResults(M) {
 
 /* ============================================================== 8 · negatives */
 
-function negativeRows(M) {
+/** Results weaker than they look, as data, so the section can count them. Findings come first. */
+function findingRows(M, W) {
   const rt = M.router_trial;
   const cont = M.continuation;
-  return [
+  const rows = [
     {
       cells: [
-        'The router chosen on the same validation text the results are reported on',
-        'Could the choice flatter the converted model?',
-        `Yes — it is the only model the choice applies to. Choosing and reporting now use separate
-         halves of the validation text; apart from the router trial's own two numbers, every
-         validation figure on this page comes from the half the choice never saw.`,
-      ],
-      __mark: 'bad',
-    },
-    {
-      cells: [
-        'A crash on the first run on the GPU',
-        'How was it found, and what stops it coming back?',
-        `On the device, not by the tests. The balancing bias and load counters were created on the
-         CPU while the experts moved to the GPU, so routing added a CPU number to GPU scores. A test
-         now holds them to the experts' device, and was watched failing against the old code.`,
-      ],
-      __mark: 'bad',
-    },
-    {
-      cells: [
-        'Results text that announced "the conversion changes nothing" as fixed wording',
-        'Would it still say so if the conversion broke?',
-        `It would have. The verdicts are computed now, and a test renders them both ways — the same
-         reason this page reads every figure from the results file rather than typing it.`,
-      ],
-      __mark: 'bad',
-    },
-    {
-      cells: [
-        `Softmax kept over sigmoid scoring`,
+        W.routerRow,
         'By how much?',
         `${rt.margin.toFixed(4)} in validation loss, on one short run of ${int(rt.tokens)} tokens each.
          It is a choice of which router to use, not a ranking of the two.`,
       ],
       __mark: 'warn',
     },
-    {
+  ];
+  if (cont.behind_steps.length) {
+    rows.push({
       cells: [
         'The converted model behind the dense control mid-run',
-        'Is the final lead safe?',
+        cont.end_position === 'ahead' ? 'Is the final lead safe?' : 'Did it ever recover?',
         `It trailed at ${spell(cont.behind_steps.length)} validation checks, by up to
-         ${cont.most_behind.toFixed(4)}, and led from step ${int(cont.ahead_from)}. With one run each
-         and no spread between seeds, the final ${signed(cont.end_gap)} is these two runs, not the
-         design.`,
+         ${cont.most_behind.toFixed(4)}${cont.ahead_from === null ? '' : `, and led from step ${int(cont.ahead_from)}`}.
+         With one run each and no spread between seeds, the final ${signed(cont.end_gap)} is these
+         two runs, not the design.`,
       ],
       __mark: 'warn',
-    },
-  ];
+    });
+  }
+  return rows;
 }
 
-function chapterNegatives(M) {
-  const rows = negativeRows(M);
+/** The mistakes in this exercise's own work, fixed before the run on this page. */
+const FIXES = [
+  `<b>The router was chosen on the validation text the results are reported on.</b> That could only
+   flatter the converted model, the one model the choice applies to. Choosing and reporting now use
+   separate halves of the validation text.`,
+  `<b>The first run on the GPU crashed.</b> The balancing bias and load counters were created on the
+   CPU while the experts moved to the GPU, so routing added a CPU number to GPU scores. It was found
+   on the device, not by the tests; a test now holds them to the experts' device, and was watched
+   failing against the old code.`,
+  `<b>The results text announced "the conversion changes nothing" as fixed wording</b>, so it would
+   have said so if the conversion broke. Its verdicts are computed now, and a test renders them both
+   ways — as this page's are.`,
+];
+
+function chapterNegatives(M, W) {
+  const rows = findingRows(M, W);
   const s = section(
     'negatives',
     'negatives',
     'What went wrong, and what did not hold',
-    `${Spell(rows.length)} things that went wrong, or held only weakly`,
+    'What did not hold, and what had to be fixed',
     [
-      `The first three were mistakes in this exercise's own work, found and fixed before the run on
-       this page. The last two are results that are weaker than they look, and are reported that
-       way.`,
+      `${Spell(rows.length)} ${rows.length === 1 ? 'result is' : 'results are'} weaker than
+       ${rows.length === 1 ? 'it looks' : 'they look'}, and come first. Below them are the
+       ${spell(FIXES.length)} mistakes in this exercise's own work that were found and fixed before
+       the run on this page.`,
     ],
-    { short: 'What went wrong', sub: 'mistakes found, and weak results' }
+    { short: 'What went wrong', sub: 'weak results, then fixed mistakes' }
   );
 
-  s.append(table(['as it was', 'the question asked of it', 'what it is now'], rows, 'grid prose'));
+  s.append(table(['the result', 'the question asked of it', 'what it supports'], rows, 'grid prose'));
+
+  const lead = el('p', 'say');
+  lead.innerHTML = '<b>Fixed before this run.</b>';
+  const ul = el('ul', 'limitlist');
+  for (const item of FIXES) {
+    const li = el('li');
+    li.innerHTML = item;
+    ul.append(li);
+  }
+  s.append(lead, ul);
 }
 
 /* ============================================================== 9 · conclusion */
 
-function chapterConclusion(M) {
-  const cont = M.continuation;
-  const b = M.balance;
+function chapterConclusion(M, W) {
   const s = section(
     'conclusion',
     'conclusion',
     'The verdict',
-    'An exact start, a balanced router, and a lead too small to rank',
-    [
-      `Copying a trained layer into experts and rescaling the kept weights to add up to one converts a
-       model without changing it — measured here, not assumed. From that start the router piled
-       tokens onto a few experts for a few hundred steps and then evened out, with no expert idle
-       after step ${int(b.last_idle)}.`,
-      `The converted model ends ${signed(cont.end_gap)} against an unconverted model given the same
-       training, after trailing it in the middle. That is a result about these two runs. Whether it
-       is a result about the design needs more than one seed.`,
-    ],
+    W.conclusionTitle,
+    W.conclusion,
     { short: 'The verdict', sub: 'what the run establishes' }
   );
 
@@ -1427,8 +1591,11 @@ function chapterLimits(M) {
   const items = [
     `<b>One seed, one run each.</b> The gap between the converted model and the control has no spread
      beside it, so its size cannot be ranked against noise.`,
-    `<b>${int(cont.tokens)} tokens is a short continuation.</b> The experts start identical and drift
-     apart only as routing tells them apart; a longer run could move the comparison either way.`,
+    `<b>${int(cont.tokens)} tokens is a short continuation.</b> The experts start identical and can
+     only grow apart as routing sends them different tokens; a longer run could move the comparison
+     either way.`,
+    `<b>Nothing here measures how far the experts' model weights grew apart</b> — only which experts
+     the router chose.`,
     `<b>The router trial is a choice, not a study</b> — one short run per scoring rule.`,
     `<b>The speed is a reference implementation's.</b> Experts run one after another in a Python loop,
      so the ${int(cont.tokens_per_second.moe)} tokens a second says nothing about an optimised kernel.`,
@@ -1462,7 +1629,7 @@ function chapterLimits(M) {
 
 /* ============================================================== 11 · next */
 
-function chapterNext(M) {
+function chapterNext(M, W) {
   const cfg = M.config;
   const s = section(
     'next',
@@ -1477,8 +1644,7 @@ function chapterNext(M) {
   for (const item of [
     `<b>More seeds for both models.</b> The spread between seeds is the noise floor the final gap has
      to clear, and it is the one number this page most needs and does not have.`,
-    `<b>A longer continuation.</b> Whether the converted model's late lead grows, holds or closes is
-     exactly what a short run cannot see.`,
+    `<b>A longer continuation.</b> ${W.longer} is exactly what a short run cannot see.`,
     `<b>A sweep over the expert count.</b> ${cfg.n_experts} experts with ${cfg.top_k} per token is one
      setting; how the gain and the cost move with it is untested here.`,
     `<b>Experts computed together instead of in a loop.</b> Only then does a speed figure say anything
@@ -1532,7 +1698,7 @@ function chapterReproduce(M) {
        tracked results file and one tracked training log, and the results file carries the block
        below; writing it without its provenance <b>raises</b> rather than warns.`,
       `<b>The dense model is an input like any other.</b> Its digest is recorded, so this run is tied to
-       the exact weights it converted, and a different starting model would show up as a different
+       the exact model weights it converted, and a different starting model would show up as a different
        number here.`,
     ],
     { short: 'The index', sub: 'what produced every number here' }
@@ -1619,17 +1785,18 @@ function buildFooter() {
 }
 
 export function buildPage(M) {
-  chapterThesis(M);
+  const W = wording(M);
+  chapterThesis(M, W);
   chapterGlossary(M);
   chapterProblem(M);
   chapterMechanism(M);
   chapterMethod(M);
-  chapterExpected(M);
-  chapterResults(M);
-  chapterNegatives(M);
-  chapterConclusion(M);
+  chapterExpected(M, W);
+  chapterResults(M, W);
+  chapterNegatives(M, W);
+  chapterConclusion(M, W);
   chapterLimits(M);
-  chapterNext(M);
+  chapterNext(M, W);
   chapterReproduce(M);
   buildRail(main());
   buildFooter();

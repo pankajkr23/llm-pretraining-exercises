@@ -329,6 +329,14 @@ figure svg.chart.dxfig {
   font-weight: 600;
 }
 
+/* The constructed weights say so on the drawing itself, beside the numbers they qualify. */
+.dx-note {
+  fill: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-style: italic;
+}
+
 .dx-lab {
   fill: var(--ink);
   font-family: var(--mono);

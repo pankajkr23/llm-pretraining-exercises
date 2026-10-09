@@ -128,6 +128,28 @@ def test_a_log_row_that_disagrees_with_the_bundle_is_refused() -> None:
             renderer.layer0_loads(bundle, renderer.parse_log(_tamper(old, new)))
 
 
+_DENSE_ROW = "dense step=9 tokens=81920 loss=2.9015 lr=2.083e-04"
+
+
+def test_a_log_whose_schedule_or_losses_disagree_is_refused() -> None:
+    """The twin for `_schedule`: the arms must share a learning rate, and each logged loss must be
+    the bundle's at that step. Broken one at a time, on a real row."""
+    renderer = _renderer()
+    bundle = _bundle()
+    assert renderer._schedule(bundle, renderer.parse_log(LOG.read_text(encoding="utf-8")))
+    for old, new, why in [
+        (
+            _DENSE_ROW,
+            _DENSE_ROW.replace("lr=2.083e-04", "lr=2.084e-04"),
+            "different learning rates",
+        ),
+        (_DENSE_ROW, _DENSE_ROW.replace("loss=2.9015", "loss=2.9016"), "loss is not the bundle"),
+        (_ROW, _ROW.replace("loss=2.9011", "loss=2.9012"), "loss is not the bundle"),
+    ]:
+        with pytest.raises(ValueError, match=why):
+            renderer._schedule(bundle, renderer.parse_log(_tamper(old, new)))
+
+
 def test_no_heading_or_rail_label_types_a_count() -> None:
     """A count in a heading or a rail label must be derived, never typed.
 
@@ -155,42 +177,138 @@ def test_no_heading_or_rail_label_types_a_count() -> None:
         r"\bsection\(\s*'[\w-]+',\s*'[a-z]+',\s*(?:null|'[^']*'|`[^`]*`),\s*`([^`]*)`", source, re.S
     )
     assert labels, "no headings or rail labels matched; the patterns have gone stale"
-    labels = [label for label in labels if "${" not in label]
-    offenders = [label for label in labels if re.search(numbers, label, re.I)]
+    #: Interpolations are derived; the words AROUND them are not. Strip each `${...}` and check what
+    #: is left, so `${Spell(n)} things, two of them` is caught where a blanket exemption let it by.
+    literal = [re.sub(r"\$\{[^}]*\}", " ", label) for label in labels]
+    offenders = [
+        label for label, text in zip(labels, literal, strict=True) if re.search(numbers, text, re.I)
+    ]
     assert not offenders, (
         f"a heading or rail label types a count instead of deriving it: {offenders}. Use "
         "spell()/Spell() over the list itself, or drop the count."
     )
 
 
-def test_no_count_is_typed_into_the_page_as_a_word() -> None:
-    """The page may not carry a large spelled count as a source literal. It must derive every one.
+_LARGE_COUNTS = (
+    "eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
+    "|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty"
+)
 
-    Ported from exercise 08, where adding one entry made six typed "twenty-three"s wrong at once
-    while every table beside them stayed right. Lexical on purpose: a runtime check cannot tell a
-    derived "twelve" from a typed one, and the typed one is the defect.
+
+def _literal_text(source: str) -> list[tuple[int, str]]:
+    """Every run of string-literal text in a JavaScript source, with the line it starts on.
+
+    Re-implemented from exercise 13's guard. A character scanner rather than a line regex, because
+    exercise 08's version asked for an opening quote on the same line as the word, and most prose
+    on these pages sits on the continuation lines of multi-line template literals — a typed count
+    there passed it. Comments are skipped; `${...}` inside a template is code and is skipped too.
     """
+    out: list[tuple[int, str]] = []
+    i, line, n = 0, 1, len(source)
+    stack: list[str] = []  # "`" for an open template, "{" for an open `${` expression or block
+    buf: list[str] = []
+    start = 1
+
+    def flush() -> None:
+        if buf:
+            out.append((start, "".join(buf)))
+            buf.clear()
+
+    while i < n:
+        c = source[i]
+        if stack and stack[-1] == "`":
+            if c == "\\":
+                buf.append(source[i : i + 2])
+                i += 2
+                continue
+            if c == "`":
+                flush()
+                stack.pop()
+            elif source.startswith("${", i):
+                flush()
+                stack.append("{")
+                i += 2
+                continue
+            else:
+                buf.append(c)
+                line += c == "\n"
+            i += 1
+            continue
+        if source.startswith("//", i):
+            j = source.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        if source.startswith("/*", i):
+            j = source.find("*/", i + 2)
+            line += source[i : (n if j < 0 else j)].count("\n")
+            i = n if j < 0 else j + 2
+            continue
+        if c in "'\"":
+            j = i + 1
+            while j < n and source[j] != c and source[j] != "\n":
+                j += 2 if source[j] == "\\" else 1
+            out.append((line, source[i + 1 : j]))
+            i = j + 1
+            continue
+        if c == "`":
+            start = line
+            stack.append("`")
+        elif c == "{" and stack:
+            stack.append("{")
+        elif c == "}" and stack and stack[-1] == "{":
+            stack.pop()
+            if stack and stack[-1] == "`":
+                start = line
+        line += c == "\n"
+        i += 1
+    return out
+
+
+def _spelled_literals(path: Path) -> list[str]:
+    """Literal text in page code carrying a large count as a spelled word. The speller's own table
+    is cut out first, keeping the line numbers; comments may discuss history freely."""
     import re
 
-    numbers = (
-        "eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen"
-        "|twenty(?:-(?:one|two|three|four|five|six|seven|eight|nine))?|thirty"
+    source = path.read_text(encoding="utf-8")
+    source = re.sub(
+        r"const SPELLED = \[.*?\];", lambda m: "\n" * m.group(0).count("\n"), source, flags=re.S
     )
+    return [
+        f"{path.name}:{line}: {text.strip()[:88]}"
+        for line, text in _literal_text(source)
+        if re.search(rf"\b({_LARGE_COUNTS})\b", text, re.I)
+    ]
+
+
+def test_no_count_is_typed_into_the_page_as_a_word() -> None:
+    """The page derives every large spelled count; it never types one. Ported from exercise 08,
+    where adding one entry made six typed "twenty-three"s wrong at once, and scanned by character
+    so that a word on the continuation line of a template literal is seen."""
     offenders = []
     for path in sorted((EXERCISE / "web").rglob("*.js")):
         if path.name == "data.js" or "_shared" in path.parts:
             continue
-        in_speller = False
-        for n, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
-            if "const SPELLED" in line:
-                in_speller = True
-            if in_speller:
-                if line.rstrip().endswith("];"):
-                    in_speller = False
-                continue
-            code = line.split("//")[0]
-            if code.lstrip().startswith("*") or code.lstrip().startswith("/*"):
-                continue
-            if re.search(rf"['\"`][^'\"`]*\b({numbers})\b", code, re.I):
-                offenders.append(f"{path.name}:{n}: {line.strip()[:88]}")
+        read = sum(len(text) for _, text in _literal_text(path.read_text(encoding="utf-8")))
+        assert read > 10_000, f"the scanner read only {read} characters of {path.name}'s prose"
+        offenders += _spelled_literals(path)
     assert not offenders, "spelled counts typed into page prose:\n  " + "\n  ".join(offenders)
+
+
+def test_the_count_word_guard_catches_a_typed_word(tmp_path: Path) -> None:
+    """Its twin. The third planted case is the one a line-based guard misses: the word on a
+    continuation line of a multi-line template literal, with no quote on its own line."""
+    planted = tmp_path / "planted.js"
+    planted.write_text(
+        "const SPELLED = [\n  'twelve',\n];\n"
+        "// twelve in a comment is history\n"
+        "/* so is thirteen\n   in a block comment */\n"
+        "const a = 'eleven rows';\n"
+        "const b = `the model's twelve blocks`;\n"
+        "const c = `a long sentence that wraps,\n   then says fourteen experts on its own`;\n"
+        "const d = `${twelve.length} from code, not typed`;\n",
+        encoding="utf-8",
+    )
+    found = _spelled_literals(planted)
+    assert len(found) == 3, found
+    assert "eleven rows" in found[0] and "twelve blocks" in found[1] and "fourteen" in found[2]
+    assert found[2].startswith("planted.js:9:"), "a multi-line literal reports its first line"
