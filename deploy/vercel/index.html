@@ -193,6 +193,19 @@
             <div class="meta">Ask what each half of a ratio is counting · every figure from the run</div>
           </span>
         </a>
+        <a class="item" href="/13-reversibility/">
+          <span class="idx">13</span>
+          <span>
+            <h2>Run the network backwards instead of remembering it</h2>
+            <p>
+              Training keeps every layer's working state until the backward pass needs it. A
+              reversible network keeps only the top of the stack and rebuilds the rest by running
+              its update rule in reverse — far less memory, a far larger batch, and a rule refused
+              because the gradients it rebuilt were no longer the true ones.
+            </p>
+            <div class="meta">Memory traded for compute, then checked · every figure from the run</div>
+          </span>
+        </a>
       </nav>
 
       <footer>

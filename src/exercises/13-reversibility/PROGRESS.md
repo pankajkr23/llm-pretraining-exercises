@@ -46,6 +46,7 @@ hidden inside it). Long runs are wrapped in `caffeinate -i -s`, which stops idle
 | 17:21–19:21 | vitals watchdog | as above | thermal state 1 throughout, memory pressure normal, no swap, **no pause** |
 | 15:28– | vitals watchdog (`artifacts/vitals/watchdog.sh`, CPU only, one sample a minute) | record thermal state, memory pressure, swap, GPU use, battery and power; pause the run if the machine is stressed | running |
 | throughout | monitors reading the run's log once a minute | report stages and failures | ended with each run |
+| 2026-10-10 | `render_results.py`, the page's tests, headless-browser screenshots (CPU only) | build the page | no training, no GPU; `results/` untouched |
 
 **The watchdog, and why it may pause a run.** Every minute it appends a row to
 `artifacts/vitals/vitals.csv` (gitignored). If the thermal state reaches *serious*, memory pressure
@@ -73,6 +74,26 @@ attempts that reached them. The largest-batch search gave 80/447 and 80/455 befo
 and 81/496 after it: the measurement's own leaked graphs had been taking memory from the search.
 
 ## Change log
+
+### 2026-10-10 — the page
+
+`web/` is the exercise's public page, on the twelve-part spine. `tools/render_results.py` gained
+`render_page_data()`: the comparisons the prose states — the bytes ratio, the batch ratio, the loss
+gaps, the step ratio, whether a speed gap is inside the machine's own spread — are now functions
+both `RESULTS.md` and `web/data.js` call, and `RESULTS.md` regenerates byte-identical (same
+sha256 before and after the refactor). No experiment was re-run; nothing in `results/` changed.
+
+- **Found while building it:** the plan for the page called the blend "the best-scoring rule".
+  It was not — leapfrog at h = 0.25 scored 5.0171 against the best blend's 5.2139 — so the page says
+  the refusal did not change the choice, and why the refusal still matters.
+- **Found by looking at the page on a phone:** every figure first drawn at 620–720 pixels put the
+  part that carries its argument — the gate and the blend marks, the measured limits, the end of
+  each run — past the right edge of a 390-pixel screen. All are now drawn at 248, the inner width
+  of a figure on a 320-pixel phone.
+- **Guards, each watched failing once:** the drift test for `data.js`, a check that the page and
+  `RESULTS.md` quote the same comparisons, a check that the derived largest batch is exactly the
+  arithmetic the budget bar draws, the heading and spelled-count guards ported from 10 and 08, and
+  a browser test (`test_reversible_page_render.py`) with one assertion per interactive figure.
 
 ### 2026-10-09 — CI found the tool recording the wrong corpus
 

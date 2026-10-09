@@ -14,12 +14,14 @@ committed file differs from a fresh render of the committed bundles.
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
 EXERCISE = Path(__file__).resolve().parents[1]
 RESULTS = EXERCISE / "results"
 OUT = EXERCISE / "RESULTS.md"
+PAGE_DATA = EXERCISE / "web" / "data.js"
 TASKS = ("trials", "fixed_batch", "max_batch", "max_batch_run")
 MIB = 2**20
 GIB = 2**30
@@ -50,14 +52,44 @@ def _mib(n: int | None) -> str:
     return "—" if n is None else f"{n / MIB:,.1f} MiB"
 
 
+def ratio(numerator: float, denominator: float) -> float | None:
+    """`numerator / denominator`, or `None` when either side is unmeasured (zero or negative).
+
+    The one place a comparison's ratio is computed, so `RESULTS.md` and the page's `data.js` quote
+    the same number rather than two computations that happen to agree today.
+    """
+    if numerator <= 0 or denominator <= 0:
+        return None
+    return numerator / denominator
+
+
+def loss_gap(base: float, other: float) -> float:
+    """`other − base`: positive when `other` ended with the higher (worse) loss."""
+    return other - base
+
+
 def _ratio_words(numerator: float, denominator: float, more: str, less: str) -> str:
     """`2.0× more`, `2.0× less` or `the same`, with the direction chosen from the numbers."""
-    if numerator <= 0 or denominator <= 0:
+    value = ratio(numerator, denominator)
+    if value is None:
         return "an unmeasured (zero) amount"
-    ratio = numerator / denominator
-    if abs(ratio - 1) < SAME:
+    if abs(value - 1) < SAME:
         return "the same"
-    return f"{ratio:.1f}× {more}" if ratio > 1 else f"{1 / ratio:.1f}× {less}"
+    return f"{value:.1f}× {more}" if value > 1 else f"{1 / value:.1f}× {less}"
+
+
+def speed_change(base_tps: float, rev_tps: float) -> float | None:
+    """The reversible run's throughput relative to the baseline's, minus one; `None` if untimed."""
+    if base_tps <= 0 or rev_tps <= 0:
+        return None
+    return rev_tps / base_tps - 1
+
+
+def inside_floor(base_tps: float, rev_tps: float, floor: float | None) -> bool:
+    """Whether a speed gap is no larger than the machine's own spread, so it ranks nothing."""
+    if floor is None or base_tps <= 0 or rev_tps <= 0:
+        return False
+    return max(rev_tps, base_tps) / min(rev_tps, base_tps) <= floor
 
 
 def speed_words(base_tps: float, rev_tps: float, floor: float | None = None) -> str:
@@ -66,13 +98,13 @@ def speed_words(base_tps: float, rev_tps: float, floor: float | None = None) -> 
     `floor` is the machine's own throughput spread (see `throughput_floor`): a gap inside it is
     reported as such rather than as a difference between the models.
     """
-    if base_tps <= 0 or rev_tps <= 0:
+    change = speed_change(base_tps, rev_tps)
+    if change is None:
         return "speed could not be compared (a run had no timed steps)"
-    change = rev_tps / base_tps - 1
     if abs(change) < SAME:
         return "the same tokens per second (within 0.5%)"
     words = f"{abs(change):.0%} {'more' if change > 0 else 'fewer'} tokens per second"
-    if floor is not None and max(rev_tps, base_tps) / min(rev_tps, base_tps) <= floor:
+    if inside_floor(base_tps, rev_tps, floor):
         return (
             f"{words} — inside the machine's own throughput spread of {floor:.2f}×, so this does "
             "not rank their speed"
@@ -239,11 +271,22 @@ def fixed_section(b: dict, floor: float | None = None) -> list[str]:
         f"- **After the forward pass, the reversible model kept {kept_words}** for the backward "
         f"pass, and ran at {speed}.",
         f"- Its rebuilt gradients on the trained weights {agreement_words(trained)}.",
-        f"- Final validation loss differs by {rev['final_val'] - base['final_val']:+.4f} "
+        f"- Final validation loss differs by {loss_gap(base['final_val'], rev['final_val']):+.4f} "
         "(reversible minus baseline). One seed each and no seed spread measured, so this is not a "
         "ranking.",
         "",
     ]
+
+
+def measured_share(variant: dict) -> float | None:
+    """The measured largest batch as a share of the derived one, or `None` if either is missing.
+
+    The derived figure leaves out gradient buffers, allocator slack and kernel workspaces, so this
+    share is how much of the derived batch those uncounted bytes cost.
+    """
+    if variant["measured_max_batch"] and variant["derived_max_batch"]:
+        return variant["measured_max_batch"] / variant["derived_max_batch"]
+    return None
 
 
 def max_section(b: dict) -> list[str]:
@@ -304,8 +347,8 @@ def max_section(b: dict) -> list[str]:
     ]
     if r["capped"]:
         for label, v in (("baseline", base), ("reversible", rev)):
-            if v["measured_max_batch"] and v["derived_max_batch"]:
-                share = v["measured_max_batch"] / v["derived_max_batch"]
+            share = measured_share(v)
+            if share is not None:
                 out.append(
                     f"- The {label}'s measured largest batch is {share:.0%} of its derived one."
                 )
@@ -359,9 +402,9 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
             f"- Against the baseline at its fixed batch of {fixed['result']['batch']} (not at the "
             f"baseline's own largest batch): "
             f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'], floor)}**, final "
-            f"validation loss {run['final_val'] - base['final_val']:+.4f}.",
-            f"- The same tokens took {base['steps'] / run['steps']:.1f}× fewer optimiser steps "
-            f"here ({run['steps']:,} against {base['steps']:,}). "
+            f"validation loss {loss_gap(base['final_val'], run['final_val']):+.4f}.",
+            f"- The same tokens took {ratio(base['steps'], run['steps']):.1f}× fewer optimiser "
+            f"steps here ({run['steps']:,} against {base['steps']:,}). "
             "At a fixed token budget, fewer and "
             "larger steps train less far unless the rate grows with the batch, and the short rate "
             "check above can only see the first steps of a run. The loss gap is measured; this "
@@ -370,6 +413,282 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
             "",
         ]
     return out
+
+
+#: How finely the page's series are kept. A curve is drawn a few hundred pixels wide, so more
+#: points than this carry nothing a reader can see and only bloat the file the page loads.
+TRIAL_POINTS = 60
+FIXED_POINTS = 300
+SIGNIFICANT = 5
+
+
+def _sig(value: float) -> float:
+    """A series value rounded to `SIGNIFICANT` figures. Scalars are never passed through this."""
+    return float(f"{value:.{SIGNIFICANT}g}")
+
+
+def loss_series(run: dict, points: int) -> dict:
+    """A run's logged training loss as `points` bucket means, against tokens seen.
+
+    The first logged loss is kept on its own, unaveraged: it is the curve's highest point and the
+    one a bucket would smear into the steps after it. Every other point is the mean of an equal run
+    of consecutive logged steps, placed at their mean step. `per_point` says how many logged steps
+    each point averages, so a caption can state it rather than guess it.
+    """
+    losses = run["losses"]
+    every = run["curve_every"]
+    per_step = run["tokens"] / run["steps"]
+    steps = [i * every for i in range(len(losses))]
+    xs, ys = [steps[0]], [losses[0]]
+    rest = list(zip(steps[1:], losses[1:], strict=True))
+    count = min(points, len(rest))
+    for k in range(count):
+        chunk = rest[round(k * len(rest) / count) : round((k + 1) * len(rest) / count)]
+        xs.append(sum(s for s, _ in chunk) / len(chunk))
+        ys.append(sum(v for _, v in chunk) / len(chunk))
+    return {
+        "tokens": [_sig((x + 1) * per_step) for x in xs],
+        "loss": [_sig(y) for y in ys],
+        "per_point": len(rest) / count if count else 0,
+        "logged_every": every,
+    }
+
+
+def _validation(run: dict) -> dict:
+    """The run's validation losses, against the tokens seen when each was measured."""
+    per_step = run["tokens"] / run["steps"]
+    keys = sorted(run["val"], key=int)
+    return {
+        "tokens": [(int(k) + 1) * per_step for k in keys],
+        "loss": [run["val"][k] for k in keys],
+    }
+
+
+def _run_numbers(run: dict) -> dict:
+    """The scalars of one training run, at full precision."""
+    return {
+        key: run[key]
+        for key in (
+            "variant",
+            "h",
+            "batch",
+            "lr",
+            "steps",
+            "tokens",
+            "final_val",
+            "tokens_per_second",
+            "seconds",
+            "saved_bytes",
+            "allocated_max_sample",
+            "parameters",
+            "diverged",
+        )
+    }
+
+
+def page_trials(b: dict) -> dict:
+    """Each short trial: final loss, measured rebuild error, and whether the gate let it in."""
+    r = b["result"]
+    tolerance = r["gradient_tolerance"]
+    rules = []
+    for key, run in r["reversible"].items():
+        rule, h = key.split("@")
+        agreement = r["agreement_at_init"].get(key)
+        rules.append(
+            {
+                "key": key,
+                "rule": rule,
+                "h": float(h),
+                "final_val": None if run["diverged"] else run["final_val"],
+                "diverged": run["diverged"],
+                "tokens_per_second": run["tokens_per_second"],
+                "agreement": agreement,
+                "eligible": key not in r.get("ineligible", {}),
+                "curve": loss_series(run, TRIAL_POINTS),
+            }
+        )
+    baseline = [
+        {
+            "lr": float(lr),
+            "final_val": run["final_val"],
+            "tokens_per_second": run["tokens_per_second"],
+            "curve": loss_series(run, TRIAL_POINTS),
+        }
+        for lr, run in r["baseline"].items()
+    ]
+    return {
+        "tokens_per_trial": r["tokens_per_trial"],
+        "steps": next(iter(r["reversible"].values()))["steps"],
+        "best_lr": r["best_lr"],
+        "best_lr_at_edge": r["best_lr_at_edge"],
+        "tolerance": tolerance,
+        "choice": r["choice"],
+        "diverged": r["diverged"],
+        "ineligible": r.get("ineligible", {}),
+        "rules": rules,
+        "baseline": baseline,
+    }
+
+
+def page_fixed(b: dict, floor: float | None) -> dict:
+    """The two full runs at the same batch, with every comparison the page states."""
+    r = b["result"]
+    base, rev = r["baseline"], r["reversible"]
+    return {
+        "batch": r["batch"],
+        "lr": r["lr"],
+        "baseline": _run_numbers(base),
+        "reversible": _run_numbers(rev),
+        "agreement": r["agreement"],
+        "kept_ratio": ratio(base["saved_bytes"], rev["saved_bytes"]),
+        "speed_change": speed_change(base["tokens_per_second"], rev["tokens_per_second"]),
+        "speed_inside_floor": inside_floor(
+            base["tokens_per_second"], rev["tokens_per_second"], floor
+        ),
+        "loss_gap": loss_gap(base["final_val"], rev["final_val"]),
+        "curves": {
+            "baseline": loss_series(base, FIXED_POINTS),
+            "reversible": loss_series(rev, FIXED_POINTS),
+        },
+        "validation": {"baseline": _validation(base), "reversible": _validation(rev)},
+    }
+
+
+def page_max(b: dict) -> dict:
+    """The largest batch each variant fits in the budget, measured and derived."""
+    r = b["result"]
+    variants = {}
+    for name in ("baseline", "reversible"):
+        v = r[name]
+        variants[name] = {**v, "measured_share": measured_share(v)}
+    return {
+        "budget_gib": r["budget_gib"],
+        "budget_bytes": r["budget_gib"] * GIB,
+        "capped": r["capped"],
+        "device": r["device"],
+        "device_limit_bytes": r["device_limit_bytes"],
+        "ceiling": r["ceiling"],
+        "batch_ratio": ratio(
+            r["reversible"]["measured_max_batch"] or 0, r["baseline"]["measured_max_batch"] or 0
+        ),
+        **variants,
+    }
+
+
+def page_max_run(b: dict, fixed: dict | None, floor: float | None) -> dict:
+    """The reversible model near its largest batch, against the baseline at its fixed one."""
+    r = b["result"]
+    run = r["run"]
+    out = {
+        "batch": r["batch"],
+        "largest_found": r.get("largest_found"),
+        "run_fraction": r.get("run_fraction"),
+        "check_steps": r["check_steps"],
+        "lr_checks": [
+            {
+                "multiplier": float(m),
+                "lr": c["lr"],
+                "final_val": None if c["diverged"] else c["final_val"],
+                "diverged": c["diverged"],
+            }
+            for m, c in r["lr_checks"].items()
+        ],
+        "lr_multiplier": r["lr_multiplier"],
+        "lr_multiplier_at_edge": r["lr_multiplier_at_edge"],
+        "run": _run_numbers(run),
+        "curve": loss_series(run, len(run["losses"])),
+        "validation": _validation(run),
+    }
+    if fixed:
+        base = fixed["result"]["baseline"]
+        out |= {
+            "speed_change": speed_change(base["tokens_per_second"], run["tokens_per_second"]),
+            "speed_inside_floor": inside_floor(
+                base["tokens_per_second"], run["tokens_per_second"], floor
+            ),
+            "loss_gap": loss_gap(base["final_val"], run["final_val"]),
+            "step_ratio": ratio(base["steps"], run["steps"]),
+        }
+    return out
+
+
+#: The settings a reader is told about, from the preset every bundle carries.
+_PRESET_KEYS = (
+    "width",
+    "depth",
+    "seq_len",
+    "batch",
+    "tokens",
+    "trial_tokens",
+    "trial_lrs",
+    "trial_rules",
+    "trial_h",
+    "blend_a",
+    "gradient_tolerance",
+    "memory_budget_gib",
+    "max_batch_ceiling",
+    "max_batch_lrs",
+    "max_batch_check_steps",
+    "max_batch_run_fraction",
+    "warmup_fraction",
+    "grad_clip",
+    "seed",
+)
+
+
+def page_numbers(bundles: dict[str, dict]) -> dict:
+    """Every number the page draws, computed by the same functions `RESULTS.md` uses."""
+    floor = throughput_floor(bundles.get("trials"))
+    any_bundle = next(iter(bundles.values()))
+    out: dict = {
+        "preset": {k: any_bundle["preset"][k] for k in _PRESET_KEYS},
+        "corpus": {
+            "dataset": any_bundle["corpus"]["dataset"],
+            "train_tokens": any_bundle["corpus"]["train_tokens"],
+        },
+        "epochs": {t: bundle["corpus"]["longest_run_epochs"] for t, bundle in bundles.items()},
+        "provenance": {t: bundle["provenance"] for t, bundle in bundles.items()},
+        "seconds": {t: bundle["seconds"] for t, bundle in bundles.items()},
+        "throughput_floor": floor,
+        "approximate_above": GRADIENT_TOLERANCE,
+    }
+    if "trials" in bundles:
+        out["trials"] = page_trials(bundles["trials"])
+    if "fixed_batch" in bundles:
+        out["fixed"] = page_fixed(bundles["fixed_batch"], floor)
+    if "max_batch" in bundles:
+        out["max_batch"] = page_max(bundles["max_batch"])
+    if "max_batch_run" in bundles:
+        out["max_run"] = page_max_run(bundles["max_batch_run"], bundles.get("fixed_batch"), floor)
+    return out
+
+
+def render_page_data(results: Path = RESULTS) -> str:
+    """Generate `web/data.js` — every figure the page draws, read from the same bundles.
+
+    **The page must not hold a number of its own.** `chapters.js` reads `M.*` and writes nothing,
+    and every comparison it states — a ratio, a gap, whether a speed difference is inside the
+    machine's own spread — is computed here by the functions `RESULTS.md` is rendered with, so the
+    two documents cannot quote different arithmetic.
+    """
+    body = json.dumps(page_numbers(load(results)), indent=2, sort_keys=True)
+    # A series is one line, not one line per point: indented, the curves alone ran to thousands of
+    # lines, which buries the scalars a reviewer actually reads in a diff.
+    body = _NUMERIC_ARRAY.sub(
+        lambda m: "[" + ", ".join(v.strip() for v in m.group(1).split(",")) + "]", body
+    )
+    return (
+        "/* GENERATED by tools/render_results.py. Do not edit.\n"
+        " *\n"
+        " * Every number the page draws is in here, read from results/*.json. `chapters.js`\n"
+        " * holds none of its own.\n"
+        " */\n"
+        "export const M = " + body + ";\n"
+    )
+
+
+#: An indented JSON array holding only numbers (or nulls), captured without its brackets.
+_NUMERIC_ARRAY = re.compile(r"\[\s*((?:-?[\d.eE+-]+|null)(?:,\s*(?:-?[\d.eE+-]+|null))*)\s*\]")
 
 
 def render(results: Path = RESULTS) -> str:
@@ -430,6 +749,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if current == fresh else 1
     OUT.write_text(fresh, encoding="utf-8")
     print(f"wrote {OUT.relative_to(EXERCISE)}")
+    if PAGE_DATA.parent.is_dir() and load():
+        PAGE_DATA.write_text(render_page_data(), encoding="utf-8")
+        print(f"wrote {PAGE_DATA.relative_to(EXERCISE)}")
     return 0
 
 

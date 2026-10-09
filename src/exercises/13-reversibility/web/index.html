@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run the network backwards instead of remembering it</title>
+    <meta
+      name="description"
+      content="Training keeps every layer's working state in memory until the backward pass needs it. A reversible network keeps only the top of the stack and rebuilds the rest by running its update rule in reverse — far less memory and a far larger batch, with the rebuilt gradients checked against stored ones, and a rule refused because its gradients were not the true ones."
+    />
+    <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cpath d='M10 8 L10 24 M16 8 L16 24 M22 8 L22 24' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3Cpath d='M7 12 L16 6 L25 12' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/components.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <link rel="stylesheet" href="./_shared/page.css" />
+    <link rel="stylesheet" href="./page-extra.css" />
+    <!--
+      Applied before first paint, on purpose. Reading the stored theme from a module would leave
+      the page rendering system colours for a frame and then repainting, which is the flash every
+      theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        /* Private mode or blocked storage: the system theme is a fine answer. */
+      }
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shellbar">
+        <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+        <div class="themepick">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="system">System</option>
+            <option value="soft-light">Soft light</option>
+            <option value="tinted-dark">Tinted dark</option>
+            <option value="high-contrast">High contrast</option>
+            <option value="neon">Neon</option>
+          </select>
+        </div>
+      </div>
+      <p class="eyebrow">13 · Reversible training</p>
+      <h1>Run the network backwards instead of remembering it</h1>
+      <p class="lede">
+        To learn from a guess, a network has to look again at every step it took to make it — so
+        ordinary training keeps all of those steps in memory. <b>A reversible network keeps only
+        the top of the stack and rebuilds the rest</b>, by running its own update rule in reverse,
+        at the cost of running each layer again. The memory falls, the batch that fits grows, and
+        a rule for doing it was refused before it could be used, because the gradients it rebuilt
+        were no longer the true ones.
+      </p>
+      <p class="lede-actions">
+        <a class="jump" href="#results">Skip to what happened <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#glossary">Start with the words you need</a>
+      </p>
+      <aside id="rail" class="rail"></aside>
+      <main id="main"></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { buildPage } from './chapters.js';
+      import { bindThemePicker } from './_shared/theme.js';
+      import { M } from './data.js';
+
+      buildPage(M);
+
+      /* The picker. The head script already applied the stored choice; this only keeps the control
+       * in step with it and writes changes back. "system" removes the attribute rather than setting
+       * a value, because that is what lets prefers-color-scheme take over again. */
+      bindThemePicker();
+    </script>
+  </body>
+</html>

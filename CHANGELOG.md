@@ -48,6 +48,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   other; the bundle is tied to exercise 13's committed results by digest; the training log is in
   the repository. A device-only bug — balancing buffers on the CPU under a GPU model — was found by
   a GPU smoke run and is now guarded.
+- **Exercise 13 has a page.** The backward pass walked block by block, with the memory it holds
+  the same at every position; the update rules as coefficients, showing why the ordinary block
+  cannot be undone and why the blend magnifies rounding; every trial candidate against the 1% gate,
+  where the blend is refused with its own measured error; an 8 GiB budget that a reader fills by
+  choosing a batch and then checks against the GPU's measured limit, with the guess pinned beside
+  it; and the long runs' curves. Every number comes from a generated `web/data.js`, written by the
+  same functions as `RESULTS.md`; a test fails if it is stale, and another fails if the page and
+  the document quote different comparisons. Every figure is drawn at a phone's width, so nothing
+  that carries an argument sits behind a sideways scroll.
 - **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
   devices, reversible training, and turning a dense model into a mixture of experts. Each has the
   standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a
