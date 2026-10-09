@@ -1982,4 +1982,14 @@ predates the harness — so it is logged as what it was.
                           made by Bash before the refusal (artifacts/vitals/thermal{,.swift}) await
                           PK's decision.
                           #195 opened
+
+2026-10-09  exercise-14   14 published in one full run (1,592 s, no watchdog pause) from 13's
+                          published baseline: the conversion changes validation loss by exactly 0;
+                          the MoE trains 3.0526 -> 3.0172 on 10M further tokens beside a dense control
+                          at 3.0240; both rise first with the re-warmed rate, explained from the
+                          control. Bundle tied to 13's committed results by digest; training log in
+                          the repository. A GPU-only bug (balancing buffers on CPU) was caught by a
+                          GPU smoke run. Stacked on #195. Merge order: #194, #195, #196; #193 and
+                          #192 are independent.
+                          #196 opened
 ```

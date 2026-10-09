@@ -1,0 +1,246 @@
+moe step=-1 tokens=0 val=3.0526
+moe step=9 tokens=81920 loss=2.9011 lr=2.083e-04 max_violation=0.334 dead=0 layer0_load=[0.223,0.252,0.259,0.292,0.202,0.226,0.264,0.282]
+moe step=19 tokens=163840 loss=3.1345 lr=4.167e-04 max_violation=0.831 dead=0 layer0_load=[0.218,0.153,0.245,0.186,0.376,0.283,0.294,0.245]
+moe step=29 tokens=245760 loss=3.1179 lr=5.000e-04 max_violation=1.730 dead=0 layer0_load=[0.233,0.023,0.140,0.162,0.294,0.206,0.664,0.279]
+moe step=39 tokens=327680 loss=3.0034 lr=4.998e-04 max_violation=2.099 dead=0 layer0_load=[0.147,0.031,0.139,0.060,0.389,0.369,0.694,0.170]
+moe step=49 tokens=409600 loss=3.1244 lr=4.995e-04 max_violation=2.591 dead=0 layer0_load=[0.223,0.071,0.313,0.175,0.178,0.728,0.135,0.177]
+moe step=59 tokens=491520 loss=3.0735 lr=4.990e-04 max_violation=2.853 dead=0 layer0_load=[0.356,0.376,0.243,0.393,0.055,0.484,0.019,0.076]
+moe step=69 tokens=573440 loss=3.0634 lr=4.984e-04 max_violation=2.960 dead=0 layer0_load=[0.099,0.925,0.171,0.649,0.023,0.040,0.011,0.083]
+moe step=79 tokens=655360 loss=3.1061 lr=4.977e-04 max_violation=2.912 dead=1 layer0_load=[0.015,0.933,0.172,0.624,0.007,0.001,0.008,0.240]
+moe step=89 tokens=737280 loss=3.0890 lr=4.967e-04 max_violation=2.952 dead=1 layer0_load=[0.004,0.737,0.302,0.438,0.005,0.001,0.010,0.502]
+moe step=99 tokens=819200 loss=3.1260 lr=4.956e-04 val=3.1079 max_violation=3.000 dead=0 layer0_load=[0.028,0.188,0.546,0.111,0.058,0.025,0.100,0.944]
+moe step=109 tokens=901120 loss=3.0436 lr=4.944e-04 max_violation=2.945 dead=1 layer0_load=[0.046,0.070,0.468,0.030,0.180,0.023,0.214,0.968]
+moe step=119 tokens=983040 loss=2.9698 lr=4.930e-04 max_violation=3.000 dead=0 layer0_load=[0.204,0.083,0.251,0.010,0.694,0.026,0.430,0.302]
+moe step=129 tokens=1064960 loss=3.0121 lr=4.915e-04 max_violation=3.000 dead=1 layer0_load=[0.251,0.083,0.047,0.004,0.798,0.065,0.710,0.041]
+moe step=139 tokens=1146880 loss=3.0091 lr=4.898e-04 max_violation=3.000 dead=0 layer0_load=[0.380,0.096,0.012,0.011,0.725,0.099,0.649,0.026]
+moe step=149 tokens=1228800 loss=3.0675 lr=4.880e-04 max_violation=3.000 dead=0 layer0_load=[0.660,0.179,0.011,0.010,0.342,0.306,0.445,0.046]
+moe step=159 tokens=1310720 loss=3.1555 lr=4.860e-04 max_violation=2.949 dead=1 layer0_load=[0.762,0.249,0.023,0.015,0.068,0.518,0.244,0.121]
+moe step=169 tokens=1392640 loss=3.0698 lr=4.838e-04 max_violation=2.880 dead=0 layer0_load=[0.294,0.307,0.062,0.045,0.046,0.800,0.183,0.265]
+moe step=179 tokens=1474560 loss=3.1907 lr=4.816e-04 max_violation=2.779 dead=0 layer0_load=[0.069,0.297,0.179,0.186,0.070,0.800,0.089,0.310]
+moe step=189 tokens=1556480 loss=3.0301 lr=4.792e-04 max_violation=3.000 dead=0 layer0_load=[0.012,0.281,0.427,0.426,0.053,0.398,0.063,0.341]
+moe step=199 tokens=1638400 loss=3.0628 lr=4.766e-04 val=3.1116 max_violation=2.998 dead=1 layer0_load=[0.010,0.150,0.603,0.674,0.078,0.101,0.048,0.336]
+moe step=209 tokens=1720320 loss=3.0671 lr=4.739e-04 max_violation=2.996 dead=1 layer0_load=[0.010,0.161,0.548,0.800,0.095,0.066,0.066,0.254]
+moe step=219 tokens=1802240 loss=3.0320 lr=4.711e-04 max_violation=2.979 dead=1 layer0_load=[0.013,0.237,0.321,0.773,0.256,0.046,0.101,0.252]
+moe step=229 tokens=1884160 loss=3.0879 lr=4.681e-04 max_violation=2.939 dead=0 layer0_load=[0.052,0.339,0.209,0.284,0.400,0.081,0.373,0.261]
+moe step=239 tokens=1966080 loss=3.0755 lr=4.650e-04 max_violation=2.885 dead=0 layer0_load=[0.126,0.261,0.228,0.168,0.244,0.169,0.615,0.190]
+moe step=249 tokens=2048000 loss=3.0533 lr=4.618e-04 max_violation=2.994 dead=0 layer0_load=[0.246,0.226,0.187,0.108,0.188,0.234,0.713,0.098]
+moe step=259 tokens=2129920 loss=3.1437 lr=4.584e-04 max_violation=2.954 dead=0 layer0_load=[0.422,0.254,0.241,0.110,0.200,0.265,0.439,0.070]
+moe step=269 tokens=2211840 loss=3.1856 lr=4.549e-04 max_violation=2.811 dead=0 layer0_load=[0.855,0.204,0.191,0.148,0.175,0.239,0.096,0.092]
+moe step=279 tokens=2293760 loss=3.1031 lr=4.513e-04 max_violation=2.852 dead=0 layer0_load=[0.963,0.134,0.147,0.230,0.169,0.241,0.017,0.099]
+moe step=289 tokens=2375680 loss=3.1863 lr=4.476e-04 max_violation=2.849 dead=0 layer0_load=[0.756,0.124,0.158,0.281,0.268,0.261,0.009,0.144]
+moe step=299 tokens=2457600 loss=3.0770 lr=4.437e-04 val=3.1148 max_violation=2.939 dead=0 layer0_load=[0.097,0.251,0.206,0.365,0.418,0.282,0.031,0.348]
+moe step=309 tokens=2539520 loss=3.0484 lr=4.397e-04 max_violation=2.322 dead=0 layer0_load=[0.019,0.244,0.274,0.223,0.631,0.240,0.047,0.324]
+moe step=319 tokens=2621440 loss=2.9670 lr=4.357e-04 max_violation=1.929 dead=0 layer0_load=[0.018,0.302,0.399,0.174,0.518,0.246,0.099,0.245]
+moe step=329 tokens=2703360 loss=3.1346 lr=4.315e-04 max_violation=2.554 dead=0 layer0_load=[0.031,0.245,0.521,0.255,0.218,0.238,0.262,0.230]
+moe step=339 tokens=2785280 loss=3.0730 lr=4.272e-04 max_violation=2.703 dead=0 layer0_load=[0.070,0.281,0.508,0.235,0.164,0.221,0.274,0.247]
+moe step=349 tokens=2867200 loss=3.0906 lr=4.227e-04 max_violation=2.571 dead=0 layer0_load=[0.198,0.253,0.288,0.245,0.133,0.267,0.350,0.266]
+moe step=359 tokens=2949120 loss=3.0705 lr=4.182e-04 max_violation=1.480 dead=0 layer0_load=[0.285,0.229,0.202,0.252,0.193,0.269,0.313,0.257]
+moe step=369 tokens=3031040 loss=3.0320 lr=4.136e-04 max_violation=1.988 dead=0 layer0_load=[0.349,0.217,0.212,0.273,0.253,0.241,0.210,0.244]
+moe step=379 tokens=3112960 loss=3.1385 lr=4.089e-04 max_violation=2.884 dead=0 layer0_load=[0.464,0.102,0.250,0.261,0.238,0.282,0.156,0.247]
+moe step=389 tokens=3194880 loss=3.1165 lr=4.041e-04 max_violation=2.966 dead=0 layer0_load=[0.386,0.119,0.238,0.360,0.268,0.240,0.133,0.255]
+moe step=399 tokens=3276800 loss=3.0605 lr=3.992e-04 val=3.1022 max_violation=2.793 dead=0 layer0_load=[0.227,0.156,0.258,0.500,0.249,0.230,0.159,0.222]
+moe step=409 tokens=3358720 loss=3.0809 lr=3.943e-04 max_violation=1.401 dead=0 layer0_load=[0.170,0.259,0.256,0.307,0.266,0.229,0.260,0.254]
+moe step=419 tokens=3440640 loss=3.0365 lr=3.892e-04 max_violation=0.688 dead=0 layer0_load=[0.172,0.255,0.267,0.240,0.278,0.247,0.286,0.256]
+moe step=429 tokens=3522560 loss=3.0995 lr=3.841e-04 max_violation=0.688 dead=0 layer0_load=[0.216,0.261,0.257,0.218,0.263,0.248,0.260,0.277]
+moe step=439 tokens=3604480 loss=3.1483 lr=3.789e-04 max_violation=0.836 dead=0 layer0_load=[0.242,0.266,0.264,0.175,0.270,0.275,0.272,0.237]
+moe step=449 tokens=3686400 loss=3.0678 lr=3.736e-04 max_violation=0.859 dead=0 layer0_load=[0.261,0.280,0.263,0.248,0.257,0.223,0.243,0.223]
+moe step=459 tokens=3768320 loss=3.0655 lr=3.682e-04 max_violation=0.622 dead=0 layer0_load=[0.261,0.272,0.226,0.260,0.246,0.255,0.229,0.251]
+moe step=469 tokens=3850240 loss=3.0502 lr=3.628e-04 max_violation=0.971 dead=0 layer0_load=[0.235,0.242,0.240,0.286,0.226,0.256,0.260,0.254]
+moe step=479 tokens=3932160 loss=3.1293 lr=3.573e-04 max_violation=0.887 dead=0 layer0_load=[0.229,0.248,0.228,0.302,0.236,0.254,0.254,0.248]
+moe step=489 tokens=4014080 loss=3.1068 lr=3.518e-04 max_violation=0.448 dead=0 layer0_load=[0.240,0.260,0.250,0.257,0.232,0.258,0.253,0.250]
+moe step=499 tokens=4096000 loss=3.0476 lr=3.462e-04 val=3.0929 max_violation=0.332 dead=0 layer0_load=[0.225,0.257,0.261,0.245,0.232,0.249,0.257,0.274]
+moe step=509 tokens=4177920 loss=3.0639 lr=3.406e-04 max_violation=0.444 dead=0 layer0_load=[0.270,0.234,0.230,0.247,0.260,0.252,0.245,0.263]
+moe step=519 tokens=4259840 loss=3.1224 lr=3.349e-04 max_violation=0.283 dead=0 layer0_load=[0.259,0.259,0.240,0.250,0.258,0.227,0.263,0.244]
+moe step=529 tokens=4341760 loss=3.0150 lr=3.292e-04 max_violation=0.349 dead=0 layer0_load=[0.225,0.254,0.260,0.244,0.245,0.239,0.274,0.259]
+moe step=539 tokens=4423680 loss=3.0083 lr=3.234e-04 max_violation=0.168 dead=0 layer0_load=[0.254,0.235,0.267,0.283,0.221,0.249,0.254,0.237]
+moe step=549 tokens=4505600 loss=3.0827 lr=3.176e-04 max_violation=0.300 dead=0 layer0_load=[0.258,0.227,0.229,0.314,0.227,0.259,0.243,0.242]
+moe step=559 tokens=4587520 loss=3.0366 lr=3.118e-04 max_violation=0.330 dead=0 layer0_load=[0.272,0.304,0.234,0.249,0.237,0.246,0.215,0.243]
+moe step=569 tokens=4669440 loss=2.9758 lr=3.060e-04 max_violation=0.226 dead=0 layer0_load=[0.233,0.280,0.272,0.237,0.246,0.244,0.237,0.251]
+moe step=579 tokens=4751360 loss=3.0883 lr=3.001e-04 max_violation=0.333 dead=0 layer0_load=[0.236,0.253,0.267,0.232,0.274,0.229,0.248,0.260]
+moe step=589 tokens=4833280 loss=2.9915 lr=2.942e-04 max_violation=0.212 dead=0 layer0_load=[0.240,0.213,0.244,0.268,0.261,0.262,0.221,0.291]
+moe step=599 tokens=4915200 loss=3.1080 lr=2.883e-04 val=3.0792 max_violation=0.221 dead=0 layer0_load=[0.226,0.253,0.264,0.261,0.240,0.244,0.251,0.261]
+moe step=609 tokens=4997120 loss=2.9803 lr=2.824e-04 max_violation=0.180 dead=0 layer0_load=[0.269,0.240,0.238,0.243,0.245,0.255,0.269,0.241]
+moe step=619 tokens=5079040 loss=3.0816 lr=2.765e-04 max_violation=0.214 dead=0 layer0_load=[0.257,0.249,0.237,0.236,0.245,0.249,0.277,0.249]
+moe step=629 tokens=5160960 loss=2.9989 lr=2.706e-04 max_violation=0.247 dead=0 layer0_load=[0.233,0.252,0.255,0.274,0.233,0.261,0.241,0.250]
+moe step=639 tokens=5242880 loss=3.0818 lr=2.647e-04 max_violation=0.293 dead=0 layer0_load=[0.260,0.273,0.267,0.253,0.236,0.247,0.228,0.236]
+moe step=649 tokens=5324800 loss=2.9758 lr=2.587e-04 max_violation=0.398 dead=0 layer0_load=[0.288,0.246,0.227,0.225,0.263,0.248,0.249,0.253]
+moe step=659 tokens=5406720 loss=3.2097 lr=2.529e-04 max_violation=0.224 dead=0 layer0_load=[0.255,0.226,0.251,0.254,0.276,0.250,0.245,0.244]
+moe step=669 tokens=5488640 loss=3.0724 lr=2.470e-04 max_violation=0.221 dead=0 layer0_load=[0.249,0.256,0.252,0.226,0.283,0.251,0.247,0.235]
+moe step=679 tokens=5570560 loss=3.1177 lr=2.411e-04 max_violation=0.518 dead=0 layer0_load=[0.269,0.240,0.264,0.215,0.255,0.262,0.247,0.247]
+moe step=689 tokens=5652480 loss=3.0958 lr=2.353e-04 max_violation=0.389 dead=0 layer0_load=[0.238,0.235,0.262,0.246,0.270,0.242,0.243,0.263]
+moe step=699 tokens=5734400 loss=2.9703 lr=2.295e-04 val=3.0660 max_violation=0.262 dead=0 layer0_load=[0.262,0.226,0.228,0.248,0.254,0.237,0.285,0.259]
+moe step=709 tokens=5816320 loss=3.0962 lr=2.237e-04 max_violation=0.220 dead=0 layer0_load=[0.249,0.255,0.245,0.272,0.244,0.255,0.244,0.236]
+moe step=719 tokens=5898240 loss=3.1608 lr=2.180e-04 max_violation=0.354 dead=0 layer0_load=[0.236,0.256,0.280,0.268,0.231,0.244,0.254,0.231]
+moe step=729 tokens=5980160 loss=3.0461 lr=2.123e-04 max_violation=0.204 dead=0 layer0_load=[0.258,0.273,0.253,0.239,0.228,0.244,0.252,0.254]
+moe step=739 tokens=6062080 loss=3.1050 lr=2.066e-04 max_violation=0.241 dead=0 layer0_load=[0.245,0.253,0.249,0.270,0.245,0.256,0.259,0.223]
+moe step=749 tokens=6144000 loss=3.1136 lr=2.010e-04 max_violation=0.170 dead=0 layer0_load=[0.258,0.245,0.239,0.252,0.265,0.263,0.255,0.223]
+moe step=759 tokens=6225920 loss=2.9896 lr=1.954e-04 max_violation=0.456 dead=0 layer0_load=[0.246,0.242,0.258,0.246,0.273,0.257,0.241,0.237]
+moe step=769 tokens=6307840 loss=3.0807 lr=1.899e-04 max_violation=0.258 dead=0 layer0_load=[0.248,0.250,0.244,0.272,0.255,0.265,0.236,0.228]
+moe step=779 tokens=6389760 loss=3.0812 lr=1.845e-04 max_violation=0.232 dead=0 layer0_load=[0.272,0.261,0.241,0.247,0.249,0.254,0.238,0.240]
+moe step=789 tokens=6471680 loss=2.9914 lr=1.791e-04 max_violation=0.625 dead=0 layer0_load=[0.248,0.267,0.229,0.231,0.265,0.254,0.249,0.257]
+moe step=799 tokens=6553600 loss=2.9892 lr=1.738e-04 val=3.0517 max_violation=0.147 dead=0 layer0_load=[0.271,0.249,0.235,0.232,0.244,0.254,0.265,0.249]
+moe step=809 tokens=6635520 loss=3.0080 lr=1.685e-04 max_violation=0.251 dead=0 layer0_load=[0.229,0.239,0.244,0.274,0.251,0.261,0.246,0.256]
+moe step=819 tokens=6717440 loss=3.1640 lr=1.634e-04 max_violation=0.172 dead=0 layer0_load=[0.245,0.244,0.250,0.259,0.236,0.258,0.246,0.263]
+moe step=829 tokens=6799360 loss=3.0086 lr=1.583e-04 max_violation=0.232 dead=0 layer0_load=[0.265,0.261,0.240,0.233,0.244,0.256,0.238,0.263]
+moe step=839 tokens=6881280 loss=3.0076 lr=1.532e-04 max_violation=0.290 dead=0 layer0_load=[0.239,0.243,0.260,0.256,0.247,0.262,0.254,0.239]
+moe step=849 tokens=6963200 loss=3.0268 lr=1.483e-04 max_violation=0.332 dead=0 layer0_load=[0.251,0.247,0.246,0.250,0.241,0.238,0.257,0.269]
+moe step=859 tokens=7045120 loss=3.1228 lr=1.435e-04 max_violation=0.193 dead=0 layer0_load=[0.251,0.238,0.253,0.256,0.230,0.251,0.256,0.267]
+moe step=869 tokens=7127040 loss=3.1058 lr=1.387e-04 max_violation=0.301 dead=0 layer0_load=[0.252,0.230,0.234,0.253,0.253,0.245,0.276,0.256]
+moe step=879 tokens=7208960 loss=3.1729 lr=1.341e-04 max_violation=0.205 dead=0 layer0_load=[0.254,0.248,0.271,0.281,0.253,0.232,0.243,0.217]
+moe step=889 tokens=7290880 loss=3.0406 lr=1.295e-04 max_violation=0.303 dead=0 layer0_load=[0.267,0.238,0.274,0.256,0.259,0.221,0.250,0.236]
+moe step=899 tokens=7372800 loss=3.0808 lr=1.250e-04 val=3.0414 max_violation=0.556 dead=0 layer0_load=[0.247,0.236,0.223,0.261,0.274,0.260,0.278,0.220]
+moe step=909 tokens=7454720 loss=3.0964 lr=1.207e-04 max_violation=0.186 dead=0 layer0_load=[0.251,0.240,0.246,0.266,0.231,0.251,0.271,0.244]
+moe step=919 tokens=7536640 loss=3.0446 lr=1.164e-04 max_violation=0.298 dead=0 layer0_load=[0.258,0.234,0.249,0.243,0.257,0.255,0.259,0.246]
+moe step=929 tokens=7618560 loss=3.0112 lr=1.123e-04 max_violation=0.248 dead=0 layer0_load=[0.240,0.242,0.234,0.258,0.232,0.248,0.282,0.263]
+moe step=939 tokens=7700480 loss=3.1333 lr=1.083e-04 max_violation=0.272 dead=0 layer0_load=[0.250,0.245,0.236,0.240,0.287,0.240,0.260,0.241]
+moe step=949 tokens=7782400 loss=2.9025 lr=1.043e-04 max_violation=0.339 dead=0 layer0_load=[0.257,0.240,0.257,0.239,0.248,0.255,0.256,0.248]
+moe step=959 tokens=7864320 loss=2.9105 lr=1.005e-04 max_violation=0.207 dead=0 layer0_load=[0.254,0.259,0.230,0.251,0.251,0.247,0.254,0.255]
+moe step=969 tokens=7946240 loss=2.9606 lr=9.687e-05 max_violation=0.196 dead=0 layer0_load=[0.235,0.242,0.257,0.255,0.272,0.247,0.247,0.245]
+moe step=979 tokens=8028160 loss=3.0018 lr=9.332e-05 max_violation=0.289 dead=0 layer0_load=[0.255,0.233,0.225,0.268,0.259,0.242,0.273,0.244]
+moe step=989 tokens=8110080 loss=2.9595 lr=8.989e-05 max_violation=0.251 dead=0 layer0_load=[0.263,0.238,0.230,0.254,0.274,0.235,0.261,0.244]
+moe step=999 tokens=8192000 loss=3.0881 lr=8.659e-05 val=3.0314 max_violation=0.214 dead=0 layer0_load=[0.256,0.238,0.254,0.238,0.258,0.256,0.262,0.238]
+moe step=1009 tokens=8273920 loss=3.0298 lr=8.343e-05 max_violation=0.331 dead=0 layer0_load=[0.247,0.245,0.243,0.243,0.237,0.259,0.279,0.247]
+moe step=1019 tokens=8355840 loss=3.0866 lr=8.039e-05 max_violation=0.431 dead=0 layer0_load=[0.248,0.239,0.267,0.248,0.232,0.237,0.256,0.272]
+moe step=1029 tokens=8437760 loss=3.1043 lr=7.749e-05 max_violation=0.132 dead=0 layer0_load=[0.252,0.246,0.254,0.268,0.257,0.243,0.242,0.238]
+moe step=1039 tokens=8519680 loss=3.0755 lr=7.473e-05 max_violation=0.142 dead=0 layer0_load=[0.248,0.250,0.259,0.239,0.257,0.263,0.229,0.255]
+moe step=1049 tokens=8601600 loss=3.1417 lr=7.210e-05 max_violation=0.267 dead=0 layer0_load=[0.247,0.236,0.261,0.251,0.253,0.274,0.247,0.231]
+moe step=1059 tokens=8683520 loss=2.9550 lr=6.961e-05 max_violation=0.321 dead=0 layer0_load=[0.260,0.253,0.256,0.243,0.265,0.255,0.243,0.225]
+moe step=1069 tokens=8765440 loss=3.0484 lr=6.727e-05 max_violation=0.233 dead=0 layer0_load=[0.258,0.232,0.248,0.258,0.252,0.241,0.267,0.244]
+moe step=1079 tokens=8847360 loss=3.0398 lr=6.507e-05 max_violation=0.257 dead=0 layer0_load=[0.241,0.254,0.240,0.247,0.277,0.258,0.249,0.234]
+moe step=1089 tokens=8929280 loss=2.9863 lr=6.301e-05 max_violation=0.206 dead=0 layer0_load=[0.256,0.255,0.251,0.256,0.223,0.252,0.259,0.247]
+moe step=1099 tokens=9011200 loss=2.9167 lr=6.110e-05 val=3.0220 max_violation=0.537 dead=0 layer0_load=[0.242,0.241,0.241,0.252,0.248,0.252,0.277,0.247]
+moe step=1109 tokens=9093120 loss=3.0130 lr=5.934e-05 max_violation=0.236 dead=0 layer0_load=[0.240,0.252,0.264,0.246,0.235,0.245,0.250,0.268]
+moe step=1119 tokens=9175040 loss=3.0573 lr=5.773e-05 max_violation=0.379 dead=0 layer0_load=[0.257,0.271,0.265,0.268,0.222,0.259,0.214,0.244]
+moe step=1129 tokens=9256960 loss=2.8305 lr=5.627e-05 max_violation=0.239 dead=0 layer0_load=[0.252,0.250,0.236,0.233,0.276,0.266,0.262,0.226]
+moe step=1139 tokens=9338880 loss=3.0527 lr=5.496e-05 max_violation=0.208 dead=0 layer0_load=[0.235,0.247,0.249,0.243,0.245,0.257,0.265,0.260]
+moe step=1149 tokens=9420800 loss=3.0405 lr=5.380e-05 max_violation=0.320 dead=0 layer0_load=[0.251,0.255,0.251,0.244,0.255,0.243,0.251,0.251]
+moe step=1159 tokens=9502720 loss=2.9901 lr=5.279e-05 max_violation=0.276 dead=0 layer0_load=[0.248,0.245,0.262,0.242,0.234,0.241,0.248,0.282]
+moe step=1169 tokens=9584640 loss=2.9440 lr=5.194e-05 max_violation=0.272 dead=0 layer0_load=[0.252,0.241,0.230,0.249,0.258,0.252,0.263,0.255]
+moe step=1179 tokens=9666560 loss=2.9917 lr=5.124e-05 max_violation=0.234 dead=0 layer0_load=[0.261,0.246,0.244,0.254,0.244,0.235,0.244,0.271]
+moe step=1189 tokens=9748480 loss=2.9940 lr=5.070e-05 max_violation=0.261 dead=0 layer0_load=[0.257,0.277,0.261,0.241,0.252,0.241,0.226,0.244]
+moe step=1199 tokens=9830400 loss=2.9882 lr=5.031e-05 val=3.0174 max_violation=0.187 dead=0 layer0_load=[0.257,0.234,0.242,0.243,0.256,0.246,0.277,0.245]
+moe step=1209 tokens=9912320 loss=2.9288 lr=5.008e-05 max_violation=0.212 dead=0 layer0_load=[0.235,0.255,0.238,0.254,0.273,0.245,0.257,0.243]
+moe step=1219 tokens=9994240 loss=3.0703 lr=5.000e-05 val=3.0172 max_violation=0.314 dead=0 layer0_load=[0.247,0.249,0.252,0.251,0.281,0.243,0.226,0.251]
+dense step=-1 tokens=0 val=3.0526
+dense step=9 tokens=81920 loss=2.9015 lr=2.083e-04
+dense step=19 tokens=163840 loss=3.1361 lr=4.167e-04
+dense step=29 tokens=245760 loss=3.1200 lr=5.000e-04
+dense step=39 tokens=327680 loss=3.0115 lr=4.998e-04
+dense step=49 tokens=409600 loss=3.1301 lr=4.995e-04
+dense step=59 tokens=491520 loss=3.0789 lr=4.990e-04
+dense step=69 tokens=573440 loss=3.0694 lr=4.984e-04
+dense step=79 tokens=655360 loss=3.1084 lr=4.977e-04
+dense step=89 tokens=737280 loss=3.0915 lr=4.967e-04
+dense step=99 tokens=819200 loss=3.1303 lr=4.956e-04 val=3.1120
+dense step=109 tokens=901120 loss=3.0421 lr=4.944e-04
+dense step=119 tokens=983040 loss=2.9717 lr=4.930e-04
+dense step=129 tokens=1064960 loss=3.0156 lr=4.915e-04
+dense step=139 tokens=1146880 loss=3.0111 lr=4.898e-04
+dense step=149 tokens=1228800 loss=3.0627 lr=4.880e-04
+dense step=159 tokens=1310720 loss=3.1532 lr=4.860e-04
+dense step=169 tokens=1392640 loss=3.0675 lr=4.838e-04
+dense step=179 tokens=1474560 loss=3.1900 lr=4.816e-04
+dense step=189 tokens=1556480 loss=3.0322 lr=4.792e-04
+dense step=199 tokens=1638400 loss=3.0636 lr=4.766e-04 val=3.1116
+dense step=209 tokens=1720320 loss=3.0671 lr=4.739e-04
+dense step=219 tokens=1802240 loss=3.0257 lr=4.711e-04
+dense step=229 tokens=1884160 loss=3.0804 lr=4.681e-04
+dense step=239 tokens=1966080 loss=3.0646 lr=4.650e-04
+dense step=249 tokens=2048000 loss=3.0457 lr=4.618e-04
+dense step=259 tokens=2129920 loss=3.1411 lr=4.584e-04
+dense step=269 tokens=2211840 loss=3.1741 lr=4.549e-04
+dense step=279 tokens=2293760 loss=3.0996 lr=4.513e-04
+dense step=289 tokens=2375680 loss=3.1781 lr=4.476e-04
+dense step=299 tokens=2457600 loss=3.0720 lr=4.437e-04 val=3.1089
+dense step=309 tokens=2539520 loss=3.0404 lr=4.397e-04
+dense step=319 tokens=2621440 loss=2.9599 lr=4.357e-04
+dense step=329 tokens=2703360 loss=3.1277 lr=4.315e-04
+dense step=339 tokens=2785280 loss=3.0607 lr=4.272e-04
+dense step=349 tokens=2867200 loss=3.0771 lr=4.227e-04
+dense step=359 tokens=2949120 loss=3.0629 lr=4.182e-04
+dense step=369 tokens=3031040 loss=3.0233 lr=4.136e-04
+dense step=379 tokens=3112960 loss=3.1317 lr=4.089e-04
+dense step=389 tokens=3194880 loss=3.1092 lr=4.041e-04
+dense step=399 tokens=3276800 loss=3.0508 lr=3.992e-04 val=3.0952
+dense step=409 tokens=3358720 loss=3.0759 lr=3.943e-04
+dense step=419 tokens=3440640 loss=3.0194 lr=3.892e-04
+dense step=429 tokens=3522560 loss=3.0898 lr=3.841e-04
+dense step=439 tokens=3604480 loss=3.1395 lr=3.789e-04
+dense step=449 tokens=3686400 loss=3.0594 lr=3.736e-04
+dense step=459 tokens=3768320 loss=3.0590 lr=3.682e-04
+dense step=469 tokens=3850240 loss=3.0426 lr=3.628e-04
+dense step=479 tokens=3932160 loss=3.1209 lr=3.573e-04
+dense step=489 tokens=4014080 loss=3.1020 lr=3.518e-04
+dense step=499 tokens=4096000 loss=3.0448 lr=3.462e-04 val=3.0849
+dense step=509 tokens=4177920 loss=3.0576 lr=3.406e-04
+dense step=519 tokens=4259840 loss=3.1106 lr=3.349e-04
+dense step=529 tokens=4341760 loss=3.0124 lr=3.292e-04
+dense step=539 tokens=4423680 loss=2.9987 lr=3.234e-04
+dense step=549 tokens=4505600 loss=3.0813 lr=3.176e-04
+dense step=559 tokens=4587520 loss=3.0299 lr=3.118e-04
+dense step=569 tokens=4669440 loss=2.9708 lr=3.060e-04
+dense step=579 tokens=4751360 loss=3.0863 lr=3.001e-04
+dense step=589 tokens=4833280 loss=2.9853 lr=2.942e-04
+dense step=599 tokens=4915200 loss=3.1047 lr=2.883e-04 val=3.0751
+dense step=609 tokens=4997120 loss=2.9793 lr=2.824e-04
+dense step=619 tokens=5079040 loss=3.0741 lr=2.765e-04
+dense step=629 tokens=5160960 loss=2.9952 lr=2.706e-04
+dense step=639 tokens=5242880 loss=3.0806 lr=2.647e-04
+dense step=649 tokens=5324800 loss=2.9732 lr=2.587e-04
+dense step=659 tokens=5406720 loss=3.2046 lr=2.529e-04
+dense step=669 tokens=5488640 loss=3.0756 lr=2.470e-04
+dense step=679 tokens=5570560 loss=3.1186 lr=2.411e-04
+dense step=689 tokens=5652480 loss=3.0878 lr=2.353e-04
+dense step=699 tokens=5734400 loss=2.9725 lr=2.295e-04 val=3.0636
+dense step=709 tokens=5816320 loss=3.0974 lr=2.237e-04
+dense step=719 tokens=5898240 loss=3.1643 lr=2.180e-04
+dense step=729 tokens=5980160 loss=3.0418 lr=2.123e-04
+dense step=739 tokens=6062080 loss=3.1082 lr=2.066e-04
+dense step=749 tokens=6144000 loss=3.1102 lr=2.010e-04
+dense step=759 tokens=6225920 loss=2.9855 lr=1.954e-04
+dense step=769 tokens=6307840 loss=3.0887 lr=1.899e-04
+dense step=779 tokens=6389760 loss=3.0842 lr=1.845e-04
+dense step=789 tokens=6471680 loss=2.9889 lr=1.791e-04
+dense step=799 tokens=6553600 loss=2.9895 lr=1.738e-04 val=3.0519
+dense step=809 tokens=6635520 loss=3.0084 lr=1.685e-04
+dense step=819 tokens=6717440 loss=3.1655 lr=1.634e-04
+dense step=829 tokens=6799360 loss=3.0165 lr=1.583e-04
+dense step=839 tokens=6881280 loss=3.0128 lr=1.532e-04
+dense step=849 tokens=6963200 loss=3.0335 lr=1.483e-04
+dense step=859 tokens=7045120 loss=3.1238 lr=1.435e-04
+dense step=869 tokens=7127040 loss=3.1086 lr=1.387e-04
+dense step=879 tokens=7208960 loss=3.1743 lr=1.341e-04
+dense step=889 tokens=7290880 loss=3.0451 lr=1.295e-04
+dense step=899 tokens=7372800 loss=3.0820 lr=1.250e-04 val=3.0430
+dense step=909 tokens=7454720 loss=3.0994 lr=1.207e-04
+dense step=919 tokens=7536640 loss=3.0491 lr=1.164e-04
+dense step=929 tokens=7618560 loss=3.0140 lr=1.123e-04
+dense step=939 tokens=7700480 loss=3.1337 lr=1.083e-04
+dense step=949 tokens=7782400 loss=2.9100 lr=1.043e-04
+dense step=959 tokens=7864320 loss=2.9175 lr=1.005e-04
+dense step=969 tokens=7946240 loss=2.9688 lr=9.687e-05
+dense step=979 tokens=8028160 loss=3.0071 lr=9.332e-05
+dense step=989 tokens=8110080 loss=2.9644 lr=8.989e-05
+dense step=999 tokens=8192000 loss=3.0924 lr=8.659e-05 val=3.0345
+dense step=1009 tokens=8273920 loss=3.0374 lr=8.343e-05
+dense step=1019 tokens=8355840 loss=3.0938 lr=8.039e-05
+dense step=1029 tokens=8437760 loss=3.1072 lr=7.749e-05
+dense step=1039 tokens=8519680 loss=3.0823 lr=7.473e-05
+dense step=1049 tokens=8601600 loss=3.1460 lr=7.210e-05
+dense step=1059 tokens=8683520 loss=2.9616 lr=6.961e-05
+dense step=1069 tokens=8765440 loss=3.0524 lr=6.727e-05
+dense step=1079 tokens=8847360 loss=3.0478 lr=6.507e-05
+dense step=1089 tokens=8929280 loss=2.9940 lr=6.301e-05
+dense step=1099 tokens=9011200 loss=2.9261 lr=6.110e-05 val=3.0277
+dense step=1109 tokens=9093120 loss=3.0179 lr=5.934e-05
+dense step=1119 tokens=9175040 loss=3.0700 lr=5.773e-05
+dense step=1129 tokens=9256960 loss=2.8354 lr=5.627e-05
+dense step=1139 tokens=9338880 loss=3.0631 lr=5.496e-05
+dense step=1149 tokens=9420800 loss=3.0498 lr=5.380e-05
+dense step=1159 tokens=9502720 loss=2.9976 lr=5.279e-05
+dense step=1169 tokens=9584640 loss=2.9438 lr=5.194e-05
+dense step=1179 tokens=9666560 loss=3.0067 lr=5.124e-05
+dense step=1189 tokens=9748480 loss=3.0014 lr=5.070e-05
+dense step=1199 tokens=9830400 loss=2.9991 lr=5.031e-05 val=3.0243
+dense step=1209 tokens=9912320 loss=2.9420 lr=5.008e-05
+dense step=1219 tokens=9994240 loss=3.0793 lr=5.000e-05 val=3.0240

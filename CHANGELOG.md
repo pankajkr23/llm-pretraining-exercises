@@ -39,6 +39,15 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   outside the machine's own measured spread. Reaching the published run took five attempts, each
   failure fixed with a guard: float64 on the GPU, a memory probe that skipped clipping, a weak
   charger, and a reference cycle in the memory measurement that leaked one forward graph per run.
+- **Exercise 14 — a dense model upcycled into a mixture of experts, trained on.** Exercise 13's
+  trained 21M-parameter model becomes eight copied experts per block behind a float32 router, with
+  bias-only load balancing. The conversion changes the validation loss by exactly nothing, and the
+  MoE keeps training below its starting point on 10M further tokens, beside a dense control on the
+  same tokens; both rise first with the re-warmed rate, which the page explains from the control.
+  The router is chosen on one half of the validation split and everything is reported on the
+  other; the bundle is tied to exercise 13's committed results by digest; the training log is in
+  the repository. A device-only bug — balancing buffers on the CPU under a GPU model — was found by
+  a GPU smoke run and is now guarded.
 - **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
   devices, reversible training, and turning a dense model into a mixture of experts. Each has the
   standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a
