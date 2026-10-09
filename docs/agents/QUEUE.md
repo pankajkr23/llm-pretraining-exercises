@@ -1992,4 +1992,15 @@ predates the harness — so it is logged as what it was.
                           GPU smoke run. Stacked on #195. Merge order: #194, #195, #196; #193 and
                           #192 are independent.
                           #196 opened
+
+2026-10-10  web-11        11's page: Adam by hand against torch, the bias ratio's peak, all 19
+                          matrices settling with and without warmup, three schedule comparisons
+                          each set against its own seed spread, SP vs muP. TWO AUDITS BEFORE THE PR
+                          found verdict words typed while the page claimed they were computed; every
+                          verdict now comes from one function over the data, and a test renders a
+                          reversed result and asserts the words flip. Also: a false "still climbing"
+                          caption, a downsampled gap figure hiding 41 inside-noise steps, and absent
+                          values printing as "step 0". The quoting check SKIPS from a worktree unless
+                          LLM_NOTES_DIR is set; it was run with it set. Pages 12-14 follow.
+                          #197 opened
 ```
