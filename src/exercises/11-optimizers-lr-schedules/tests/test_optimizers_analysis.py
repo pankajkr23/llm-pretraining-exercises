@@ -6,9 +6,7 @@ the right answer is known, including inputs built to fool them.
 
 import math
 
-import numpy as np
 import pytest
-from optimizers.ratios import settles_at, smooth
 from optimizers.sweep import find_minimum, fit_power_law, predict
 
 LRS = [1.25e-4 * 2**i for i in range(7)]
@@ -70,22 +68,3 @@ def test_a_flat_minimum_across_widths_predicts_the_same_rate() -> None:
     out = predict([256, 512, 1024], [[1e-3] * 3, [1e-3] * 3], 4096)
     assert out["exponent"] == pytest.approx(0.0, abs=1e-12)
     assert out["prediction"] == pytest.approx(1e-3)
-
-
-def test_smoothing_is_a_trailing_mean() -> None:
-    assert list(smooth(np.array([1.0, 3.0, 5.0, 7.0]), 2)) == [1.0, 2.0, 4.0, 6.0]
-
-
-def test_settling_is_found_where_a_ramp_meets_its_plateau() -> None:
-    curve = np.concatenate([np.linspace(0.0, 1.0, 100), np.ones(200)])
-    step = settles_at(curve, band=0.1, window=1, tail=50)
-    assert 88 <= step <= 92, "a linear ramp to 1.0 enters the ±10% band at 0.9 of the ramp"
-
-
-def test_a_curve_still_moving_at_the_end_has_not_settled() -> None:
-    assert settles_at(np.linspace(0.0, 1.0, 300), band=0.05, window=5, tail=50) is None
-
-
-def test_settling_needs_enough_steps_to_judge() -> None:
-    with pytest.raises(ValueError):
-        settles_at(np.ones(20), tail=50, window=10)

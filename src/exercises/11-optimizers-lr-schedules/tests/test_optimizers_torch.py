@@ -12,7 +12,7 @@ from optimizers.ablation import SwitchableAdamW  # noqa: E402
 from optimizers.adam import adam_by_hand, largest_difference, torch_adam  # noqa: E402
 from optimizers.data import Batches, validation_set  # noqa: E402
 from optimizers.model import GPT, ModelConfig, layer_group, param_groups  # noqa: E402
-from optimizers.ratios import RatioMeter  # noqa: E402
+from optimizers.ratios import RatioMeter, settles_at, smooth  # noqa: E402
 from optimizers.train import train  # noqa: E402
 
 TINY = ModelConfig(vocab_size=50, width=64, depth=2, seq_len=12)
@@ -241,3 +241,26 @@ def test_the_loop_records_what_it_was_asked_for() -> None:
     assert log.tokens == 5 * 2 * 12
     assert all(len(v) == 5 for v in log.ratios.values())
     assert set(log.ratios) == {n for n, p in GPT(TINY).named_parameters() if p.ndim == 2}
+
+
+# The settling helpers are pure numpy, but `optimizers.ratios` imports torch for its meter, so
+# their tests live here: in CI's plain job, without torch, a file importing it fails collection.
+
+
+def test_smoothing_is_a_trailing_mean() -> None:
+    assert list(smooth(np.array([1.0, 3.0, 5.0, 7.0]), 2)) == [1.0, 2.0, 4.0, 6.0]
+
+
+def test_settling_is_found_where_a_ramp_meets_its_plateau() -> None:
+    curve = np.concatenate([np.linspace(0.0, 1.0, 100), np.ones(200)])
+    step = settles_at(curve, band=0.1, window=1, tail=50)
+    assert 88 <= step <= 92, "a linear ramp to 1.0 enters the ±10% band at 0.9 of the ramp"
+
+
+def test_a_curve_still_moving_at_the_end_has_not_settled() -> None:
+    assert settles_at(np.linspace(0.0, 1.0, 300), band=0.05, window=5, tail=50) is None
+
+
+def test_settling_needs_enough_steps_to_judge() -> None:
+    with pytest.raises(ValueError):
+        settles_at(np.ones(20), tail=50, window=10)
