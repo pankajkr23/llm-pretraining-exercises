@@ -277,7 +277,9 @@ jobs:
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py \
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py \
             src/exercises/13-reversibility/tests/test_reversible_stack.py \
-            src/exercises/13-reversibility/tests/test_reversible_pipeline.py
+            src/exercises/13-reversibility/tests/test_reversible_pipeline.py \
+            src/exercises/14-moe/tests/test_moe_layer.py \
+            src/exercises/14-moe/tests/test_moe_pipeline.py
 
   security:
     runs-on: ubuntu-latest

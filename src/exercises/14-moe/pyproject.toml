@@ -5,7 +5,19 @@ description = "Exercise 14 — From a dense model to a mixture of experts"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
+    # The decoder, the corpus, the schedules and the provenance helpers are exercise 11's; this
+    # exercise replaces the feed-forward layer. Exercise 13 is read only as files (its trained
+    # checkpoint and results), never imported.
+    "exercise-11-optimizers-lr-schedules",
+    "exercise-09-loss-functions-output-heads",
 ]
+
+[project.optional-dependencies]
+train = ["torch>=2.6"]
+
+[tool.uv.sources]
+exercise-11-optimizers-lr-schedules = { workspace = true }
+exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

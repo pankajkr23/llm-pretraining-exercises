@@ -85,6 +85,8 @@ OPTIONAL_DEPENDENCY_GATES: dict[str, str] = {
     "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py": "torch",
     "src/exercises/13-reversibility/tests/test_reversible_stack.py": "torch",
     "src/exercises/13-reversibility/tests/test_reversible_pipeline.py": "torch",
+    "src/exercises/14-moe/tests/test_moe_layer.py": "torch",
+    "src/exercises/14-moe/tests/test_moe_pipeline.py": "torch",
 }
 
 #: Which `uv sync --extra <name>` provides which import.
