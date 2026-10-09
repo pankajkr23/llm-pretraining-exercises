@@ -106,21 +106,27 @@ All of it is in [`RESULTS.md`](RESULTS.md). How each number was produced:
 - **And again in float32, at the published depth.** Inversion amplifies rounding, so the run itself
   measures how far rebuilt gradients are from stored ones — for every trial candidate on its initial
   weights, and for the chosen rule before and after its long run — on its own device and dtype. The
-  blend rule's float32 gradients at depth 12 are a few percent off (`DECISIONS.md` D10); `RESULTS.md`
-  says so whenever the measured error is above 0.1%.
+  blend rule's float32 gradients at depth 12 are 1–5% off (`DECISIONS.md` D10), so a candidate whose
+  rebuilt gradients drift more than 1% is ineligible: it is trained and shown, never chosen. In the
+  published run that excluded all three blend settings.
 - **Memory is measured two ways.** *Bytes kept for backward* are counted, on any device, by
   PyTorch's saved-tensor hooks during one forward pass; a second instrument in the tests (which
   storages are still alive afterwards) agrees with them per sequence for every variant. *The largest
   batch* is found on the GPU by running real training steps under a hard memory cap until one runs
   out of memory, doubling and then bisecting. The derived largest batch is printed beside it: the
   forward pass's bytes per sequence plus, for the reversible model, the block it re-runs during the
-  backward pass. A batch that reached the search ceiling is reported as a lower bound.
+  backward pass. A batch that reached the search ceiling is reported as a lower bound. The run at the
+  largest batch uses 85% of what the search found, because memory outside PyTorch's tensors varies
+  between processes.
 - **Every variant uses the same loss.** At large batch the output logits (`tokens × 10,001`) outgrow
   the stack's activations, and reversibility does nothing for them. The loss is therefore computed in
   chunks that are recomputed in backward, for the baseline too; otherwise the head would set every
   variant's largest batch and the comparison would measure the loss, not the stack.
-- **Speed is steady-state.** The first steps (compilation, allocator warm-up) and evaluation are off
-  the clock, and the device is synchronised before every reading.
+- **Speed is steady-state, and only a finding outside the machine's own spread.** The first steps
+  (compilation, allocator warm-up) and evaluation are off the clock, and the device is synchronised
+  before every reading. The baseline trials train one model at three learning rates, which changes
+  nothing a GPU does per token, so their spread in tokens per second is the machine's own; a speed
+  gap smaller than it is reported as not ranking the two.
 - **The variant is chosen before the long runs**, by validation loss on short runs at the same data
   and learning rate, on the first half of the validation split; every reported loss is measured on
   the second half. The fixed-batch runs use the chosen rule and rate as they are; the run at the

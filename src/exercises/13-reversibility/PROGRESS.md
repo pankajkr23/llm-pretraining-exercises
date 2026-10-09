@@ -18,8 +18,8 @@ against this yet; that is PK's, before submitting.
 | O1 | **Scaffold** | **done** | Created by `tools/new_exercise.py`. |
 | O2 | **Reversible stack** | **done** | Midpoint, blend and leapfrog update rules with a custom autograd function that rebuilds each layer's input in the backward pass; matches stored autograd to rtol 1e-9 in float64 (`test_reversible_stack.py`). |
 | O3 | **Memory measurement** | **done** | Exact bytes kept for backward by saved-tensor hooks; the largest batch found under a GPU memory cap, in a separate process. |
-| O4 | **Published run** | **pending** | `FULL`: the trial over update rules and rates, the 50-million-token runs, and the largest-batch search, on an Apple M4 GPU; `RESULTS.md` rendered from `results/*.json`. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` only once the published run exists. |
+| O4 | **Published run** | **done** | Attempt 5, commit `eb74fb6`, Apple M4 GPU, 17:21–19:21 with no watchdog pause. All four bundles from one commit and today's code (a test enforces it); `RESULTS.md` is their render. |
+| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` after the published run; the executed copy sits beside the builder. |
 | O6 | **Notebook tracked in the repository** | **PK's** | Needs the `.gitignore` exemption above. |
 | O7 | **Submission** | **PK's** | The README link and the notebook, once merged and public. |
 
@@ -39,9 +39,11 @@ hidden inside it). Long runs are wrapped in `caffeinate -i -s`, which stops idle
 | 11:13–12:24 | full run, attempt 3 (GPU, `caffeinate`) | publish | ended when the machine restarted |
 | ~15:15 | SMOKE run (GPU) | test on the device after the restart | passed |
 | 15:18–16:52 | full run, attempt 4 (GPU, `caffeinate`) | publish | trials, both 50M-token runs and the search completed with the machine calm throughout (thermal state 1, no pauses); crashed out of memory in the rate checks at batch 386 |
-| 16:55–17:30 | three diagnostics in one capped process (GPU, minutes each) | find why memory ran out at 85% of a batch that fitted | each run left 0.22–0.37 GiB behind, and a forced garbage collection did not free it: a leak, not a margin |
-| ~17:35 | the same diagnostic after the fix (GPU) | confirm the fix on the device | 0.00 GiB left after each of three runs |
-| — | full run, attempt 5 | publish | below |
+| 16:55–17:15 | three diagnostics in one capped process (GPU, minutes each) | find why memory ran out at 85% of a batch that fitted | each run left 0.22–0.37 GiB behind, and a forced garbage collection did not free it: a leak, not a margin |
+| ~17:18 | the same diagnostic after the fix (GPU) | confirm the fix on the device | 0.00 GiB left after each of three runs |
+| ~17:20 | SMOKE run (GPU) | test the leak fix on the device | passed |
+| 17:21–19:21 | full run, attempt 5 (GPU, `caffeinate`) | publish | **completed** — all four stages, published |
+| 17:21–19:21 | vitals watchdog | as above | thermal state 1 throughout, memory pressure normal, no swap, **no pause** |
 | 15:28– | vitals watchdog (`artifacts/vitals/watchdog.sh`, CPU only, one sample a minute) | record thermal state, memory pressure, swap, GPU use, battery and power; pause the run if the machine is stressed | running |
 | throughout | monitors reading the run's log once a minute | report stages and failures | ended with each run |
 
@@ -52,6 +54,23 @@ with `SIGCONT` after two consecutive calm minutes, and records each pause and it
 `pauses.log`. A pause inside a timed stage makes that stage's throughput false, so any pause is
 reported beside the results and the speed figures it touched are not used. It was tested on a dummy
 process before use: paused, resumed, and exited when the process ended.
+
+## The full record — ablations, with the published numbers
+
+From the published run (commit `eb74fb6`). `RESULTS.md` is the authority; this is the history.
+
+| ablation | what changed | held fixed | outcome |
+| --- | --- | --- | --- |
+| Which reversible rule | midpoint, blend, leapfrog × h ∈ {0.25, 0.5, 1.0}, 2.5M tokens each | data, seed, the baseline's chosen rate (0.001) | leapfrog at h = 0.25 trained best (5.0171 against the baseline's 5.2186); all three blend settings were ineligible, their rebuilt gradients 1.4–5.4% off |
+| Reversible vs standard, same batch | the residual stack's rule and whether activations are stored | 21.3M parameters, 50M tokens, batch 32, rate, data order | 58.7× fewer bytes kept for backward (42.4 against 2,490 MiB); validation loss +0.049; speed 10% lower, inside the machine's own 1.23× spread, so not ranked |
+| Rebuilt vs stored gradients, on the device | memory mode only | the chosen model, float32, depth 12, MPS | 5.3e-5 relative at initialisation, 3.9e-5 after training |
+| Largest batch in 8 GiB | the stack | the cap, the probe (two real training steps) | 496 sequences against the baseline's 81 — 6.1× |
+| Training at the largest batch | batch 421 (85% of 496) instead of 32 | the same 50M tokens | 13.2× fewer optimiser steps; validation loss +0.88 against the baseline at batch 32; the 40-step rate check chose the smallest rate on its grid |
+
+**Reproduced across attempts.** The trials chose leapfrog at h = 0.25 and rate 0.001 in all five
+attempts. The two 50M-token runs gave 3.0523/3.1005, 3.0519/3.0993 and 3.0526/3.1020 in the three
+attempts that reached them. The largest-batch search gave 80/447 and 80/455 before the leak fix,
+and 81/496 after it: the measurement's own leaked graphs had been taking memory from the search.
 
 ## Change log
 

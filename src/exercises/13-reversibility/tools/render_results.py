@@ -326,8 +326,9 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
         (
             f"The search found {r['largest_found']:,}; the run uses "
             f"{r['run_fraction']:.0%} of it, because a sustained run at the exact edge of the "
-            "memory cap is not reliable — memory outside PyTorch's own tensors varies between "
-            "processes, and the first attempt at the edge ran out of memory in its first steps."
+            "memory cap is not reliable: memory outside PyTorch's own tensors varies between "
+            "processes. (An earlier attempt at the exact edge ran out of memory; it also carried a "
+            "leak in the memory measurement, since fixed, so the edge alone is not proven to fail.)"
             if "largest_found" in r
             else "The run uses the largest batch the search found."
         ),
@@ -359,6 +360,13 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
             f"baseline's own largest batch): "
             f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'], floor)}**, final "
             f"validation loss {run['final_val'] - base['final_val']:+.4f}.",
+            f"- The same tokens took {base['steps'] / run['steps']:.1f}× fewer optimiser steps "
+            f"here ({run['steps']:,} against {base['steps']:,}). "
+            "At a fixed token budget, fewer and "
+            "larger steps train less far unless the rate grows with the batch, and the short rate "
+            "check above can only see the first steps of a run. The loss gap is measured; this "
+            "explanation of it is not tested here — a run with the rate scaled to the batch would "
+            "test it.",
             "",
         ]
     return out
