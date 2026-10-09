@@ -521,6 +521,33 @@ text.ax.warn {
   );
 }
 
+/* The legend for the two kinds of cost, so the hatching is never left for the reader to guess. */
+.wb-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.wb-sw {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+  border-radius: 2px;
+}
+
+.wb-sw.kept {
+  background: var(--part-k);
+}
+
+.wb-sw.rerun {
+  background: repeating-linear-gradient(135deg, var(--part-k) 0 3px, transparent 3px 6px);
+  outline: 1px solid var(--part-k);
+}
+
 .wb-v {
   font-family: var(--mono);
   font-variant-numeric: tabular-nums;
@@ -851,18 +878,6 @@ text.ax.warn {
 
 /* --- Figure 4: the memory budget --------------------------------------------------------------- */
 
-.b-ask {
-  margin: 0 0 12px;
-  max-width: 64ch;
-  font-size: 0.74em;
-  line-height: 1.55;
-  color: var(--ink);
-}
-
-.budget.revealed .b-ask {
-  color: var(--muted);
-}
-
 .budgetfig {
   display: block;
   width: 100%;
@@ -915,7 +930,7 @@ text.ax.warn {
   stroke-dasharray: 3 2;
 }
 
-.budgetfig .m-measured circle {
+.budgetfig .m-measured {
   fill: var(--ink);
 }
 
@@ -933,20 +948,10 @@ text.ax.warn {
 }
 
 .budgetfig .b-cursor {
-  stroke: var(--accent);
-  stroke-width: 2;
-}
-
-.budgetfig .b-ghost {
   fill: none;
-  stroke: var(--grade-b);
-  stroke-width: 2;
-  stroke-dasharray: 4 3;
-}
-
-.budgetfig .b-ghost-lab {
-  fill: var(--grade-b);
-  font-weight: 700;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
 }
 
 .b-read {

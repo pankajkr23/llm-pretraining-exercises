@@ -183,20 +183,64 @@ def test_results_md_is_the_render_of_the_committed_bundles_or_both_are_absent() 
     assert committed == R.render(results), "RESULTS.md is stale; re-run tools/render_results.py"
 
 
-def test_a_speed_gap_inside_the_machines_own_spread_is_not_a_ranking() -> None:
-    """The same baseline model ran 1.4x apart across its trials: a 7% gap cannot rank speeds."""
-    trials = {
+def _speed_trials(base: list[float], rev: list[float]) -> dict:
+    """Trials at one batch: baseline runs at several rates, reversible candidates at the best."""
+    return {
         "result": {
-            "baseline": {"a": {"tokens_per_second": 43000.0}, "b": {"tokens_per_second": 30700.0}}
+            "baseline": {
+                str(lr): {"tokens_per_second": tps, "batch": 4}
+                for lr, tps in zip((0.0005, 0.001, 0.002), base, strict=False)
+            },
+            "reversible": {
+                f"leapfrog@{h}": {"tokens_per_second": tps, "batch": 4}
+                for h, tps in zip((0.25, 0.5, 1.0), rev, strict=False)
+            },
+            "best_lr": 0.001,
+            "choice": {"rule": "leapfrog", "h": 0.25},
         }
     }
-    floor = R.throughput_floor(trials)
-    assert floor == 43000.0 / 30700.0
-    inside = R.speed_words(23600, 22000, floor)
-    assert "does not rank" in inside
-    outside = R.speed_words(40000, 20000, floor)
-    assert "does not rank" not in outside and "fewer tokens per second" in outside
-    assert R.throughput_floor(None) is None
+
+
+def _speed_fixed(base_tps: float) -> dict:
+    return {"result": {"lr": 1e-3, "baseline": {"tokens_per_second": base_tps, "batch": 4}}}
+
+
+def test_the_drift_is_one_configuration_measured_in_two_separate_runs() -> None:
+    """The same baseline settings in its trial and in its long run: their ratio is the drift.
+
+    The earlier floor was the spread across baseline trials made back to back (1.23× in the
+    published run), which understated how far one configuration moved between runs made at
+    different times (1.44×: its trial against its long run).
+    """
+    trials = _speed_trials([42000.0, 41000.0, 34000.0], [26000.0])
+    assert R.throughput_drift(trials, _speed_fixed(28700.0)) == 41000.0 / 28700.0
+    assert R.throughput_drift(trials, _speed_fixed(50000.0)) == 50000.0 / 41000.0
+    assert R.throughput_drift(None, _speed_fixed(1.0)) is None
+    inside = R.speed_words(28700, 25800, 41000.0 / 28700.0)
+    assert "cannot size the difference" in inside
+    outside = R.speed_words(40000, 20000, 41000.0 / 28700.0)
+    assert "cannot size" not in outside and "fewer tokens per second" in outside
+
+
+def test_the_speed_verdict_follows_the_trials_in_either_direction() -> None:
+    """Slower when every reversible trial is slower, faster when every one is faster, else open."""
+    slower = R.trial_speeds(_speed_trials([42000.0, 41000.0, 34000.0], [27000.0, 25500.0]))
+    assert slower["verdict"] == "slower"
+    assert slower["closest"] == 34000.0 / 27000.0
+    assert slower["at_chosen_rate"] == 41000.0 / 27000.0
+    words = R.trial_speed_words(slower, 1.44, 1.11)
+    assert "The reversible model is slower" in words and "cannot size it" in words
+
+    faster = R.trial_speeds(_speed_trials([20000.0, 21000.0], [30000.0, 31000.0]))
+    assert faster["verdict"] == "faster"
+    assert faster["at_chosen_rate"] == 30000.0 / 21000.0
+    words = R.trial_speed_words(faster, 1.1, 1.5)
+    assert "The reversible model is faster" in words and "cannot size it" not in words
+
+    mixed = R.trial_speeds(_speed_trials([30000.0, 20000.0], [25000.0]))
+    assert mixed["verdict"] == "mixed"
+    assert "does not establish which is faster" in R.trial_speed_words(mixed, None, None)
+    assert R.trial_speeds(None) is None
 
 
 # ------------------------------------------------------------------------ the page's data and copy
@@ -229,16 +273,22 @@ def test_the_page_and_results_md_quote_the_same_comparisons() -> None:
     descriptions of one run would disagree and nothing else would notice.
     """
     bundles = R.load()
-    if len(bundles) < len(R.TASKS):
+    if not bundles:
+        assert not (EXERCISE / "web" / "data.js").exists(), "data.js with no bundles behind it"
         return
+    missing = sorted(set(R.TASKS) - set(bundles))
+    assert not missing, f"the page is published but these bundles are missing: {missing}"
     page = R.page_numbers(bundles)
     document = R.render()
     assert f"{page['fixed']['kept_ratio']:.1f}× fewer bytes" in document
     assert f"{page['max_batch']['batch_ratio']:.1f}× larger" in document
     assert f"{page['fixed']['loss_gap']:+.4f}" in document
     assert f"{page['max_run']['loss_gap']:+.4f}" in document
-    assert f"{page['max_run']['step_ratio']:.1f}× fewer optimiser steps" in document
-    assert f"{page['throughput_floor']:.2f}×" in document
+    assert f"{page['max_run']['step_ratio']:.1f}× fewer optimiser" in document
+    assert f"drift of {page['throughput_drift']:.2f}×" in document
+    speeds = page["trial_speeds"]
+    assert f"The reversible model is {speeds['verdict']}" in document
+    assert f"{speeds['closest']:.2f}–{speeds['furthest']:.2f}×" in document
 
 
 def test_the_derived_batch_is_the_arithmetic_the_budget_bar_draws() -> None:

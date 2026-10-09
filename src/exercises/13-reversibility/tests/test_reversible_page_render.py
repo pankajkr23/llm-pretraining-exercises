@@ -14,6 +14,7 @@ not the page.
 
 import functools
 import http.server
+import json
 import os
 import re
 import socketserver
@@ -243,7 +244,7 @@ def test_the_gutter_the_shared_stylesheet_reserves_is_actually_filled(page):
 def test_every_number_on_the_page_came_from_the_run(page):
     """A missing key in the generated data renders as `undefined` in perfectly valid HTML."""
     text = page.inner_text("main")
-    for poison in ("undefined", "NaN", "[object Object]"):
+    for poison in ("undefined", "NaN", "Infinity", "[object Object]"):
         assert poison not in text, f"the page rendered {poison!r} — a figure came from nowhere"
     labels = page.evaluate(
         "() => [...document.querySelectorAll('main svg text')].map(t => t.textContent).join(' ')"
@@ -313,13 +314,6 @@ def test_every_glossary_entry_carries_a_number_from_the_run(page):
     assert not numberless, f"these glossary entries carry no figure from the run: {numberless}"
 
 
-def test_the_opening_tiles_include_a_failure(page):
-    """A page that shows only its wins has not earned them: one tile is the red one."""
-    marks = page.eval_on_selector_all(".tiles .tile", "els => els.map(e => e.className)")
-    assert 3 <= len(marks) <= 4, marks
-    assert any("bad" in m for m in marks), f"no failure among the opening tiles: {marks}"
-
-
 # ------------------------------------------------------------------------ the interactive figures
 
 
@@ -382,35 +376,54 @@ def test_the_gate_answers_for_whichever_candidate_is_chosen(page):
     page.click(".tcell.refused")
     refused = _trials(page)
     assert refused["state"] == "refused" and refused["verdict"] != chosen["verdict"]
-    assert "%" in refused["verdict"], "a refusal must show the measured error it was refused for"
+    rules = _data()["trials"]["rules"]
+    cand = next(r for r in rules if f"{r['rule']}{r['h']:g}" == refused["selected"])
+    error = _pct_sig(cand["agreement"]["gradient_error"])
+    assert error in refused["verdict"], (
+        f"a refusal must show the measured error it was refused for ({error}): {refused['verdict']}"
+    )
+
+
+def _pct_sig(x: float) -> str:
+    """The page's `pctSig`: a share as a percentage to two significant figures."""
+    return f"{float(f'{x * 100:.2g}'):g}%"
 
 
 def test_the_gate_shows_a_refusal_with_its_error_under_reduced_motion(still):
-    """The figure's end state is the blend being refused, with its own measured gradient error."""
+    """The end state is the best-scoring refused candidate, with its own measured error."""
+    refused = [r for r in _data()["trials"]["rules"] if not r["eligible"]]
     state = _trials(still)
+    if not refused:
+        assert state["state"] == "chosen", state
+        return
+    best = min(refused, key=lambda r: r["final_val"])
     assert state["state"] == "refused", state
-    assert "blend" in state["verdict"] and "%" in state["verdict"]
+    assert best["rule"] in state["verdict"]
+    assert _pct_sig(best["agreement"]["gradient_error"]) in state["verdict"]
 
 
 def _budget(view):
     return view.evaluate(
         """() => ({
-             revealed: document.querySelector('.budget').classList.contains('revealed'),
+             batch: document.querySelector('.budget').dataset.batch,
              widths: [...document.querySelectorAll('.budgetfig .b-act')]
                .map(r => r.getAttribute('width')),
-             measuredShown: [...document.querySelectorAll('.budgetfig .m-measured')]
-               .every(g => g.style.display !== 'none'),
-             out: document.querySelector('#budget-batch + output, .budget .walk-out').textContent,
+             measured: document.querySelectorAll('.budgetfig .m-measured').length,
+             read: document.querySelector('.b-read').textContent,
            })"""
     )
 
 
-def test_the_budget_bar_follows_the_batch_and_hides_the_answer_until_asked(site):
-    """Figure 4: the slider changes the bars; the measured limits stay hidden until revealed."""
+def test_the_budget_bar_follows_the_batch(site):
+    """Figure 4: the slider changes the bars and the reading; the measured markers are always drawn.
+
+    There is no reveal any more: the opening tiles state the measured limits before this figure,
+    so asking the reader to predict them would only pretend to ask.
+    """
     ctx, view = _open(site)
     try:
         before = _budget(view)
-        assert not before["revealed"] and not before["measuredShown"]
+        assert before["measured"] == 2, "both measured limits should be drawn"
         view.evaluate(
             """() => {
                  const r = document.querySelector('#budget-batch');
@@ -420,17 +433,146 @@ def test_the_budget_bar_follows_the_batch_and_hides_the_answer_until_asked(site)
         )
         moved = _budget(view)
         assert moved["widths"] != before["widths"], "the batch moved and the bars did not"
-        view.click(".budget .btn")
-        shown = _budget(view)
-        assert shown["revealed"] and shown["measuredShown"]
-        assert "your guess" in (view.text_content(".budgetfig .b-ghost-lab") or ""), (
-            "the reader's guess is not pinned beside the answer after the reveal"
-        )
+        assert moved["read"] != before["read"] and moved["batch"] != before["batch"]
     finally:
         ctx.close()
 
 
-def test_the_budget_is_revealed_under_reduced_motion(still):
-    """With reduced motion the measured limits are painted, at the reversible model's own."""
-    state = _budget(still)
-    assert state["revealed"] and state["measuredShown"], state
+def test_the_budget_paints_the_measured_limit_under_reduced_motion(still):
+    """With reduced motion the figure opens at the reversible model's own measured largest batch."""
+    data = _data()
+    assert _budget(still)["batch"] == str(data["max_batch"]["reversible"]["measured_max_batch"])
+
+
+# ------------------------------------------------------------------------ verdicts follow the data
+
+
+def _data() -> dict:
+    """The page's generated data, read the way a reader's browser does — from `data.js`."""
+    text = (REPO / "src" / "exercises" / SLUG / "web" / "data.js").read_text(encoding="utf-8")
+    head = "export const M = "
+    return json.loads(text[text.index(head) + len(head) :].rstrip()[:-1])
+
+
+#: Rebuild the page from a copy of its data in which every comparison comes out the other way:
+#: the reversible model keeps more, fits a smaller batch, runs faster in every trial, does better at
+#: the large batch, and has nothing refused by the gate. A fresh module instance builds into a
+#: cleared page, so the text read back is only what the reversed data produced.
+REVERSED_JS = """async () => {
+  const { M } = await import('./data.js?reversed');
+  const R = structuredClone(M);
+  R.fixed.kept_ratio = 1 / M.fixed.kept_ratio;
+  R.fixed.baseline.saved_bytes = M.fixed.reversible.saved_bytes;
+  R.fixed.reversible.saved_bytes = M.fixed.baseline.saved_bytes;
+  R.max_batch.batch_ratio = 1 / M.max_batch.batch_ratio;
+  R.max_batch.baseline.measured_max_batch = M.max_batch.reversible.measured_max_batch;
+  R.max_batch.reversible.measured_max_batch = M.max_batch.baseline.measured_max_batch;
+  R.fixed.loss_gap = -M.fixed.loss_gap;
+  R.max_run.loss_gap = -M.max_run.loss_gap;
+  R.trial_speeds.verdict = 'faster';
+  for (const r of R.trials.rules) r.eligible = true;
+  R.trials.ineligible = {};
+  for (const id of ['main', 'rail', 'foot']) document.getElementById(id).replaceChildren();
+  const { buildPage } = await import('./chapters.js?reversed');
+  buildPage(R);
+  return document.querySelector('main').textContent.replace(/\\s+/g, ' ');
+}"""
+
+#: Phrases each direction must produce, and the other direction must not.
+FORWARD = (
+    "fewer bytes kept for the backward pass by the reversible model",
+    "slower than every baseline trial",
+    "The large batch trained less",
+    "Spending that memory on a larger batch cost loss.",
+    "The gate did not change which rule was used",
+)
+REVERSED = (
+    "more bytes kept for the backward pass by the reversible model",
+    "faster than every baseline trial",
+    "The large batch trained further",
+    "Spending that memory on a larger batch did not cost loss.",
+    "every candidate rebuilt its gradients within it",
+)
+
+
+def test_the_verdict_words_flip_when_the_data_does(site):
+    """No verdict on this page is typed: reverse every comparison in the data and the words follow.
+
+    The first review of this page found "fewer", "held", "slower" and "did not change which rule
+    was used" typed into the source while the page claimed every number was computed — so a re-run
+    that came out the other way would have printed the old verdicts over new numbers.
+    """
+    ctx, view = _open(site)
+    try:
+        forward = view.inner_text("main")
+        missing = [w for w in FORWARD if w not in forward]
+        assert not missing, f"the published page lacks its own verdicts: {missing}"
+        assert not [w for w in REVERSED if w in forward]
+        reversed_text = view.evaluate(REVERSED_JS)
+        stale = [w for w in FORWARD if w in reversed_text]
+        assert not stale, f"these verdicts did not follow the reversed data: {stale}"
+        flipped = [w for w in REVERSED if w not in reversed_text]
+        assert not flipped, f"the reversed data did not produce: {flipped}"
+        for poison in ("undefined", "NaN", "Infinity", "[object Object]"):
+            assert poison not in reversed_text, f"the reversed page rendered {poison!r}"
+    finally:
+        ctx.close()
+
+
+def test_the_opening_tiles_are_marked_by_the_data(page):
+    """Each tile's mark follows its number: the green, amber and red are not chosen by hand."""
+    data = _data()
+    rules = data["trials"]["rules"]
+    expected = [
+        "good" if data["fixed"]["kept_ratio"] > 1 else "bad",
+        "good" if data["max_batch"]["batch_ratio"] > 1 else "bad",
+        "bad" if data["max_run"]["loss_gap"] > 0 else "good",
+        "bad" if any(not r["eligible"] for r in rules) else "good",
+    ]
+    marks = page.eval_on_selector_all(
+        ".tiles .tile", "els => els.map(e => e.className.replace('tile ', ''))"
+    )
+    assert marks == expected, f"tile marks {marks} do not follow the data {expected}"
+
+
+def test_no_figure_is_cut_off_on_a_phone(site):
+    """At 390 and 320 no figure scrolls or clips, and every label lies inside its drawing's box.
+
+    A figure that scrolls on a phone hides its right-hand side, which is where this page's results
+    sat before every drawing was redrawn at a phone's width. Scrolling inside a figure is not
+    deliberate anywhere here, so it is asserted absent rather than given a scroll cue.
+    """
+    ctx, view = _open(site)
+    try:
+        for width in (390, 320):
+            view.set_viewport_size({"width": width, "height": 900})
+            view.wait_for_timeout(150)
+            found = view.evaluate(
+                """() => {
+                     const out = [];
+                     for (const f of document.querySelectorAll('main figure')) {
+                       for (const e of [f, ...f.querySelectorAll('*')]) {
+                         if (!(e instanceof HTMLElement)) continue;
+                         if (e.scrollWidth > e.clientWidth + 1) {
+                           out.push(`${e.tagName.toLowerCase()}.${e.className}: ` +
+                                    `${e.scrollWidth} > ${e.clientWidth}`);
+                         }
+                       }
+                       for (const svg of f.querySelectorAll('svg')) {
+                         const box = svg.getBoundingClientRect();
+                         for (const t of svg.querySelectorAll('text')) {
+                           if (!t.textContent) continue;
+                           const r = t.getBoundingClientRect();
+                           if (r.left < box.left - 1 || r.right > box.right + 1 ||
+                               r.top < box.top - 1 || r.bottom > box.bottom + 1) {
+                             out.push(`label "${t.textContent}" outside its drawing`);
+                           }
+                         }
+                       }
+                     }
+                     return out;
+                   }"""
+            )
+            assert not found, f"at {width}px: {found}"
+    finally:
+        ctx.close()

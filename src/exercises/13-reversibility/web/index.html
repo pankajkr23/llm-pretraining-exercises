@@ -6,7 +6,7 @@
     <title>Run the network backwards instead of remembering it</title>
     <meta
       name="description"
-      content="Training keeps every layer's working state in memory until the backward pass needs it. A reversible network keeps only the top of the stack and rebuilds the rest by running its update rule in reverse — far less memory and a far larger batch, with the rebuilt gradients checked against stored ones, and a rule refused because its gradients were not the true ones."
+      content="Training keeps every layer's working state in memory until the backward pass needs it. A reversible network keeps only the top of the stack and rebuilds the rest by running its update rule in reverse. What that saves in memory, what it buys in batch size, what it costs in speed and loss, and a gate that checks the rebuilt gradients before any rule is used."
     />
     <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
     <link
@@ -53,9 +53,10 @@
         To learn from a guess, a network has to look again at every step it took to make it — so
         ordinary training keeps all of those steps in memory. <b>A reversible network keeps only
         the top of the stack and rebuilds the rest</b>, by running its own update rule in reverse,
-        at the cost of running each layer again. The memory falls, the batch that fits grows, and
-        a rule for doing it was refused before it could be used, because the gradients it rebuilt
-        were no longer the true ones.
+        at the cost of running each layer again. This page measures what that saves in memory,
+        what the saving buys in batch size, what it costs in speed and in loss — and checks, before
+        any rule is used, that the gradients it rebuilds are still the ones ordinary training
+        would compute.
       </p>
       <p class="lede-actions">
         <a class="jump" href="#results">Skip to what happened <span aria-hidden="true">→</span></a>

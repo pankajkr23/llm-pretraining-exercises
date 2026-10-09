@@ -29,9 +29,14 @@ reference, rebuild error) · `model.py` (`ChainedGPT`, exercise 11's model chain
 - **Never train at the exact edge the memory search found.** It passed batch 447 and the run there
   ran out of memory: the probe now runs two real steps (clipping included) and the run uses
   `max_batch_run_fraction` of what was found.
-- **Speed is only a finding outside the machine's own spread.** The same baseline model ran 1.4×
-  apart across its trials under a weak charger; `render_results.throughput_floor` measures that
-  spread from the trials and the speed verdict refuses to rank inside it.
+- **Speed is compared like with like, and a single pair of separate runs cannot size it.** The
+  verdict comes from the trials, which ran back to back at one batch
+  (`render_results.trial_speeds`): in the published run every reversible candidate was slower than
+  every baseline run. The long runs were made at different times, and the same baseline
+  configuration moved further between its trial and its long run (`render_results.throughput_drift`)
+  than the long pair differs, so that pair does not size the slowdown. An earlier version used the
+  spread across baseline trials as the floor; trials made back to back understate the drift
+  between runs made an hour apart, and it let a slower model read as unranked.
 - **Choose on one half of the validation split, report on the other** (`experiments.validation_half`).
 - **`saved_bytes` cannot see a tensor kept on `ctx` or allocated during backward.** The tests
   cross-check it with a liveness instrument; the reversible backward's re-run block is measured

@@ -126,11 +126,12 @@ All of it is in [`RESULTS.md`](RESULTS.md). How each number was produced:
   the stack's activations, and reversibility does nothing for them. The loss is therefore computed in
   chunks that are recomputed in backward, for the baseline too; otherwise the head would set every
   variant's largest batch and the comparison would measure the loss, not the stack.
-- **Speed is steady-state, and only a finding outside the machine's own spread.** The first steps
-  (compilation, allocator warm-up) and evaluation are off the clock, and the device is synchronised
-  before every reading. The baseline trials train one model at three learning rates, which changes
-  nothing a GPU does per token, so their spread in tokens per second is the machine's own; a speed
-  gap smaller than it is reported as not ranking the two.
+- **Speed is steady-state, and compared like with like.** The first steps (compilation, allocator
+  warm-up) and evaluation are off the clock, and the device is synchronised before every reading.
+  The verdict comes from the trials, which ran back to back at the same batch: whether every
+  reversible candidate was slower (or faster) than every baseline run. The long runs were made at
+  different times, so a gap between them counts only if it is larger than the machine's own drift —
+  how far the same baseline configuration moved between its trial and its long run.
 - **The variant is chosen before the long runs**, by validation loss on short runs at the same data
   and learning rate, on the first half of the validation split; every reported loss is measured on
   the second half. The fixed-batch runs use the chosen rule and rate as they are; the run at the

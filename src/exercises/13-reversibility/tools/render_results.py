@@ -85,18 +85,24 @@ def speed_change(base_tps: float, rev_tps: float) -> float | None:
     return rev_tps / base_tps - 1
 
 
-def inside_floor(base_tps: float, rev_tps: float, floor: float | None) -> bool:
-    """Whether a speed gap is no larger than the machine's own spread, so it ranks nothing."""
-    if floor is None or base_tps <= 0 or rev_tps <= 0:
+def long_pair_ratio(base_tps: float, rev_tps: float) -> float | None:
+    """Two runs' tokens per second, larger over smaller, so the gap reads the same either way."""
+    return ratio(max(base_tps, rev_tps), min(base_tps, rev_tps))
+
+
+def inside_drift(base_tps: float, rev_tps: float, drift: float | None) -> bool:
+    """Whether a gap between two separate runs is no larger than one configuration's own drift."""
+    if drift is None or base_tps <= 0 or rev_tps <= 0:
         return False
-    return max(rev_tps, base_tps) / min(rev_tps, base_tps) <= floor
+    return max(rev_tps, base_tps) / min(rev_tps, base_tps) <= drift
 
 
-def speed_words(base_tps: float, rev_tps: float, floor: float | None = None) -> str:
-    """How the reversible model's throughput compares with the baseline's, in words.
+def speed_words(base_tps: float, rev_tps: float, drift: float | None = None) -> str:
+    """How one run's throughput compares with another's, in words.
 
-    `floor` is the machine's own throughput spread (see `throughput_floor`): a gap inside it is
-    reported as such rather than as a difference between the models.
+    `drift` is how far a single configuration's speed moved between two separate runs on this
+    machine (see `throughput_drift`). A gap between two separate runs that is no larger than that
+    is reported as unable to size anything, rather than as a difference between the models.
     """
     change = speed_change(base_tps, rev_tps)
     if change is None:
@@ -104,29 +110,113 @@ def speed_words(base_tps: float, rev_tps: float, floor: float | None = None) -> 
     if abs(change) < SAME:
         return "the same tokens per second (within 0.5%)"
     words = f"{abs(change):.0%} {'more' if change > 0 else 'fewer'} tokens per second"
-    if inside_floor(base_tps, rev_tps, floor):
+    if inside_drift(base_tps, rev_tps, drift):
         return (
-            f"{words} — inside the machine's own throughput spread of {floor:.2f}×, so this does "
-            "not rank their speed"
+            f"{words} — smaller than this machine's own drift of {drift:.2f}× between two runs of "
+            "one configuration, so this pair cannot size the difference"
         )
     return words
 
 
-def throughput_floor(trials: dict | None) -> float | None:
-    """How much the same model's throughput varied on this machine: the baseline trials.
+def throughput_drift(trials: dict | None, fixed: dict | None) -> float | None:
+    """How far one configuration's speed moved between two separate runs on this machine.
 
-    The baseline trials train one model at several learning rates, which changes nothing a GPU
-    does per token, so any spread in their tokens per second is the machine's — power, heat, other
-    load — and no speed gap smaller than it is evidence about the models.
+    The baseline trial at the fixed-batch run's own rate and batch is the same model, the same
+    settings and the same per-token work as the baseline's long run, made at a different time. Any
+    ratio between their tokens per second is the machine's — power, heat, other load — so two
+    separate runs that differ by less than it cannot size a speed difference between models.
+    (A spread across trials made back to back is not that number: it understates the drift
+    between runs made an hour apart.)
+    """
+    if trials is None or fixed is None:
+        return None
+    long_run = fixed["result"]["baseline"]
+    trial = trials["result"]["baseline"].get(str(fixed["result"]["lr"]))
+    if trial is None or trial["batch"] != long_run["batch"]:
+        return None
+    return ratio(
+        max(trial["tokens_per_second"], long_run["tokens_per_second"]),
+        min(trial["tokens_per_second"], long_run["tokens_per_second"]),
+    )
+
+
+def trial_speeds(trials: dict | None) -> dict | None:
+    """Every short trial's tokens per second, baseline against reversible.
+
+    The trials ran back to back under the same conditions at the same batch, so this is the
+    like-with-like comparison: if every reversible candidate ran slower than every baseline run,
+    the reversible model is slower, whatever the machine was doing between experiments.
     """
     if trials is None:
         return None
-    speeds = [
-        run["tokens_per_second"]
-        for run in trials["result"]["baseline"].values()
-        if run["tokens_per_second"] > 0
-    ]
-    return max(speeds) / min(speeds) if len(speeds) >= 2 else None
+    r = trials["result"]
+    base = [run["tokens_per_second"] for run in r["baseline"].values()]
+    rev = [run["tokens_per_second"] for run in r["reversible"].values()]
+    base, rev = [v for v in base if v > 0], [v for v in rev if v > 0]
+    if not base or not rev:
+        return None
+    at_rate = r["baseline"].get(str(r["best_lr"]))
+    chosen = r["reversible"].get(f"{r['choice']['rule']}@{r['choice']['h']}")
+    verdict = "slower" if max(rev) < min(base) else "faster" if min(rev) > max(base) else "mixed"
+    slower = verdict == "slower"
+    return {
+        "baseline": [min(base), max(base)],
+        "reversible": [min(rev), max(rev)],
+        "verdict": verdict,
+        "closest": ratio(min(base), max(rev)) if slower else ratio(min(rev), max(base)),
+        "furthest": ratio(max(base), min(rev)) if slower else ratio(max(rev), min(base)),
+        # Larger over smaller in the verdict's own direction, so "1.56× slower" and "1.56× faster"
+        # both read as a factor above one.
+        "at_chosen_rate": (
+            None
+            if at_rate is None or chosen is None
+            else ratio(at_rate["tokens_per_second"], chosen["tokens_per_second"])
+            if verdict != "faster"
+            else ratio(chosen["tokens_per_second"], at_rate["tokens_per_second"])
+        ),
+    }
+
+
+def trial_speed_words(speeds: dict | None, drift: float | None, pair: float | None) -> str:
+    """The speed verdict: like-with-like from the trials, and what one long pair can say.
+
+    `pair` is the ratio between the two long runs' tokens per second (larger over smaller).
+    """
+    if speeds is None:
+        return "Speed could not be compared: a trial had no timed steps."
+    b, v = speeds["baseline"], speeds["reversible"]
+    rev_range = f"({v[0]:,.0f}–{v[1]:,.0f} tokens per second)"
+    base_range = f"({b[0]:,.0f}–{b[1]:,.0f})"
+    if drift is None or pair is None:
+        drift_text = ""
+    elif pair <= drift:
+        drift_text = (
+            f" The long runs cannot size it: they differ by {pair:.2f}×, while the same baseline "
+            f"configuration ran {drift:.2f}× apart between its trial and its long run."
+        )
+    else:
+        drift_text = (
+            f" The long runs differ by {pair:.2f}×, more than the {drift:.2f}× the same baseline "
+            "configuration drifted between its trial and its long run."
+        )
+    if speeds["verdict"] == "mixed":
+        return (
+            f"In the trials, run back to back at the same batch, the reversible candidates "
+            f"{rev_range} and the baseline runs {base_range} overlap, so this run does not "
+            f"establish which is faster.{drift_text}"
+        )
+    word = speeds["verdict"]
+    rate = (
+        ""
+        if speeds["at_chosen_rate"] is None
+        else f" ({speeds['at_chosen_rate']:.2f}× at the chosen rate)"
+    )
+    return (
+        f"In the trials, run back to back at the same batch, every reversible candidate "
+        f"{rev_range} was {word} than every baseline run {base_range}, by "
+        f"{speeds['closest']:.2f}–{speeds['furthest']:.2f}×{rate}. **The reversible model is "
+        f"{word}; by how much is not pinned down.**{drift_text}"
+    )
 
 
 def agreement_words(agreement: dict | None) -> str:
@@ -230,7 +320,7 @@ def trials_section(b: dict) -> list[str]:
     ]
 
 
-def fixed_section(b: dict, floor: float | None = None) -> list[str]:
+def fixed_section(b: dict, drift: float | None = None, speeds: dict | None = None) -> list[str]:
     """The two full runs at the same batch, side by side."""
     r = b["result"]
     base, rev = r["baseline"], r["reversible"]
@@ -259,7 +349,8 @@ def fixed_section(b: dict, floor: float | None = None) -> list[str]:
     kept_words = (
         "as many bytes as the baseline" if kept == "the same" else f"{kept} bytes than the baseline"
     )
-    speed = speed_words(base["tokens_per_second"], rev["tokens_per_second"], floor)
+    speed = speed_words(base["tokens_per_second"], rev["tokens_per_second"], drift)
+    pair = long_pair_ratio(base["tokens_per_second"], rev["tokens_per_second"])
     return [
         f"## 2 · The same batch ({r['batch']}), the full budget",
         "",
@@ -270,6 +361,7 @@ def fixed_section(b: dict, floor: float | None = None) -> list[str]:
         "",
         f"- **After the forward pass, the reversible model kept {kept_words}** for the backward "
         f"pass, and ran at {speed}.",
+        *([f"- {trial_speed_words(speeds, drift, pair)}"] if speeds is not None else []),
         f"- Its rebuilt gradients on the trained weights {agreement_words(trained)}.",
         f"- Final validation loss differs by {loss_gap(base['final_val'], rev['final_val']):+.4f} "
         "(reversible minus baseline). One seed each and no seed spread measured, so this is not a "
@@ -355,7 +447,13 @@ def max_section(b: dict) -> list[str]:
     return [*out, ""]
 
 
-def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> list[str]:
+def lr_check_spread(b: dict) -> float | None:
+    """How far apart the rate checks ended: the largest final loss minus the smallest."""
+    finals = [c["final_val"] for c in b["result"]["lr_checks"].values() if not c["diverged"]]
+    return max(finals) - min(finals) if len(finals) >= 2 else None
+
+
+def max_run_section(b: dict, fixed: dict | None, drift: float | None = None) -> list[str]:
     """The reversible model at its largest batch."""
     r = b["result"]
     run = r["run"]
@@ -382,6 +480,15 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
         "",
         *checks,
         "",
+        *(
+            []
+            if lr_check_spread(b) is None
+            else [
+                f"- The checks ended within {lr_check_spread(b):.4f} of each other. No noise floor "
+                f"was measured for a {r['check_steps']:,}-step check, so a gap this small is not "
+                "evidence that one rate is better than another."
+            ]
+        ),
         *_edge_note(r["lr_multiplier_at_edge"], "multiplier"),
         "",
         f"At {r['lr_multiplier']:g}× the fixed-batch rate, on the full budget, scored on the "
@@ -401,7 +508,7 @@ def max_run_section(b: dict, fixed: dict | None, floor: float | None = None) -> 
         out += [
             f"- Against the baseline at its fixed batch of {fixed['result']['batch']} (not at the "
             f"baseline's own largest batch): "
-            f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'], floor)}**, final "
+            f"**{speed_words(base['tokens_per_second'], run['tokens_per_second'], drift)}**, final "
             f"validation loss {loss_gap(base['final_val'], run['final_val']):+.4f}.",
             f"- The same tokens took {ratio(base['steps'], run['steps']):.1f}× fewer optimiser "
             f"steps here ({run['steps']:,} against {base['steps']:,}). "
@@ -530,7 +637,7 @@ def page_trials(b: dict) -> dict:
     }
 
 
-def page_fixed(b: dict, floor: float | None) -> dict:
+def page_fixed(b: dict, drift: float | None) -> dict:
     """The two full runs at the same batch, with every comparison the page states."""
     r = b["result"]
     base, rev = r["baseline"], r["reversible"]
@@ -542,8 +649,9 @@ def page_fixed(b: dict, floor: float | None) -> dict:
         "agreement": r["agreement"],
         "kept_ratio": ratio(base["saved_bytes"], rev["saved_bytes"]),
         "speed_change": speed_change(base["tokens_per_second"], rev["tokens_per_second"]),
-        "speed_inside_floor": inside_floor(
-            base["tokens_per_second"], rev["tokens_per_second"], floor
+        "speed_pair": long_pair_ratio(base["tokens_per_second"], rev["tokens_per_second"]),
+        "speed_inside_drift": inside_drift(
+            base["tokens_per_second"], rev["tokens_per_second"], drift
         ),
         "loss_gap": loss_gap(base["final_val"], rev["final_val"]),
         "curves": {
@@ -554,13 +662,70 @@ def page_fixed(b: dict, floor: float | None) -> dict:
     }
 
 
+def memory_story(max_batch: dict | None) -> dict | None:
+    """The ratios that connect "bytes kept", "cost per sequence" and "largest batch".
+
+    They are three different quantities and the page quotes all three, so the one sentence that
+    reconciles them is computed here: what the forward pass keeps per sequence, what the backward
+    pass's re-run block adds for the reversible model, and the batch each total allows.
+    """
+    if max_batch is None:
+        return None
+    r = max_batch["result"]
+    base, rev = r["baseline"], r["reversible"]
+    return {
+        "forward_per_sequence_ratio": ratio(
+            base["saved_bytes_per_sample"], rev["saved_bytes_per_sample"]
+        ),
+        "per_sequence_ratio": ratio(
+            base["derived_bytes_per_sample"], rev["derived_bytes_per_sample"]
+        ),
+        "rerun_over_kept": ratio(
+            rev["backward_working_bytes_per_sample"], rev["saved_bytes_per_sample"]
+        ),
+        "derived_batch_ratio": ratio(rev["derived_max_batch"] or 0, base["derived_max_batch"] or 0),
+    }
+
+
+def batch_linearity(max_batch: dict | None, fixed: dict | None) -> dict | None:
+    """What the one- and two-sequence probe predicts the baseline keeps at the fixed batch.
+
+    The probe measures what one and two sequences keep; their difference is the per-sequence
+    figure, and one sequence's total minus it is the part that does not grow with the batch. The
+    fixed-batch run measured the same quantity at its own batch, in a different run. Their
+    difference is reported, not explained: this run did not measure where it comes from.
+    """
+    if max_batch is None or fixed is None:
+        return None
+    probe = max_batch["result"]["baseline"]
+    run = fixed["result"]
+    fixed_part = probe["saved_bytes_batch1"] - probe["saved_bytes_per_sample"]
+    predicted = fixed_part + run["batch"] * probe["saved_bytes_per_sample"]
+    measured = run["baseline"]["saved_bytes"]
+    return {
+        "fixed_part": fixed_part,
+        "batch": run["batch"],
+        "predicted": predicted,
+        "measured": measured,
+        "excess": measured - predicted,
+    }
+
+
 def page_max(b: dict) -> dict:
     """The largest batch each variant fits in the budget, measured and derived."""
     r = b["result"]
     variants = {}
     for name in ("baseline", "reversible"):
         v = r[name]
-        variants[name] = {**v, "measured_share": measured_share(v)}
+        variants[name] = {
+            **v,
+            "measured_share": measured_share(v),
+            "unexplained": (
+                None
+                if not (v["measured_max_batch"] and v["derived_max_batch"])
+                else v["derived_max_batch"] - v["measured_max_batch"]
+            ),
+        }
     return {
         "budget_gib": r["budget_gib"],
         "budget_bytes": r["budget_gib"] * GIB,
@@ -571,11 +736,12 @@ def page_max(b: dict) -> dict:
         "batch_ratio": ratio(
             r["reversible"]["measured_max_batch"] or 0, r["baseline"]["measured_max_batch"] or 0
         ),
+        "story": memory_story(b),
         **variants,
     }
 
 
-def page_max_run(b: dict, fixed: dict | None, floor: float | None) -> dict:
+def page_max_run(b: dict, fixed: dict | None, drift: float | None) -> dict:
     """The reversible model near its largest batch, against the baseline at its fixed one."""
     r = b["result"]
     run = r["run"]
@@ -593,6 +759,7 @@ def page_max_run(b: dict, fixed: dict | None, floor: float | None) -> dict:
             }
             for m, c in r["lr_checks"].items()
         ],
+        "lr_check_spread": lr_check_spread(b),
         "lr_multiplier": r["lr_multiplier"],
         "lr_multiplier_at_edge": r["lr_multiplier_at_edge"],
         "run": _run_numbers(run),
@@ -603,8 +770,8 @@ def page_max_run(b: dict, fixed: dict | None, floor: float | None) -> dict:
         base = fixed["result"]["baseline"]
         out |= {
             "speed_change": speed_change(base["tokens_per_second"], run["tokens_per_second"]),
-            "speed_inside_floor": inside_floor(
-                base["tokens_per_second"], run["tokens_per_second"], floor
+            "speed_inside_drift": inside_drift(
+                base["tokens_per_second"], run["tokens_per_second"], drift
             ),
             "loss_gap": loss_gap(base["final_val"], run["final_val"]),
             "step_ratio": ratio(base["steps"], run["steps"]),
@@ -638,7 +805,7 @@ _PRESET_KEYS = (
 
 def page_numbers(bundles: dict[str, dict]) -> dict:
     """Every number the page draws, computed by the same functions `RESULTS.md` uses."""
-    floor = throughput_floor(bundles.get("trials"))
+    drift = throughput_drift(bundles.get("trials"), bundles.get("fixed_batch"))
     any_bundle = next(iter(bundles.values()))
     out: dict = {
         "preset": {k: any_bundle["preset"][k] for k in _PRESET_KEYS},
@@ -649,17 +816,19 @@ def page_numbers(bundles: dict[str, dict]) -> dict:
         "epochs": {t: bundle["corpus"]["longest_run_epochs"] for t, bundle in bundles.items()},
         "provenance": {t: bundle["provenance"] for t, bundle in bundles.items()},
         "seconds": {t: bundle["seconds"] for t, bundle in bundles.items()},
-        "throughput_floor": floor,
+        "throughput_drift": drift,
+        "trial_speeds": trial_speeds(bundles.get("trials")),
+        "batch_linearity": batch_linearity(bundles.get("max_batch"), bundles.get("fixed_batch")),
         "approximate_above": GRADIENT_TOLERANCE,
     }
     if "trials" in bundles:
         out["trials"] = page_trials(bundles["trials"])
     if "fixed_batch" in bundles:
-        out["fixed"] = page_fixed(bundles["fixed_batch"], floor)
+        out["fixed"] = page_fixed(bundles["fixed_batch"], drift)
     if "max_batch" in bundles:
         out["max_batch"] = page_max(bundles["max_batch"])
     if "max_batch_run" in bundles:
-        out["max_run"] = page_max_run(bundles["max_batch_run"], bundles.get("fixed_batch"), floor)
+        out["max_run"] = page_max_run(bundles["max_batch_run"], bundles.get("fixed_batch"), drift)
     return out
 
 
@@ -667,9 +836,9 @@ def render_page_data(results: Path = RESULTS) -> str:
     """Generate `web/data.js` — every figure the page draws, read from the same bundles.
 
     **The page must not hold a number of its own.** `chapters.js` reads `M.*` and writes nothing,
-    and every comparison it states — a ratio, a gap, whether a speed difference is inside the
-    machine's own spread — is computed here by the functions `RESULTS.md` is rendered with, so the
-    two documents cannot quote different arithmetic.
+    and every comparison it states — a ratio, a gap, which model the trials found faster and
+    whether a long pair is inside the machine's own drift — is computed here by the functions
+    `RESULTS.md` is rendered with, so the two documents cannot quote different arithmetic.
     """
     body = json.dumps(page_numbers(load(results)), indent=2, sort_keys=True)
     # A series is one line, not one line per point: indented, the curves alone ran to thousands of
@@ -727,13 +896,13 @@ def render(results: Path = RESULTS) -> str:
         ]
     if "trials" in bundles:
         parts += trials_section(bundles["trials"])
-    floor = throughput_floor(bundles.get("trials"))
+    drift = throughput_drift(bundles.get("trials"), bundles.get("fixed_batch"))
     if "fixed_batch" in bundles:
-        parts += fixed_section(bundles["fixed_batch"], floor)
+        parts += fixed_section(bundles["fixed_batch"], drift, trial_speeds(bundles.get("trials")))
     if "max_batch" in bundles:
         parts += max_section(bundles["max_batch"])
     if "max_batch_run" in bundles:
-        parts += max_run_section(bundles["max_batch_run"], bundles.get("fixed_batch"), floor)
+        parts += max_run_section(bundles["max_batch_run"], bundles.get("fixed_batch"), drift)
     return "\n".join(parts).rstrip() + "\n"
 
 

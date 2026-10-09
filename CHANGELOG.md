@@ -52,11 +52,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   the same at every position; the update rules as coefficients, showing why the ordinary block
   cannot be undone and why the blend magnifies rounding; every trial candidate against the 1% gate,
   where the blend is refused with its own measured error; an 8 GiB budget that a reader fills by
-  choosing a batch and then checks against the GPU's measured limit, with the guess pinned beside
-  it; and the long runs' curves. Every number comes from a generated `web/data.js`, written by the
-  same functions as `RESULTS.md`; a test fails if it is stale, and another fails if the page and
-  the document quote different comparisons. Every figure is drawn at a phone's width, so nothing
-  that carries an argument sits behind a sideways scroll.
+  choosing a batch, against the GPU's measured limit; and the long runs' curves. Every number, and
+  every verdict word, comes from a generated `web/data.js`, written by the same functions as
+  `RESULTS.md`; a test fails if it is stale, another if the page and the document quote different
+  comparisons, and a browser test renders the page from reversed data and requires the words to
+  flip. Every figure is drawn at a phone's width, so nothing that carries an argument sits behind a
+  sideways scroll.
+- **Exercise 13's speed verdict is corrected.** It had called the reversible model's speed
+  unranked, against a "floor" taken from three baseline trials made back to back. In those trials
+  every reversible candidate ran slower than every baseline run; and the same baseline
+  configuration drifted further between its trial and its long run than the long pair differs. The
+  verdict is now "slower, by an amount one long pair cannot pin down", in `RESULTS.md` and on the
+  page.
 - **Exercises 11 to 14 are scaffolded**: optimizers and learning-rate schedules, ZeRO on simulated
   devices, reversible training, and turning a dense model into a mixture of experts. Each has the
   standard skeleton, a smoke test, a CI shard entry, a root README row, and — locally only — a

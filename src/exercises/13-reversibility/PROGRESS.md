@@ -63,7 +63,7 @@ From the published run (commit `eb74fb6`). `RESULTS.md` is the authority; this i
 | ablation | what changed | held fixed | outcome |
 | --- | --- | --- | --- |
 | Which reversible rule | midpoint, blend, leapfrog × h ∈ {0.25, 0.5, 1.0}, 2.5M tokens each | data, seed, the baseline's chosen rate (0.001) | leapfrog at h = 0.25 trained best (5.0171 against the baseline's 5.2186); all three blend settings were ineligible, their rebuilt gradients 1.4–5.4% off |
-| Reversible vs standard, same batch | the residual stack's rule and whether activations are stored | 21.3M parameters, 50M tokens, batch 32, rate, data order | 58.7× fewer bytes kept for backward (42.4 against 2,490 MiB); validation loss +0.049; speed 10% lower, inside the machine's own 1.23× spread, so not ranked |
+| Reversible vs standard, same batch | the residual stack's rule and whether activations are stored | 21.3M parameters, 50M tokens, batch 32, rate, data order | 58.7× fewer bytes kept for backward (42.4 against 2,490 MiB); validation loss +0.049; slower — every reversible trial ran 1.25–1.66× slower than every baseline trial, back to back — while the long pair's 10% gap is inside the 1.44× the same baseline configuration drifted between runs, so it does not size the slowdown (corrected 2026-10-10; it read "not ranked") |
 | Rebuilt vs stored gradients, on the device | memory mode only | the chosen model, float32, depth 12, MPS | 5.3e-5 relative at initialisation, 3.9e-5 after training |
 | Largest batch in 8 GiB | the stack | the cap, the probe (two real training steps) | 496 sequences against the baseline's 81 — 6.1× |
 | Training at the largest batch | batch 421 (85% of 496) instead of 32 | the same 50M tokens | 13.2× fewer optimiser steps; validation loss +0.88 against the baseline at batch 32; the 40-step rate check chose the smallest rate on its grid |
@@ -74,6 +74,21 @@ attempts that reached them. The largest-batch search gave 80/447 and 80/455 befo
 and 81/496 after it: the measurement's own leaked graphs had been taking memory from the search.
 
 ## Change log
+
+### 2026-10-10 — the speed verdict was wrong, and the page's verdicts were typed
+
+**Review found the speed comparison wrong in substance.** It set every gap against a "floor" — the
+spread across the three baseline trials, 1.23× — and called the 10% gap between the long runs
+unranked. But the trials, run back to back at one batch, show every reversible candidate slower
+than every baseline run, by 1.25–1.66×; and the same baseline configuration ran 1.44× apart between
+its trial and its long run, so a spread across trials made back to back was never a floor for runs
+made an hour apart. `render_results.py` now reports the like-with-like verdict (slower) and says
+the long pair cannot size it; `RESULTS.md` changed wording accordingly. No experiment was re-run.
+
+The same review found the page stating verdicts — "fewer", "held", "slower", "did not change the
+choice" — as typed words while claiming every number was computed. Each is now derived from the
+data, and a browser test renders the page from a deliberately reversed copy of the data and
+requires the words to flip.
 
 ### 2026-10-10 — the page
 

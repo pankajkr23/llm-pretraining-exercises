@@ -200,8 +200,8 @@
             <p>
               Training keeps every layer's working state until the backward pass needs it. A
               reversible network keeps only the top of the stack and rebuilds the rest by running
-              its update rule in reverse — far less memory, a far larger batch, and a rule refused
-              because the gradients it rebuilt were no longer the true ones.
+              its update rule in reverse — measured for what it saves in memory, what it buys in
+              batch size, what it costs, and whether its rebuilt gradients are still the right ones.
             </p>
             <div class="meta">Memory traded for compute, then checked · every figure from the run</div>
           </span>

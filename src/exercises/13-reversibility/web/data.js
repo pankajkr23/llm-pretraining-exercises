@@ -5,6 +5,13 @@
  */
 export const M = {
   "approximate_above": 0.001,
+  "batch_linearity": {
+    "batch": 32,
+    "excess": 235868160,
+    "fixed_part": 87574272,
+    "measured": 2611173376,
+    "predicted": 2375305216
+  },
   "corpus": {
     "dataset": "HuggingFaceFW/fineweb-edu",
     "train_tokens": 66000000
@@ -77,7 +84,8 @@ export const M = {
       "variant": "leapfrog"
     },
     "speed_change": -0.10169172238611401,
-    "speed_inside_floor": true,
+    "speed_inside_drift": true,
+    "speed_pair": 1.1132035904825799,
     "validation": {
       "baseline": {
         "loss": [4.65796035528183, 4.034693121910095, 3.7083744406700134, 3.5070272386074066, 3.37589493393898, 3.294193059206009, 3.221183091402054, 3.1649167835712433, 3.123340278863907, 3.092247426509857, 3.067698448896408, 3.055716633796692, 3.0525713860988617],
@@ -102,6 +110,7 @@ export const M = {
       "saved_bytes_batch1": 159065864,
       "saved_bytes_per_sample": 71491592,
       "state_bytes": 340459520,
+      "unexplained": 34,
       "variant": "standard"
     },
     "batch_ratio": 6.1234567901234565,
@@ -123,7 +132,14 @@ export const M = {
       "saved_bytes_batch1": 13793032,
       "saved_bytes_per_sample": 991240,
       "state_bytes": 340459520,
+      "unexplained": 700,
       "variant": "leapfrog"
+    },
+    "story": {
+      "derived_batch_ratio": 10.4,
+      "forward_per_sequence_ratio": 72.1233929219967,
+      "per_sequence_ratio": 10.37075561363217,
+      "rerun_over_kept": 5.954497397199467
     }
   },
   "max_run": {
@@ -137,6 +153,7 @@ export const M = {
     },
     "largest_found": 496,
     "loss_gap": 0.8844532668590546,
+    "lr_check_spread": 0.007116258144378662,
     "lr_checks": [
       {
         "diverged": false,
@@ -176,7 +193,7 @@ export const M = {
     },
     "run_fraction": 0.85,
     "speed_change": -0.05546865139216528,
-    "speed_inside_floor": true,
+    "speed_inside_drift": true,
     "step_ratio": 13.181425485961123,
     "validation": {
       "loss": [3.9370246529579163],
@@ -280,7 +297,15 @@ export const M = {
     "max_batch_run": 2360.6959342909977,
     "trials": 1050.685537542
   },
-  "throughput_floor": 1.2288052964492706,
+  "throughput_drift": 1.4358143533358292,
+  "trial_speeds": {
+    "at_chosen_rate": 1.557323287003712,
+    "baseline": [34442.8827031089, 42323.59669056119],
+    "closest": 1.25084557594088,
+    "furthest": 1.6561068664507892,
+    "reversible": [25556.078262790554, 27535.679356103676],
+    "verdict": "slower"
+  },
   "trials": {
     "baseline": [
       {

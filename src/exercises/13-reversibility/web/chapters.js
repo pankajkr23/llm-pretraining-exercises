@@ -142,14 +142,6 @@ const Spell = (n) => {
 const signed = (n, d = 4) => (n >= 0 ? '+' : '−') + Math.abs(n).toFixed(d);
 const pct = (n, d = 1) => `${(n * 100).toFixed(d)}%`;
 
-/* How many decimals a measurement's own noise floor will support: quote a digit only when the
- * spread is smaller than that digit's place value. Ported from exercise 09. */
-const decimalsFor = (spread) =>
-  spread > 0 ? Math.min(4, Math.max(0, Math.floor(-Math.log10(spread)))) : 4;
-
-/** A ratio quoted to the precision its own spread earns, never finer. */
-const ratio = (value, spread) => `${value.toFixed(decimalsFor(spread))}×`;
-
 /* The units this page reports memory in. Binary, as the bundles count them. */
 const mib = (bytes) =>
   (bytes / 2 ** 20).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -194,79 +186,164 @@ function undo(rule, k) {
 const PLAY = [];
 
 const chosenTrial = (M) =>
-  M.trials.rules.find((r) => r.rule === M.trials.choice.rule && r.h === M.trials.choice.h);
-const refused = (M) => M.trials.rules.filter((r) => !r.eligible);
+  M.trials.rules.find((r) => r.rule === M.trials.choice.rule && r.h === M.trials.choice.h) || null;
+const refused = (M) => M.trials.rules.filter((r) => !r.eligible && r.agreement);
 const eligible = (M) => M.trials.rules.filter((r) => r.eligible && r.agreement);
-const baselineTrial = (M) => M.trials.baseline.find((b) => b.lr === M.trials.best_lr);
+const baselineTrial = (M) => M.trials.baseline.find((b) => b.lr === M.trials.best_lr) || null;
+const scored = (list) => list.filter((r) => typeof r.final_val === 'number');
+/** The refused candidate with the lowest loss, or `null` when nothing was refused or scored. */
 const bestRefused = (M) =>
-  refused(M).reduce((a, b) => (a === null || b.final_val < a.final_val ? b : a), null);
+  scored(refused(M)).reduce((a, b) => (a === null || b.final_val < a.final_val ? b : a), null);
+const errors = (list) => list.map((r) => r.agreement.gradient_error);
+
+/* Words that carry a direction are chosen from the numbers, never typed: a re-run that came out the
+ * other way must read the other way. `test_reversible_page_render.py` renders the page from a
+ * reversed copy of the data and requires these to flip. */
+const fewerMore = (ratio) => (ratio >= 1 ? 'fewer' : 'more');
+const times = (ratio) => `${(ratio >= 1 ? ratio : 1 / ratio).toFixed(1)}×`;
+const higherLower = (gap) => (gap > 0 ? 'higher' : gap < 0 ? 'lower' : 'no different');
+const has = (v) => typeof v === 'number' && Number.isFinite(v);
+const count = (v) => (has(v) ? int(v) : 'not measured');
+/** A range of small percentages, or a phrase saying there is none. */
+const pctRange = (list) =>
+  list.length ? `${pctSig(Math.min(...list))} to ${pctSig(Math.max(...list))}` : 'none';
+
+/* One name for the reference every rebuilt gradient is measured against. */
+const STORED = 'the stored gradients';
+
+/* Each rule in plain words, for a reader who has not yet met the coefficients. */
+const RULE_WORDS = (M) => ({
+  midpoint: 'which steps from the state two layers back, over the current one',
+  blend: `which mixes the two previous states, with a weight a = ${M.preset.blend_a} on the older`,
+  leapfrog: 'which extends the line through the two previous states',
+});
+
+/** Which rules the gate refused, and how many of each rule's settings, from the data. */
+function refusalSummary(M) {
+  const out = [];
+  for (const rule of M.preset.trial_rules) {
+    const tried = M.trials.rules.filter((r) => r.rule === rule).length;
+    const no = refused(M).filter((r) => r.rule === rule).length;
+    if (!no) continue;
+    out.push(no === tried ? `every setting of ${rule}` : `${spell(no)} of ${spell(tried)} settings of ${rule}`);
+  }
+  return out;
+}
 
 /* ============================================================== 1 · thesis */
 
 function chapterThesis(M) {
   const F = M.fixed;
   const X = M.max_batch;
-  const blend = bestRefused(M);
+  const R = M.max_run;
+  const T = M.trials;
+  const P = M.preset;
+  const best = bestRefused(M);
+  const chosen = chosenTrial(M);
+  const base = baselineTrial(M);
   const s = section(
     'thesis',
     'thesis',
     'Memory traded for compute',
     'Keep the top of the stack, rebuild the rest — and check the rebuild',
     [
-      `The same ${int(F.baseline.parameters)}-parameter model, trained as an ordinary stack and as
-       a reversible one on the same ${int(F.baseline.tokens)} tokens. <b>The green tiles are what
-       the method promises, the amber one is what it cost in loss, and the red one is what this
-       exercise refused to accept</b> — the reason the page exists in the form it does.`,
+      `The same ${int(F.baseline.parameters)}-parameter model, trained as an ordinary residual
+       stack and as a reversible one on the same ${int(F.baseline.tokens)} tokens. A reversible
+       stack moves its state forward with an update rule that can be run backwards. This run tried
+       ${spell(P.trial_rules.length)} such rules — ${P.trial_rules.join(', ')} — each at step sizes
+       h = ${P.trial_h.join(', ')}, and refused any whose rebuilt gradients were more than
+       ${pct(T.tolerance, 0)} from ${STORED}: <b>the gate</b>. Read the tiles in order: memory,
+       batch, loss, and the gate.`,
     ],
     { short: 'The claim', sub: 'what reversing a network buys and costs' }
   );
 
-  const tiles = el('div', 'tiles');
-  for (const [v, k, mark] of [
-    [
-      `${F.kept_ratio.toFixed(1)}×`,
-      `fewer bytes kept for the backward pass at the same batch of ${F.batch} —
-       ${mib(F.reversible.saved_bytes)} MiB against ${mib(F.baseline.saved_bytes)} MiB`,
-      'good',
-    ],
-    [
-      `${int(X.baseline.measured_max_batch)} → ${int(X.reversible.measured_max_batch)}`,
-      `sequences in one training step under the same ${X.budget_gib} GiB cap, found by running real
-       steps until one ran out of memory — ${X.batch_ratio.toFixed(1)}× as many`,
-      'good',
-    ],
-    [
-      signed(F.loss_gap, 3),
-      `validation loss, reversible minus ordinary, after the full run at the same batch. One seed
-       each, so this is reported and not ranked`,
-      'watch',
-    ],
-    [
-      pctSig(blend.agreement.gradient_error),
-      `how far the <b>blend</b> rule's rebuilt gradients were from the true ones at h = ${blend.h},
-       its best-scoring setting. Every blend setting was over the ${pct(M.trials.tolerance, 0)} gate
-       and refused`,
-      'bad',
-    ],
-  ]) {
+  const tiles = [];
+  tiles.push(
+    has(F.kept_ratio)
+      ? [
+          times(F.kept_ratio),
+          `${fewerMore(F.kept_ratio)} bytes kept for the backward pass by the reversible model at
+           the same batch of ${F.batch} — ${mib(F.reversible.saved_bytes)} MiB against
+           ${mib(F.baseline.saved_bytes)} MiB`,
+          F.kept_ratio > 1 ? 'good' : 'bad',
+        ]
+      : ['—', 'the bytes kept for the backward pass could not be compared', 'watch']
+  );
+  tiles.push(
+    has(X.batch_ratio)
+      ? [
+          `${int(X.baseline.measured_max_batch)} → ${int(X.reversible.measured_max_batch)}`,
+          `sequences one training step could take under the same ${X.budget_gib} GiB cap, ordinary
+           then reversible, found by running real steps until one ran out of memory —
+           ${times(X.batch_ratio)} ${X.batch_ratio >= 1 ? 'as many' : 'fewer'}`,
+          X.batch_ratio > 1 ? 'good' : 'bad',
+        ]
+      : ['—', 'the largest batch was not measured for both models', 'watch']
+  );
+  tiles.push(
+    has(R.loss_gap)
+      ? [
+          signed(R.loss_gap, 2),
+          `validation loss of the reversible model near its largest batch (${R.batch}) against the
+           ordinary model at batch ${F.batch}: the same tokens in ${times(R.step_ratio)}
+           ${fewerMore(R.step_ratio)} steps. At the same batch the gap is
+           ${signed(F.loss_gap, 3)}. One seed per run`,
+          R.loss_gap > 0 ? 'bad' : 'good',
+        ]
+      : ['—', 'the large-batch run has no validation loss to compare', 'watch']
+  );
+  tiles.push(
+    best
+      ? [
+          pctSig(best.agreement.gradient_error),
+          `how far the <b>${best.rule}</b> rule — ${RULE_WORDS(M)[best.rule]} — rebuilt its
+           gradients from ${STORED} at h = ${best.h}, its best-scoring refused setting. Refused by
+           the gate: ${refusalSummary(M).join('; ')}`,
+          'bad',
+        ]
+      : [
+          spell(refused(M).length),
+          `candidates refused by the ${pct(T.tolerance, 0)} gate: every candidate rebuilt its
+           gradients within it`,
+          'good',
+        ]
+  );
+
+  const wrap = el('div', 'tiles');
+  for (const [v, k, mark] of tiles) {
     const tile = el('div', `tile ${mark}`);
     const value = el('div', 'tile-v');
     value.innerHTML = v;
     const key = el('div', 'tile-k');
     key.innerHTML = k;
     tile.append(value, key);
-    tiles.append(tile);
+    wrap.append(tile);
   }
-  s.append(tiles);
+  s.append(wrap);
 
-  const chosen = chosenTrial(M);
-  const note = el('p', 'say small');
-  note.innerHTML = `The red tile did not change which rule was used — ${chosen.rule} at h =
-    ${chosen.h} scored ${chosen.final_val.toFixed(4)} against the best blend's
-    ${blend.final_val.toFixed(4)} anyway. It is first because it is the check that would have
-    caught a run training on gradients a few percent wrong while its loss curve looked perfectly
-    normal.`;
-  s.append(note);
+  if (best && chosen && has(chosen.final_val)) {
+    const changed = best.final_val < chosen.final_val;
+    const below = base ? scored(refused(M)).filter((r) => r.final_val < base.final_val) : [];
+    const note = el('p', 'say small');
+    note.innerHTML = `${
+      changed
+        ? `<b>The gate changed which rule was used.</b> ${best.rule} at h = ${best.h} scored
+           ${best.final_val.toFixed(4)}, lower than the chosen ${chosen.rule}'s
+           ${chosen.final_val.toFixed(4)}, and would have been picked without it.`
+        : `<b>The gate did not change which rule was used:</b> ${chosen.rule} at h = ${chosen.h}
+           scored ${chosen.final_val.toFixed(4)}, lower than the best refused candidate's
+           ${best.final_val.toFixed(4)}.`
+    } ${
+      below.length
+        ? `But ${spell(below.length)} of the refused settings scored lower than the ordinary
+           model's ${base.final_val.toFixed(4)} in the same trials, so a loss curve alone would have
+           recommended them.`
+        : ''
+    } The last tile is the check that catches a run training on gradients
+    ${pctRange(errors(refused(M)))} off while its loss looks normal.`;
+    s.append(note);
+  }
 }
 
 /* ============================================================== 2 · glossary */
@@ -276,6 +353,7 @@ function chapterGlossary(M) {
   const F = M.fixed;
   const X = M.max_batch;
   const T = M.trials;
+  const S = M.trial_speeds;
   /* Built BEFORE the section, so the heading can count them. */
   const entries = [
     [
@@ -288,7 +366,7 @@ function chapterGlossary(M) {
     [
       'kept for backward',
       `Whatever the forward pass leaves in memory for the backward pass to read. The ordinary model
-       here adds ${int(X.baseline.saved_bytes_per_sample)} bytes of it for every extra
+       here adds ${count(X.baseline.saved_bytes_per_sample)} bytes of it for every extra
        ${P.seq_len}-token sequence in a batch.`,
     ],
     [
@@ -308,22 +386,25 @@ function chapterGlossary(M) {
        long runs use ${T.choice.rule} at h = ${T.choice.h}.`,
     ],
     [
-      'gradient error',
-      `How far rebuilding moved the gradients from the ones ordinary training computes, as a share
-       of their size. The chosen rule's: ${pctSig(F.agreement.init.gradient_error)} before
-       training, ${pctSig(F.agreement.trained.gradient_error)} after.`,
+      'stored gradients',
+      `What ordinary training computes when it keeps every block's input: the reference every
+       rebuilt gradient is measured against. <b>Gradient error</b> is the distance between the two,
+       as a share of their size — for the chosen rule, ${pctSig(F.agreement.init.gradient_error)}
+       on its starting weights and ${pctSig(F.agreement.trained.gradient_error)} on its trained
+       ones.`,
     ],
     [
       'the gate',
-      `A candidate whose gradient error is above ${pct(T.tolerance, 0)} on its starting weights is
-       still trained and shown, but can never be chosen. It refused
-       ${spell(Object.keys(T.ineligible).length)} of the ${spell(T.rules.length)} candidates.`,
+      `A candidate whose gradient error is above ${pct(T.tolerance, 0)} on its starting weights —
+       measured on the GPU in float32, the run's own precision — is still trained and shown, but
+       can never be chosen. It refused ${spell(refused(M).length)} of the
+       ${spell(T.rules.length)} candidates.`,
     ],
     [
       'the largest batch',
       `The most sequences one training step can take under a ${X.budget_gib} GiB memory cap, found
-       on the GPU by running real steps until one fails: ${int(X.baseline.measured_max_batch)} for
-       the ordinary model, ${int(X.reversible.measured_max_batch)} for the reversible one.`,
+       on the GPU by running real steps until one fails: ${count(X.baseline.measured_max_batch)}
+       for the ordinary model, ${count(X.reversible.measured_max_batch)} for the reversible one.`,
     ],
     [
       'validation loss',
@@ -332,10 +413,14 @@ function chapterGlossary(M) {
        to choose. The ordinary model ends at ${F.baseline.final_val.toFixed(4)}.`,
     ],
     [
-      "the machine's spread",
-      `The same model at ${spell(T.baseline.length)} learning rates ran
-       ${M.throughput_floor.toFixed(2)}× apart in tokens per second on this machine. A speed gap
-       smaller than that says nothing about the models.`,
+      "the machine's drift",
+      has(M.throughput_drift)
+        ? `How far one configuration's speed moved between two runs made at different times: the
+           ordinary model at the same settings ran ${M.throughput_drift.toFixed(2)}× apart in its
+           trial and in its long run. A gap between two separate runs smaller than that cannot size
+           a speed difference${S ? '; the trials, run back to back, are what can' : ''}.`
+        : `How far one configuration's speed moves between separate runs. This run could not
+           measure it, so no speed gap between separate runs is sized here.`,
     ],
   ];
   const s = section(
@@ -365,28 +450,42 @@ function chapterGlossary(M) {
 function chapterProblem(M) {
   const F = M.fixed;
   const X = M.max_batch;
-  const s = section(
-    'problem',
-    'problem',
-    'The problem',
-    'An ordinary block cannot give its input back',
-    [
-      `To work out how a weight should change, the backward pass needs the exact input the block
-       saw on the way forward. So an ordinary transformer keeps every block's working tensors until
-       the backward pass comes back for them — <b>and that pile grows with the depth and with the
-       batch.</b>`,
-      `Here, at a batch of ${F.batch}, it is ${mib(F.baseline.saved_bytes)} MiB. The weights, their
-       gradients and the optimiser's running averages together take ${mib(X.baseline.state_bytes)}
-       MiB. <b>It is the activations, not the model, that run out of room</b> — each further
-       sequence in the batch adds another ${mib(X.baseline.saved_bytes_per_sample)} MiB.`,
-      `Why not recompute the input instead of keeping it? An ordinary block adds its update to the
-       state it was given: ${p('ℓ+1')} = ${p('ℓ')} + f(${p('ℓ')}). To get ${p('ℓ')} back from
-       ${p('ℓ+1')} you would need f(${p('ℓ')}) — which needs the very state you are trying to
-       recover. There is no way round it, so the input is stored.`,
-    ],
-    { short: 'The problem', sub: 'activations, not weights, fill memory' }
+  const lin = M.batch_linearity;
+  const activationsWin = F.baseline.saved_bytes > X.baseline.state_bytes;
+  const paras = [
+    `To work out how a weight should change, the backward pass needs the exact input the block saw
+     on the way forward. So an ordinary transformer keeps every block's working tensors until the
+     backward pass comes back for them — and that pile grows with the depth and with the batch.`,
+    `Here, at a batch of ${F.batch}, it is ${mib(F.baseline.saved_bytes)} MiB, against
+     ${mib(X.baseline.state_bytes)} MiB for the weights, their gradients and the optimiser's running
+     averages together. <b>${
+       activationsWin
+         ? 'At this batch the activations, not the model, are the larger claim on memory'
+         : 'At this batch the model itself, not the activations, is the larger claim on memory'
+     }.</b>`,
+  ];
+  if (lin) {
+    const over = lin.excess >= 0;
+    paras.push(
+      `Each further sequence adds ${mib(X.baseline.saved_bytes_per_sample)} MiB: that is the
+       difference between what one and two sequences keep, measured in the largest-batch
+       experiment, where one sequence also kept ${mib(lin.fixed_part)} MiB that does not grow with
+       the batch. Together they predict ${mib(lin.predicted)} MiB at batch ${lin.batch}; the long
+       run measured ${mib(lin.measured)} MiB, ${mib(Math.abs(lin.excess))} MiB
+       ${over ? 'more' : 'less'}. The two numbers come from different runs, and this page does not
+       explain the difference.`
+    );
+  }
+  paras.push(
+    `Why not recompute the input instead of keeping it? An ordinary block adds its update to the
+     state it was given: ${p('ℓ+1')} = ${p('ℓ')} + f(${p('ℓ')}). To get ${p('ℓ')} back from
+     ${p('ℓ+1')} you would need f(${p('ℓ')}) — which needs the very state you are trying to
+     recover. There is no way round it, so the input is stored.`
   );
-  return s;
+  return section('problem', 'problem', 'The problem', 'An ordinary block cannot give its input back', paras, {
+    short: 'The problem',
+    sub: 'what fills memory during training',
+  });
 }
 
 /* ============================================================== 4 · mechanism */
@@ -473,7 +572,8 @@ function walkFigure(M) {
   const sRebuild = slot('rebuilds');
   const sNote = slot('what to notice');
 
-  /* The bytes this walk costs per sequence: the same at every position, which is the point. */
+  /* What each model holds per sequence for its backward pass, measured once at this depth. Drawn
+   * for scale: the bars do not move with the walk, and nothing about the walk tests them. */
   const bytes = el('div', 'walk-bytes');
   const most = X.baseline.derived_bytes_per_sample;
   const bar = (who, value, parts) => {
@@ -488,13 +588,17 @@ function walkFigure(M) {
     row.append(track, el('span', 'wb-v', `${int(value)} bytes`));
     return row;
   };
+  const key = el('div', 'wb-key');
+  key.innerHTML = `<span><i class="wb-sw kept"></i>kept by the forward pass</span>
+    <span><i class="wb-sw rerun"></i>one block re-run during the backward pass</span>`;
   bytes.append(
-    el('div', 'wb-title', 'held for the backward pass, per sequence, at any position'),
+    el('div', 'wb-title', `per sequence, at depth ${L}: what each model holds for its backward pass`),
     bar('ordinary', X.baseline.derived_bytes_per_sample, [['base', X.baseline.derived_bytes_per_sample]]),
     bar('reversible', X.reversible.derived_bytes_per_sample, [
       ['kept', X.reversible.saved_bytes_per_sample],
       ['rerun', X.reversible.backward_working_bytes_per_sample],
-    ])
+    ]),
+    key
   );
 
   body.append(stack, slots);
@@ -550,8 +654,8 @@ function walkFigure(M) {
         ? `The last rebuild returns the seed — the copy of ${p(0)} the stack started from, since a
            two-step rule needs two states to begin. Every state has been visited once, and no more
            than ${spell(st.held.length)} were ever held at a time.`
-        : `${p(st.released)} has done its job and is freed. The memory held is the same as at the
-           top of the stack: two states and the one block being re-run.`;
+        : `${p(st.released)} has done its job and is freed. What is held is what it was at the
+           top of the stack: ${spell(st.held.length)} states and the one block being re-run.`;
     const x0 = BX - 3;
     const yFrom = y(st.k - 1) + 9;
     const yTo = y(st.k - 2) + 9;
@@ -564,14 +668,22 @@ function walkFigure(M) {
   PLAY.push(wrap.playAll);
   show(current);
 
+  const story = X.story;
   return figure(
     wrap,
-    `<b>Two states and one block, wherever the walk is.</b> Move the position down the stack: the
-     filled pair slides with it, the state below is rebuilt from the two above and the block between
-     them, and the state above is freed. The bars underneath do not move, which is the argument —
-     the reversible model holds ${int(X.reversible.derived_bytes_per_sample)} bytes per sequence at
-     every position, against ${int(X.baseline.derived_bytes_per_sample)} for the ordinary one. A
-     position where a third state had to be kept would refute it.`
+    `<b>The walk holds the same few things at every position.</b> Move the position down the stack:
+     the filled pair slides with it, the state below is rebuilt from the two above and the block
+     between them, and the state above is freed; a position that had to keep a third state would
+     refute the mechanism. The bars underneath are measured costs per sequence at this depth, drawn
+     for scale — the slider does not test them. The ordinary model's bar is everything its forward
+     pass keeps; the reversible one's adds the block re-run during the backward pass (hatched).${
+       story && has(story.forward_per_sequence_ratio) && has(story.per_sequence_ratio)
+         ? ` Counting only what the forward pass keeps, a sequence costs the reversible model
+            ${times(story.forward_per_sequence_ratio)} ${fewerMore(story.forward_per_sequence_ratio)}
+            bytes; with the re-run block it is ${times(story.per_sequence_ratio)}
+            ${fewerMore(story.per_sequence_ratio)}.`
+         : ''
+     }`
   );
 }
 
@@ -664,7 +776,10 @@ function chapterMechanism(M) {
        already holds.</b> So the forward pass keeps only the two states at the top and discards the
        rest. The backward pass walks down, re-runs each block once on the state it has, rebuilds the
        state below, and backpropagates through what it just ran. The price is one extra forward
-       pass per block; the pay-off is that memory for activations stops depending on the depth.`,
+       pass per block. What the mechanism implies is that the memory for activations stops growing
+       with the depth. This run measures only depth ${M.preset.depth}; the exercise's tests check
+       the claim on a small model at two depths, and the reversible stack kept exactly the same
+       bytes per sequence at both.`,
       `The rules come from Gal et al., <i>Reversing Large Language Models for Efficient Training
        and Fine-Tuning</i> (arXiv:2512.02056); this page writes them all in one coefficient form,
        the way the code implements them.`,
@@ -734,8 +849,8 @@ function chapterMethod(M) {
         {
           cells: [
             'the gate',
-            `each candidate's rebuilt gradients measured against stored ones on its starting
-             weights, on the GPU, in the run's own precision; above ${pct(T.tolerance, 0)} it
+            `each candidate's rebuilt gradients measured against ${STORED} on its starting
+             weights, on the GPU, in float32 as the run trains; above ${pct(T.tolerance, 0)} it
              cannot be chosen`,
           ],
           __mark: 'warn',
@@ -763,7 +878,11 @@ function chapterMethod(M) {
           ],
         },
         {
-          cells: ['machine', `an Apple GPU through ${env.device}, torch ${env.torch}`],
+          cells: [
+            'machine',
+            `${env.platform.split('-').slice(0, 2).join(' ')}, ${env.machine}, on the
+             <code>${env.device}</code> GPU backend · torch ${env.torch}`,
+          ],
         },
       ]
     )
@@ -780,13 +899,74 @@ function chapterMethod(M) {
 
 /* ============================================================== 6 · expected */
 
+/** A row's verdict word and its mark, from whether the claim held. */
+const verdict = (held) =>
+  held === null ? ['unresolved', 'warn'] : held ? ['held', 'good'] : ['did not hold', 'bad'];
+
+/** The rules whose every setting passed the gate, and those with at least one refused. */
+function rulesByGate(M) {
+  const passed = [];
+  const failed = [];
+  for (const rule of M.preset.trial_rules) {
+    const all = M.trials.rules.filter((r) => r.rule === rule && r.agreement);
+    if (!all.length) continue;
+    (all.every((r) => r.eligible) ? passed : failed).push(rule);
+  }
+  return { passed, failed };
+}
+
+/** The speed row: the trials' like-with-like verdict, and what one long pair cannot say. */
+function speedVerdict(M) {
+  const S = M.trial_speeds;
+  if (!S) return [null, 'the trials have no timed steps to compare'];
+  const range = `${S.closest.toFixed(2)}–${S.furthest.toFixed(2)}×`;
+  if (S.verdict === 'mixed') return [null, 'the trials overlap, so this run cannot say which is faster'];
+  return [
+    S.verdict === 'slower',
+    `every reversible trial ran ${S.verdict} than every baseline trial, back to back, by ${range};
+     how much ${S.verdict} is not pinned down`,
+  ];
+}
+
 function chapterExpected(M) {
   const F = M.fixed;
   const X = M.max_batch;
   const R = M.max_run;
-  const ok = eligible(M);
-  const worstOk = Math.max(...ok.map((r) => r.agreement.gradient_error));
-  const bad = refused(M).map((r) => r.agreement.gradient_error);
+  const { passed, failed } = rulesByGate(M);
+  const worstOk = errors(eligible(M));
+  const bad = errors(refused(M));
+  const [speedHeld, speedText] = speedVerdict(M);
+  const rows = [
+    [
+      'Far fewer bytes kept for the backward pass',
+      has(F.kept_ratio) ? F.kept_ratio > 1 : null,
+      has(F.kept_ratio)
+        ? `${times(F.kept_ratio)} ${fewerMore(F.kept_ratio)} at the same batch`
+        : 'not compared',
+    ],
+    [
+      'A larger batch in the same memory',
+      has(X.batch_ratio) ? X.batch_ratio > 1 : null,
+      `${count(X.baseline.measured_max_batch)} → ${count(X.reversible.measured_max_batch)}
+       sequences in ${X.budget_gib} GiB`,
+    ],
+    [
+      `Rebuilt gradients are ${STORED}`,
+      failed.length ? false : passed.length ? true : null,
+      `${passed.length ? `within the gate for ${passed.join(' and ')} (worst ${worstOk.length ? pctSig(Math.max(...worstOk)) : '—'})` : ''}${
+        passed.length && failed.length ? '; ' : ''
+      }${failed.length ? `outside it for ${failed.join(' and ')} (${pctRange(bad)})` : ''}`,
+    ],
+    ['One extra forward pass per block costs speed', speedHeld, speedText],
+    [
+      'The hope: the bigger batch trains as far on the same tokens',
+      has(R.loss_gap) ? R.loss_gap <= 0 : null,
+      has(R.loss_gap)
+        ? `${signed(R.loss_gap, 2)} validation loss with ${times(R.step_ratio)}
+           ${fewerMore(R.step_ratio)} steps`
+        : 'no validation loss to compare',
+    ],
+  ];
   const s = section(
     'expected',
     'expected',
@@ -803,60 +983,25 @@ function chapterExpected(M) {
   s.append(
     table(
       ['the claim', 'what this run measured'],
-      [
-        {
-          cells: [
-            'Far fewer bytes kept for the backward pass',
-            `<b>held</b> — ${F.kept_ratio.toFixed(1)}× fewer at the same batch`,
-          ],
-          __mark: 'good',
-        },
-        {
-          cells: [
-            'A larger batch in the same memory',
-            `<b>held</b> — ${int(X.baseline.measured_max_batch)} → ${int(X.reversible.measured_max_batch)}
-             sequences in ${X.budget_gib} GiB`,
-          ],
-          __mark: 'good',
-        },
-        {
-          cells: [
-            'Rebuilt gradients are the true gradients',
-            `<b>held for midpoint and leapfrog</b> (worst ${pctSig(worstOk)}), <b>failed for the
-             blend</b> (${pctSig(Math.min(...bad))} to ${pctSig(Math.max(...bad))})`,
-          ],
-          __mark: 'bad',
-        },
-        {
-          cells: [
-            'One extra forward pass per block costs speed',
-            `<b>unresolved</b> — ${pct(Math.abs(F.speed_change), 0)} fewer tokens per second, a gap
-             inside the machine's own spread`,
-          ],
-          __mark: 'warn',
-        },
-        {
-          cells: [
-            'The hope: the bigger batch trains as far on the same tokens',
-            `<b>did not hold</b> — ${signed(R.loss_gap, 2)} validation loss with
-             ${R.step_ratio.toFixed(1)}× fewer steps`,
-          ],
-          __mark: 'bad',
-        },
-      ]
+      rows.map(([claim, held, text]) => {
+        const [word, mark] = verdict(held);
+        return { cells: [claim, `<b>${word}</b> — ${text}`], __mark: mark };
+      })
     )
   );
 }
 
 /* ============================================================== 7 · results */
 
-/* Figure 3 — the trials, and the gate. Adversary: the reader tries to choose a rule; the blend is
- * refused by name, with its own measured error. */
+/* Figure 3 — the trials, and the gate. Adversary: the reader tries to choose a rule; a refused one
+ * is refused by name, with its own measured error. */
 function trialsFigure(M) {
   const T = M.trials;
   const tol = T.tolerance;
-  const base = baselineTrial(M);
-  const END = bestRefused(M);
+  const base = baselineTrial(M) || { final_val: NaN };
+  /* The end state is the best-scoring refusal; with nothing refused, the chosen candidate. */
+  const refusedBest = bestRefused(M);
+  const END = refusedBest || chosenTrial(M) || T.rules.find((r) => r.agreement);
 
   const all = [...T.rules.map((r) => r.curve.loss), ...T.baseline.map((b) => b.curve.loss)].flat();
   const lo = Math.min(...all);
@@ -1013,28 +1158,29 @@ function trialsFigure(M) {
     const name = `${st.r.rule} at h = ${st.r.h}`;
     const loss = st.r.final_val === null ? 'diverged' : st.r.final_val.toFixed(4);
     const against =
-      st.r.final_val === null
+      !has(st.r.final_val) || !has(base.final_val)
         ? ''
-        : `, ${st.r.final_val < base.final_val ? 'lower' : 'higher'} than the ordinary model's
+        : `, ${higherLower(st.r.final_val - base.final_val)} than the ordinary model's
            ${base.final_val.toFixed(4)} at the same rate`;
     if (st.state === 'refused') {
       verdict.className = 'tverdict bad';
       verdict.innerHTML = `<span class="fig-verdict hit">refused</span> ${name} scored
-        ${loss}${against} — and its rebuilt
-        gradients were <b>${pctSig(st.e)}</b> away from the true ones, ${st.times.toFixed(1)}× the
-        gate. It was trained and is shown, but a run using it would be learning from gradients that
-        are not the ones it reports.`;
+        ${loss}${against} — and its rebuilt gradients were <b>${pctSig(st.e)}</b> away from
+        ${STORED}, ${st.times.toFixed(1)}× the gate. It was trained and is shown, but a run using it
+        would be learning from gradients other than the ones ordinary training computes.`;
     } else if (st.state === 'chosen') {
-      const best = Math.min(...eligible(M).map((r) => r.final_val ?? Infinity));
+      const losses = scored(eligible(M)).map((r) => r.final_val);
+      const lowest = losses.length && st.r.final_val === Math.min(...losses);
       verdict.className = 'tverdict good';
       verdict.innerHTML = `<span class="fig-verdict">chosen</span> ${name} scored ${loss}${against}${
-        st.r.final_val === best ? ', the lowest of every eligible candidate' : ''
-      }. Its rebuilt gradients were ${pctSig(st.e)} from the true ones —
+        lowest ? ', the lowest of every eligible candidate' : ''
+      }. Its rebuilt gradients were ${pctSig(st.e)} from ${STORED} —
         ${(tol / st.e).toFixed(0)}× inside the gate.`;
     } else {
       verdict.className = 'tverdict';
-      verdict.innerHTML = `<span class="fig-verdict">eligible</span> ${name} scored ${loss}; its rebuilt gradients were
-        ${pctSig(st.e)} from the true ones, inside the gate. It lost on loss, not on correctness.`;
+      verdict.innerHTML = `<span class="fig-verdict">eligible</span> ${name} scored ${loss}; its
+        rebuilt gradients were ${pctSig(st.e)} from ${STORED}, inside the gate. It lost on loss, not
+        on correctness.`;
     }
   };
 
@@ -1043,22 +1189,36 @@ function trialsFigure(M) {
   wrap.append(groups, meter, verdict);
   show(selected);
 
-  const errsRefused = refused(M).map((r) => r.agreement.gradient_error);
-  const worstOk = Math.max(...eligible(M).map((r) => r.agreement.gradient_error));
+  const bad = errors(refused(M));
+  const good = errors(eligible(M));
+  const { passed, failed } = rulesByGate(M);
+  const gateLine = failed.length
+    ? `the ${failed.join(' and ')} errors sit at ${pctRange(bad)}, beyond the ${pct(tol, 0)} line`
+    : `every error sits inside the ${pct(tol, 0)} line`;
+  const okLine =
+    passed.length && good.length
+      ? `, while the worst ${passed.join(' or ')} setting is ${Math.floor(tol / Math.max(...good))}×
+         inside it`
+      : '';
   return figure(
     wrap,
-    `<b>Try to choose the blend: the gate refuses every setting of it.</b> Each panel is one short
-     trial — its training loss, its final validation loss, and how far its rebuilt gradients were
-     from stored ones. The strip below puts all ${spell(T.rules.length)} errors on one scale: the
-     blend's sit at ${pctSig(Math.min(...errsRefused))} to ${pctSig(Math.max(...errsRefused))},
-     beyond the ${pct(tol, 0)} line, while the worst midpoint or leapfrog setting is
-     ${Math.floor(tol / worstOk)}× inside it. The blend's losses look ordinary, which is the danger
-     — nothing in a loss curve says the gradients behind it are wrong.`
+    `<b>${
+      refusedBest
+        ? `Try to choose ${refusedBest.rule}: the gate refuses ${refusalSummary(M).join('; ')}.`
+        : 'Try to choose a candidate the gate refuses: there is none in this run.'
+    }</b> Each panel is one short trial — its training loss, its final validation loss, and how far
+     its rebuilt gradients were from ${STORED}. The strip below puts all
+     ${spell(T.rules.length)} errors on one scale: ${gateLine}${okLine}. A refused candidate's loss
+     can look ordinary, which is the danger — nothing in a loss curve says the gradients behind it
+     are wrong.`
   );
 }
 
 /* Figure 4 — the memory budget. Budget: a fixed pool, two ways of spending it. The reader slides
- * the batch, sees the derived cost fill the bar, and is asked to predict the measured edge first. */
+ * the batch and watches the derived cost fill the cap, against where real steps ran out.
+ *
+ * There is no predict-before-reveal here, deliberately. The opening tiles and the paragraph above
+ * this figure both state the measured limits, so a reveal would only pretend to ask. */
 function budgetFigure(M) {
   const X = M.max_batch;
   const budget = X.budget_bytes;
@@ -1068,8 +1228,7 @@ function budgetFigure(M) {
   ];
   const ceiling = X.ceiling;
 
-  /* Two panels at a phone's width, side by side where there is room. One 720-wide drawing put the
-   * measured markers and the cap past the right edge of a 390px screen, behind a scroll. */
+  /* Two panels at a phone's width, side by side where there is room. */
   const W = 248;
   const L0 = 8;
   const R0 = W - 8;
@@ -1080,7 +1239,7 @@ function budgetFigure(M) {
   const barY = (i) => 58 + i * 52;
   const BH = 176;
   const axY = (i) => 60 + i * 64;
-  const AH = 198;
+  const AH = 176;
   /* A label centred on its mark unless that would run off either edge. */
   const anchorFor = (x, text) => {
     const half = text.length * 3.4;
@@ -1091,16 +1250,10 @@ function budgetFigure(M) {
 
   /* Opens at the batch the long runs used, so the first thing drawn is a configuration that ran. */
   let batch = M.fixed.batch;
-  let revealed = false;
-  let guess = null;
 
   const wrap = el('div', 'budget');
   wrap.setAttribute('role', 'group');
   wrap.setAttribute('aria-label', 'The memory budget, filled by a batch of your choosing');
-
-  const ask = el('p', 'b-ask');
-  ask.innerHTML = `<b>Before you reveal:</b> slide the batch to where you think the reversible
-    model ran out of ${X.budget_gib} GiB on the real GPU.`;
 
   const ctl = el('div', 'walk-ctl');
   const label = el('label', null, 'Batch, in sequences');
@@ -1113,10 +1266,7 @@ function budgetFigure(M) {
   range.step = '1';
   const out = el('output', 'walk-out');
   out.htmlFor = 'budget-batch';
-  const reveal = el('button', 'btn', 'Pin my guess and reveal');
-  reveal.type = 'button';
-  reveal.setAttribute('aria-pressed', 'false');
-  ctl.append(label, range, out, reveal);
+  ctl.append(label, range, out);
 
   const node = svg('svg', {
     viewBox: `0 0 ${W} ${BH}`,
@@ -1153,39 +1303,38 @@ function budgetFigure(M) {
       "Each model's derived and measured largest batch on a logarithmic axis, with the batch chosen",
   });
   axis.append(svgText(L0, 14, 'fig-lab', 'largest batch · log scale'));
-  /* Drawn first, so the marks and their labels paint over it rather than under it. */
-  const cursor = svg('line', { x1: 0, x2: 0, y1: axY(0) - 16, y2: axY(1) + 8, class: 'b-cursor' });
+  /* A short tick on each row, not a line through both: a full-height cursor crossed the marks'
+   * labels, and a halo covers only the glyphs, not the gaps between them. */
+  const cursor = svg('path', { d: '', class: 'b-cursor' });
   axis.append(cursor);
   const tickBatches = [];
   for (let b = 1; b <= ceiling; b *= 4) tickBatches.push(b);
-  const markers = V.map((d, i) => {
+  V.forEach((d, i) => {
     axis.append(svg('line', { x1: L0, x2: R0, y1: axY(i), y2: axY(i), class: 'gridline' }));
     axis.append(svgText(L0, axY(i) - 22, 'ax strong', d.name));
     for (const b of tickBatches) axis.append(svg('line', { x1: lx(b), x2: lx(b), y1: axY(i) - 3, y2: axY(i) + 3, class: 'tick' }));
-    const dx = lx(d.v.derived_max_batch);
-    const dText = `derived ${int(d.v.derived_max_batch)}`;
-    const dLab = svgText(dx, axY(i) - 10, 'ax', dText);
-    dLab.setAttribute('text-anchor', anchorFor(dx, dText));
-    axis.append(svg('circle', { cx: dx, cy: axY(i), r: 6, class: 'm-derived' }), dLab);
-    const mx = lx(d.v.measured_max_batch);
-    const mText = `measured ${int(d.v.measured_max_batch)}`;
-    const meas = svg('g', { class: 'm-measured' });
-    const mLab = svgText(mx, axY(i) + 20, 'ax strong', mText);
-    mLab.setAttribute('text-anchor', anchorFor(mx, mText));
-    meas.append(svg('circle', { cx: mx, cy: axY(i), r: 6 }), mLab);
-    /* Not placed at the measured position: a placeholder there would give the answer away. */
-    const hidden = svgText(R0, axY(i) + 20, 'ax end m-hidden', 'measured: hidden');
-    axis.append(meas, hidden);
-    return { meas, hidden };
+    if (has(d.v.derived_max_batch) && d.v.derived_max_batch > 0) {
+      const dx = lx(d.v.derived_max_batch);
+      const dText = `derived ${int(d.v.derived_max_batch)}`;
+      const dLab = svgText(dx, axY(i) - 10, 'ax', dText);
+      dLab.setAttribute('text-anchor', anchorFor(dx, dText));
+      axis.append(svg('circle', { cx: dx, cy: axY(i), r: 6, class: 'm-derived' }), dLab);
+    }
+    if (has(d.v.measured_max_batch) && d.v.measured_max_batch > 0) {
+      const mx = lx(d.v.measured_max_batch);
+      const mText = `measured ${int(d.v.measured_max_batch)}`;
+      const mLab = svgText(mx, axY(i) + 20, 'ax strong', mText);
+      mLab.setAttribute('text-anchor', anchorFor(mx, mText));
+      axis.append(svg('circle', { cx: mx, cy: axY(i), r: 6, class: 'm-measured' }), mLab);
+    } else {
+      axis.append(svgText(R0, axY(i) + 20, 'ax end m-hidden', 'measured: not available'));
+    }
   });
   for (const b of tickBatches.filter((_, k) => k % 2 === 0)) {
     const t = svgText(lx(b), AH - 6, 'ax', int(b));
     t.setAttribute('text-anchor', anchorFor(lx(b), int(b)));
     axis.append(t);
   }
-  const ghost = svg('path', { d: '', class: 'b-ghost' });
-  const ghostLab = svgText(0, 0, 'ax mid b-ghost-lab', '');
-  axis.append(ghost, ghostLab);
   const panels = el('div', 'budget-panels');
   panels.append(node, axis);
 
@@ -1202,7 +1351,8 @@ function budgetFigure(M) {
   const stateFor = (b) =>
     V.map((d) => {
       const need = d.v.state_bytes + b * d.v.derived_bytes_per_sample;
-      return { d, need, fits: need <= budget, act: b * d.v.derived_bytes_per_sample };
+      const measured = d.v.measured_max_batch;
+      return { d, need, fits: need <= budget, ran: has(measured) ? b <= measured : null };
     });
 
   /* show(b) — RENDER ONLY. */
@@ -1215,6 +1365,7 @@ function budgetFigure(M) {
     batch = b;
     range.value = toSlider(b);
     out.textContent = `${int(b)}`;
+    wrap.dataset.batch = String(b);
     const st = stateFor(b);
     st.forEach((s, i) => {
       const { act, over, val } = bars[i];
@@ -1224,69 +1375,48 @@ function budgetFigure(M) {
       val.textContent = `${gib(s.need)} GiB${s.need > span ? ' →' : ''}${s.fits ? '' : ' · over'}`;
       val.setAttribute('class', `ax end${s.fits ? '' : ' warn'}`);
     });
-    cursor.setAttribute('x1', String(lx(b)));
-    cursor.setAttribute('x2', String(lx(b)));
-    wrap.classList.toggle('revealed', revealed);
-    reveal.setAttribute('aria-pressed', String(revealed));
-    for (const m of markers) {
-      m.meas.style.display = revealed ? '' : 'none';
-      m.hidden.style.display = revealed ? 'none' : '';
-    }
-    if (revealed && guess !== null) {
-      const gx = lx(guess);
-      const gy = axY(1);
-      ghost.setAttribute('d', `M ${gx} ${gy - 12} L ${gx} ${gy + 28}`);
-      ghostLab.setAttribute('x', String(Math.min(Math.max(gx, L0 + 96), R0 - 96)));
-      ghostLab.setAttribute('y', String(gy + 44));
-      const actual = X.reversible.measured_max_batch;
-      const r = guess > actual ? guess / actual : actual / guess;
-      ghostLab.textContent = `your guess ${int(guess)} · ${r < 1.05 ? 'on the mark' : `${r.toFixed(1)}× ${guess > actual ? 'high' : 'low'}`}`;
-    } else {
-      ghost.setAttribute('d', '');
-      ghostLab.textContent = '';
-    }
-    const [o, r] = st;
-    read.innerHTML = `At <b>${int(b)}</b> sequences the derived count needs ${gib(o.need)} GiB for the
-      ordinary model and ${gib(r.need)} GiB for the reversible one, against a cap of
-      ${X.budget_gib} GiB. ${
-        revealed
-          ? `On the GPU, the ordinary model's real limit was ${int(X.baseline.measured_max_batch)}
-             and the reversible one's ${int(X.reversible.measured_max_batch)} —
-             ${pct(X.baseline.measured_share, 0)} and ${pct(X.reversible.measured_share, 0)} of what
-             the count predicts.`
-          : 'The measured limits stay hidden until you reveal them.'
+    cursor.setAttribute(
+      'd',
+      V.map((_, i) => `M ${lx(b)} ${axY(i) - 7} V ${axY(i) + 7}`).join(' ')
+    );
+    const phrase = (s) =>
+      `the ${s.d.name} model needs ${gib(s.need)} GiB by the count${
+        s.ran === null ? '' : s.ran ? ', a batch real steps did run' : ', past where real steps ran out'
       }`;
+    read.innerHTML = `At <b>${int(b)}</b> sequences, ${phrase(st[0])}; ${phrase(st[1])}. The cap is
+      ${X.budget_gib} GiB.`;
   };
 
   range.addEventListener('input', () => show(toBatch(range.value)));
-  reveal.addEventListener('click', () => {
-    guess = batch;
-    revealed = true;
-    show(batch);
-  });
-  wrap.playAll = () => {
-    revealed = true;
-    show(X.reversible.measured_max_batch);
-  };
+  wrap.playAll = () =>
+    show(has(X.reversible.measured_max_batch) ? X.reversible.measured_max_batch : batch);
   PLAY.push(wrap.playAll);
 
   /* The standing limitation — true whatever batch is drawn, so it never changes with the control. */
   const rail = el('div', 'fig-rail');
-  rail.innerHTML = `<b>Hollow means derived.</b> A derived limit is a count of bytes the run measured,
-    not a step the GPU took; only the solid markers are measurements.`;
-  wrap.append(ask, ctl, panels, read, rail);
+  rail.innerHTML = `<b>Hollow means derived.</b> A derived limit is arithmetic on bytes the run
+    measured, not a step the GPU took; only the solid markers are measurements.`;
+  wrap.append(ctl, panels, read, rail);
   show(batch);
 
+  const gaps = V.filter((d) => has(d.v.unexplained) && has(d.v.measured_share));
   return figure(
     wrap,
-    `<b>The bar is arithmetic; the measured marker is the GPU.</b> The derived limit is where the
+    `<b>The bar is arithmetic; the solid marker is the GPU.</b> The derived limit is where the
      ${mib(X.baseline.state_bytes)} MiB of weights, gradients and optimiser state, plus the batch's
-     measured cost per sequence, reach the cap: ${int(X.baseline.derived_max_batch)} and
-     ${int(X.reversible.derived_max_batch)}. Real
-     steps ran out sooner — at ${pct(X.baseline.measured_share, 0)} and
-     ${pct(X.reversible.measured_share, 0)} of those — because the count leaves out gradient
-     buffers, the allocator's fragmentation and kernel workspaces, for both models. That is why the
-     measured batch is the headline and the derived one is drawn hollow.`
+     measured cost per sequence, reach the cap.${
+       gaps.length
+         ? ` Real steps ran out sooner: ${gaps
+             .map(
+               (d) =>
+                 `the ${d.name} model at ${pct(d.v.measured_share, 0)} of its derived batch,
+                  ${int(d.v.unexplained)} sequences short`
+             )
+             .join('; ')}. <b>This run does not explain that gap.</b> Memory the count does not
+           see — temporary buffers during the backward pass, the allocator's fragmentation, kernel
+           workspaces — is the hypothesis, and none of it was measured here.`
+         : ''
+     } That is why the measured batch is the headline and the derived one is drawn hollow.`
   );
 }
 
@@ -1393,12 +1523,14 @@ function curvesFigure(M) {
 function chapterResults(M) {
   const F = M.fixed;
   const X = M.max_batch;
+  const S = M.trial_speeds;
+  const story = X.story || {};
   const chosen = chosenTrial(M);
   const s = section(
     'results',
     'results',
     'What happened',
-    'Less memory, a bigger batch, and a gate that did its job',
+    'The choice, the memory, and the long runs',
     [
       `<b>First the choice.</b> ${Spell(M.trials.rules.length)} candidates trained for the same short
        run. The gate looked at each one's rebuilt gradients before its loss counted for anything.`,
@@ -1407,28 +1539,63 @@ function chapterResults(M) {
   );
   s.append(trialsFigure(M));
 
+  /* Three different ratios describe the memory, and a reader meets all of them. This paragraph is
+   * the one place they are set side by side, each with the question it answers. */
   const mem = el('p', 'say');
-  mem.innerHTML = `<b>Then the memory.</b> With ${chosen.rule} at h = ${chosen.h} the reversible
-    model keeps ${mib(F.reversible.saved_bytes)} MiB for the backward pass where the ordinary model
-    keeps ${mib(F.baseline.saved_bytes)} MiB — <b>${F.kept_ratio.toFixed(1)}× fewer</b> — and in a fixed
-    ${X.budget_gib} GiB the batch it can train at grows from ${int(X.baseline.measured_max_batch)} to
-    ${int(X.reversible.measured_max_batch)}.`;
+  const parts = [];
+  if (has(F.kept_ratio)) {
+    parts.push(`after the forward pass at batch ${F.batch}, the reversible model holds
+      ${mib(F.reversible.saved_bytes)} MiB where the ordinary model holds
+      ${mib(F.baseline.saved_bytes)} MiB — <b>${times(F.kept_ratio)} ${fewerMore(F.kept_ratio)}</b>`);
+  }
+  if (has(story.forward_per_sequence_ratio) && has(story.per_sequence_ratio)) {
+    parts.push(`per extra sequence its forward pass keeps
+      ${times(story.forward_per_sequence_ratio)} ${fewerMore(story.forward_per_sequence_ratio)}, but
+      the backward pass then re-runs one block at a time, and that block's working set brings the
+      cost of a sequence to ${times(story.per_sequence_ratio)} ${fewerMore(story.per_sequence_ratio)}`);
+  }
+  if (has(story.derived_batch_ratio) && has(X.batch_ratio)) {
+    parts.push(`that cost predicts a largest batch ${times(story.derived_batch_ratio)} as large;
+      real steps on the GPU fitted ${count(X.baseline.measured_max_batch)} and
+      ${count(X.reversible.measured_max_batch)} — <b>${times(X.batch_ratio)}
+      ${X.batch_ratio >= 1 ? 'as many' : 'fewer'}</b>`);
+  }
+  const told = parts.join('; ').trim();
+  mem.innerHTML = `<b>Then the memory, which takes three numbers to tell.</b>
+    ${told.charAt(0).toUpperCase()}${told.slice(1)}. Each answers a different question, which is
+    why they differ.`;
   s.append(mem);
   s.append(budgetFigure(M));
 
   const runs = el('p', 'say');
-  runs.innerHTML = `<b>Then the long runs.</b> Both models trained from the same starting weights
-    on the same ${int(F.baseline.tokens)} tokens. The reversible model's rebuilt gradients were
-    checked against stored ones at both ends of its run: ${pctSig(F.agreement.init.gradient_error)}
-    apart on the starting weights and ${pctSig(F.agreement.trained.gradient_error)} on the trained
-    ones.`;
+  const speedText = !S
+    ? 'The trials have no timed steps, so speed is not compared here.'
+    : S.verdict === 'mixed'
+      ? 'In the trials the reversible and ordinary speeds overlap, so this run cannot say which is faster.'
+      : `In the trials, run back to back, every reversible candidate was ${S.verdict} than every
+         ordinary run, by ${S.closest.toFixed(2)}–${S.furthest.toFixed(2)}×. The long runs
+         ${
+           F.speed_inside_drift
+             ? `cannot size that: their ${pct(Math.abs(F.speed_change), 0)} gap is smaller than the
+                ${M.throughput_drift.toFixed(2)}× the same ordinary configuration moved between its
+                trial and its long run`
+             : `differ by ${pct(Math.abs(F.speed_change), 0)}, more than the machine's drift between runs`
+         }.`;
+  runs.innerHTML = `<b>Then the long runs.</b> Both models trained from the same starting weights on
+    the same ${int(F.baseline.tokens)} tokens. The reversible model's rebuilt gradients were checked
+    against ${STORED} at both ends of its run: ${pctSig(F.agreement.init.gradient_error)} apart on
+    the starting weights and ${pctSig(F.agreement.trained.gradient_error)} on the trained ones.
+    ${speedText}`;
   s.append(runs);
   s.append(
     table(
       ['at batch ' + F.batch, 'ordinary', 'reversible'],
       [
         { cells: ['final validation loss', F.baseline.final_val.toFixed(4), F.reversible.final_val.toFixed(4)] },
-        { cells: ['kept for backward', `${mib(F.baseline.saved_bytes)} MiB`, `${mib(F.reversible.saved_bytes)} MiB`], __mark: 'good' },
+        {
+          cells: ['kept for backward', `${mib(F.baseline.saved_bytes)} MiB`, `${mib(F.reversible.saved_bytes)} MiB`],
+          __mark: has(F.kept_ratio) && F.kept_ratio > 1 ? 'good' : 'bad',
+        },
         {
           cells: ['GPU memory after a forward pass, sampled', `${mib(F.baseline.allocated_max_sample)} MiB`, `${mib(F.reversible.allocated_max_sample)} MiB`],
         },
@@ -1446,53 +1613,64 @@ function chapterNegatives(M) {
   const F = M.fixed;
   const R = M.max_run;
   const X = M.max_batch;
-  const speedRatio = F.baseline.tokens_per_second / F.reversible.tokens_per_second;
-  const fewer = (change) => `${pct(Math.abs(change), 0)} ${change < 0 ? 'fewer' : 'more'}`;
-  const rows = [
-    {
+  const S = M.trial_speeds;
+  const rows = [];
+  if (has(R.loss_gap)) {
+    const worse = R.loss_gap > 0;
+    const others = R.lr_checks.filter((c) => c.multiplier !== R.lr_multiplier).map((c) => `${c.multiplier}×`);
+    rows.push({
       cells: [
-        `<b>The large batch trained less far</b>`,
+        `<b>The large batch trained ${worse ? 'less' : 'further'}</b>`,
         `${signed(R.loss_gap, 4)} validation loss against the ordinary model at batch ${F.batch},
          with ${int(R.run.steps)} steps instead of ${int(F.baseline.steps)}. Fewer, larger steps at
-         an unscaled rate is the explanation on offer, and it is untested: a run with the rate
-         scaled to the batch would test it, and none was made.`,
+         an unscaled rate is the explanation on offer, and it is untested:
+         ${others.length ? `${others.join(' and ')} the rate were tried only for ${R.check_steps} steps, and ` : ''}no
+         full run used a rate scaled to the batch.`,
       ],
-      __mark: 'bad',
-    },
-    ...(R.lr_multiplier_at_edge
-      ? [
-          {
-            cells: [
-              '<b>The rate check stopped at the edge of its grid</b>',
-              `Over ${R.check_steps} steps it chose ${R.lr_multiplier}× the fixed-batch rate — the
-               ${R.lr_multiplier_at_edge} multiplier it tried — so a
-               ${R.lr_multiplier_at_edge === 'smallest' ? 'lower' : 'higher'} one might have done
-               better. It is a best-of-grid, not an optimum.`,
-            ],
-            __mark: 'warn',
-          },
-        ]
-      : []),
-    {
+      __mark: worse ? 'bad' : 'good',
+    });
+  }
+  if (R.lr_multiplier_at_edge) {
+    rows.push({
       cells: [
-        "<b>The speed gap is inside the machine's own noise</b>",
-        `The reversible model ran ${fewer(F.speed_change)} tokens per second at the same batch, and
-         ${fewer(R.speed_change)} at batch ${R.batch}. The same ordinary model varied
-         ${M.throughput_floor.toFixed(2)}× across its own trials, so at the precision that spread
-         allows, their ratio is ${ratio(speedRatio, M.throughput_floor - 1)}. The extra forward pass
-         is expected to cost time; on this machine the measured gap does not rank them.`,
+        '<b>The rate check could not separate the rates</b>',
+        `Over ${R.check_steps} steps the multipliers ${R.lr_checks.map((c) => `${c.multiplier}×`).join(', ')}
+         ended ${has(R.lr_check_spread) ? `within ${R.lr_check_spread.toFixed(4)} of each other` : 'close together'},
+         and no noise floor was measured for so short a check, so they were indistinguishable here.
+         ${R.lr_multiplier}× was used — the ${R.lr_multiplier_at_edge} tried, so a
+         ${R.lr_multiplier_at_edge === 'smallest' ? 'lower' : 'higher'} one was never tested.`,
       ],
       __mark: 'warn',
-    },
-    {
+    });
+  }
+  if (S && S.verdict !== 'mixed' && has(M.throughput_drift)) {
+    rows.push({
+      cells: [
+        `<b>The ${S.verdict === 'slower' ? 'slowdown' : 'speed-up'} is real but not sized</b>`,
+        `Every reversible trial was ${S.verdict} than every ordinary trial, by
+         ${S.closest.toFixed(2)}–${S.furthest.toFixed(2)}×, run back to back. The long runs differ
+         by ${has(F.speed_pair) ? `${F.speed_pair.toFixed(2)}×` : 'an unmeasured amount'}, and the
+         same ordinary configuration moved ${M.throughput_drift.toFixed(2)}× between its trial and
+         its long run, so the machine's drift between runs is too large for one long pair to say
+         how much ${S.verdict}.`,
+      ],
+      __mark: 'warn',
+    });
+  }
+  const gaps = [X.baseline, X.reversible].filter((v) => has(v.measured_share));
+  if (gaps.length === 2) {
+    rows.push({
       cells: [
         '<b>The derived batch was optimistic, unevenly</b>',
         `The count of kept bytes predicted ${int(X.baseline.derived_max_batch)} and
-         ${int(X.reversible.derived_max_batch)}; the GPU held ${pct(X.baseline.measured_share, 0)}
-         and ${pct(X.reversible.measured_share, 0)} of that. What it leaves out costs the reversible
-         model a larger share of its batch, so its derived figure is not a stand-in for measuring.`,
+         ${int(X.reversible.derived_max_batch)}; real steps fitted ${pct(X.baseline.measured_share, 0)}
+         and ${pct(X.reversible.measured_share, 0)} of that. The shortfall is not explained by this
+         run, and it is ${X.reversible.measured_share < X.baseline.measured_share ? 'larger' : 'smaller'}
+         for the reversible model, so its derived figure is not a stand-in for measuring.`,
       ],
-    },
+    });
+  }
+  rows.push(
     {
       cells: [
         '<b>The measurement leaked memory</b>',
@@ -1505,12 +1683,12 @@ function chapterNegatives(M) {
     {
       cells: [
         '<b>The first full attempt died minutes in</b>',
-        `Checking the rebuilt gradients converted them to a number format the Apple GPU does not
-         support. Every test ran on the CPU and could not see it, so a short run on the GPU now comes
-         before every full one.`,
+        `Checking the rebuilt gradients converted them to a number format this GPU backend
+         (<code>${M.max_batch.device}</code>) does not support. Every test ran on the CPU and could not
+         see it, so a short run on the GPU now comes before every full one.`,
       ],
-    },
-  ];
+    }
+  );
   const s = section(
     'negatives',
     'negatives',
@@ -1531,30 +1709,47 @@ function chapterNegatives(M) {
 function chapterConclusion(M) {
   const F = M.fixed;
   const X = M.max_batch;
-  const s = section(
-    'conclusion',
-    'conclusion',
-    'The verdict',
-    'Trade memory for compute — then measure the trade',
-    [
-      `Rebuilding activations instead of storing them works as promised on memory:
-       ${F.kept_ratio.toFixed(1)}× fewer bytes kept and ${X.batch_ratio.toFixed(1)}× the batch in the
-       same cap, with a final loss ${signed(F.loss_gap, 3)} from the ordinary model's — a gap a
-       single seed per run cannot rank.`,
-      `<b>It does not come for free on correctness.</b> A rule whose inverse divides by a number
-       smaller than one at every layer magnifies rounding on the way down, and in this model's own
-       precision that was enough to move the blend's gradients by
-       ${pctSig(Math.min(...refused(M).map((r) => r.agreement.gradient_error)))} to
-       ${pctSig(Math.max(...refused(M).map((r) => r.agreement.gradient_error)))}. Nothing in its
-       loss showed it.`,
-    ],
-    { short: 'The verdict', sub: 'what to carry away' }
-  );
+  const R = M.max_run;
+  const S = M.trial_speeds;
+  const { failed } = rulesByGate(M);
+  const paras = [];
+  if (has(F.kept_ratio) && has(X.batch_ratio)) {
+    const promised = F.kept_ratio > 1 && X.batch_ratio > 1;
+    paras.push(`On memory the method ${promised ? 'delivered what it promises' : 'did not deliver what it promises'}:
+      ${times(F.kept_ratio)} ${fewerMore(F.kept_ratio)} bytes kept and ${times(X.batch_ratio)}
+      ${X.batch_ratio >= 1 ? 'the' : 'less'} batch in the same cap${
+        S && S.verdict !== 'mixed' ? `, on a model that ran ${S.verdict} in every trial` : ''
+      }.`);
+  }
+  if (has(R.loss_gap)) {
+    paras.push(`<b>${R.loss_gap > 0 ? 'Spending that memory on a larger batch cost loss.' : 'Spending that memory on a larger batch did not cost loss.'}</b>
+      At batch ${R.batch} the same tokens took ${times(R.step_ratio)} ${fewerMore(R.step_ratio)}
+      steps and ended ${signed(R.loss_gap, 2)} against the ordinary model at batch ${F.batch}; at the
+      same batch the gap was ${signed(F.loss_gap, 3)}. One seed per run, and the larger batch's rate
+      was not scaled to it, so this run says what that batch did here, not what a tuned one would.`);
+  }
+  if (failed.length) {
+    const bad = errors(refused(M));
+    const divides =
+      failed.includes('blend') && M.preset.blend_a < 1
+        ? ` The blend's inverse divides by a = ${M.preset.blend_a} at every layer, which magnifies
+           rounding on the way down;`
+        : '';
+    paras.push(`<b>It does not come for free on correctness.</b>${divides} in float32 at this depth
+      that moved ${failed.join(' and ')}'s rebuilt gradients ${pctRange(bad)} from ${STORED}.
+      Nothing in the loss showed it.`);
+  }
+  const s = section('conclusion', 'conclusion', 'The verdict', 'Trade memory for compute — then measure the trade', paras, {
+    short: 'The verdict',
+    sub: 'what to carry away',
+  });
   const box = el('div', 'takeaway');
   box.innerHTML = `<b>The check worth copying.</b> Before trusting a reversible run, compare its
-    rebuilt gradients with stored ones on the run's own device, precision and depth — and refuse a
-    rule that fails, before its loss can make the case for it. A test in high precision on a small
-    model passes for every rule here, including the one that failed.`;
+    rebuilt gradients with ${STORED} on the run's own device, precision and depth — and refuse a rule
+    that fails, before its loss can make the case for it. A high-precision test on a small model is
+    not that check: this exercise's float64 tests pass for every rule${
+      failed.length ? `, ${failed.join(' and ')} included` : ''
+    }.`;
   s.append(box);
 }
 
@@ -1572,15 +1767,16 @@ function chapterLimits(M) {
      full run.`,
     `<b>The derived batch leaves memory out</b> — gradient buffers, the allocator's fragmentation
      and kernel workspaces, for both variants — which is why the measured batch is the headline.`,
-    `<b>Apple's GPU keeps no peak-memory counter.</b> The largest batch is measured directly, but
+    `<b>The <code>${X.device}</code> GPU backend keeps no peak-memory counter.</b> The largest
+     batch is measured directly, but
      "GPU memory after a forward pass" is a sample, not a peak. The exact, device-independent
      number is the bytes kept for backward.`,
     `<b>The ${X.budget_gib} GiB cap is ours</b>, chosen so the search is reproducible; the device
      itself offered this process ${gib(X.device_limit_bytes)} GiB. The ratio between variants is the
      part that transfers, not the batch sizes.`,
-    `<b>The model is small and shallow</b> — ${P.depth} blocks. The saving grows with depth, so a
-     deeper model would show more of it; the per-sequence bytes are reported so it can be
-     estimated, not so it should be.`,
+    `<b>The model is small and shallow</b> — ${P.depth} blocks, and only that depth was run. The
+     mechanism implies the saving grows with depth, but this run does not measure that; the
+     per-sequence bytes are reported so a deeper model could be estimated, not so it should be.`,
     `<b>The step size and the blend weight were chosen on short runs.</b> A rule that trained well
      for ${int(M.trials.tokens_per_trial)} tokens could still drift over a much longer run; the long
      runs' curves are kept so that would be visible.`,
@@ -1625,18 +1821,25 @@ function chapterNext(M) {
   );
   const ul = el('ul', 'nextlist');
   for (const item of [
-    `<b>Scale the rate with the batch.</b> The run at batch ${R.batch} kept the fixed-batch rate
-     after a short check that chose the edge of its grid. A run whose rate grows with the batch
-     would show whether the loss gap belongs to the steps or to the stack.`,
+    `<b>Scale the rate with the batch.</b> The run at batch ${R.batch} used ${R.lr_multiplier}× the
+     fixed-batch rate after a ${R.check_steps}-step check that could not tell its rates apart. A
+     full run whose rate grows with the batch would show whether the loss gap belongs to the steps
+     or to the stack.`,
     `<b>Give the ordinary model its own largest batch.</b> Comparing both models at their own
      limits, rather than one at its limit and one at a fixed batch, is the comparison a practitioner
      actually faces.`,
-    `<b>Go deeper.</b> The ordinary model's activation memory grows with depth and the reversible
-     one's does not, so a deeper model should show a wider gap than this ${spell(M.preset.depth)}-block
-     one does — a prediction, not a measurement.`,
-    `<b>Rescue the blend, or retire it.</b> A blend weight closer to one, or the inversion done in
-     higher precision, could shrink the amplification that disqualified it. Either change would
-     have to pass the same gate before its loss counted.`,
+    `<b>Go deeper.</b> By the mechanism, the ordinary model's activation memory grows with depth
+     and the reversible one's does not, so a deeper model should show a wider gap than this
+     ${spell(M.preset.depth)}-block one — a prediction, not a measurement.`,
+    `<b>Size the speed cost.</b> The trials say which model is faster; only runs made back to back
+     under the same conditions, at full length, would say by how much.`,
+    ...(rulesByGate(M).failed.includes('blend')
+      ? [
+          `<b>Rescue the blend, or retire it.</b> A blend weight closer to one, or the inversion done
+           in higher precision, could shrink the amplification that disqualified it. Either change
+           would have to pass the same gate before its loss counted.`,
+        ]
+      : []),
   ]) {
     const li = el('li');
     li.innerHTML = item;
