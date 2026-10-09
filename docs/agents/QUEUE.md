@@ -1929,4 +1929,19 @@ predates the harness — so it is logged as what it was.
                           nondeterminism. THE MAC HIBERNATED AT 1% BATTERY (02:40-08:39); the sweep
                           was re-run alone under caffeinate. Long GPU runs need AC power.
                           #194 opened
+
+2026-10-09  exercise-13   13 published after five full-run attempts, each failure fixed with a guard:
+                          float64 on MPS (tests were CPU-only; a GPU SMOKE run now precedes every
+                          full run); OOM at the batch-search edge (probe = two real steps, run at
+                          85%); a weak charger (battery 14%->3%, throughput 1.4x noisy; a vitals
+                          watchdog now pauses runs at thermal >= 2); and A REFERENCE CYCLE IN THE
+                          MEMORY MEASUREMENT - a saved-tensor hook returned outputs to autograd and
+                          the custom Function's ctx closed a cycle Python cannot collect, leaking one
+                          graph per run. Leapfrog kept 58.7x fewer bytes and fitted 6.1x the batch;
+                          blend gated out at 1-5% gradient error. Stacked on #194.
+                          GUARD FINDING: the unit-scope guard refused a vitals script outside the
+                          declared scope; it lives in 13's artifacts instead, and two stray files
+                          made by Bash before the refusal (artifacts/vitals/thermal{,.swift}) await
+                          PK's decision.
+                          #195 opened
 ```
