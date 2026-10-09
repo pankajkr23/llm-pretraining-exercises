@@ -1,39 +1,154 @@
 # 13 · Reversible training: memory against batch size
 
-**One sentence saying what this exercise establishes.** Replace this — it is the first thing a
-reader sees and the last thing anyone remembers to write.
+**A 21-million-parameter language model trained on 50 million tokens three ways — as an ordinary
+residual stack, as a reversible stack at the same batch, and as a reversible stack at the largest
+batch its memory allows — with the final loss, tokens per second and memory of each.** The numbers
+are in [`RESULTS.md`](RESULTS.md), generated from `results/*.json`, each with its provenance.
 
 ## How to read this
 
-- **Meeting this for the first time** — read [What this is](#what-this-is), which should explain the
-  problem before any of the machinery.
-- **Changing the code** — start at [How the pieces fit](#how-the-pieces-fit), then
-  [Run it](#run-it).
-- **Deciding whether to believe it** — go to [The evidence](#the-evidence), then
-  [What this cannot establish](#what-this-cannot-establish).
+- **Meeting this for the first time** — read [What this is](#what-this-is): why training keeps
+  activations at all, and how a reversible stack avoids keeping them. The notebook then runs every
+  step on a small model.
+- **Changing the code** — start at [How the pieces fit](#how-the-pieces-fit), then [Run it](#run-it).
+  The whole technique is one autograd function in `reversible/stack.py`.
+- **Deciding whether to believe it** — go to [The evidence](#the-evidence) for how each number was
+  measured, then [What this cannot establish](#what-this-cannot-establish).
 
 ## What this is
 
-Replace this section with the problem, in plain words, before any notation.
+**Why training needs so much memory.** To compute gradients, the backward pass needs the input to
+every operation of the forward pass. An ordinary transformer therefore keeps every block's
+intermediate tensors until the backward pass reaches them, so activation memory grows with depth and
+with batch — and at some batch, it is what runs out.
+
+**Why an ordinary block cannot give them back.** A residual block computes
+`p⁽ℓ⁺¹⁾ = p⁽ℓ⁾ + f(p⁽ℓ⁾)`. To recover `p⁽ℓ⁾` from `p⁽ℓ⁺¹⁾` you would need `f(p⁽ℓ⁾)` — which needs the
+very thing you are trying to recover. So the input must be stored.
+
+**A rule that can be run backwards.** Gal et al., *Reversing Large Language Models for Efficient
+Training and Fine-Tuning* (arXiv:2512.02056), treat the layer index as time and advance the stream
+with two-step rules borrowed from numerical integration. Each one adds the block's update to a
+combination of the *two* previous states, and evaluates the block at the middle one:
+
+| rule | update | how it is undone |
+| --- | --- | --- |
+| midpoint (paper eq. 4) | `p⁽ℓ⁺¹⁾ = p⁽ℓ⁻¹⁾ + 2h·f(p⁽ℓ⁾)` | `p⁽ℓ⁻¹⁾ = p⁽ℓ⁺¹⁾ − 2h·f(p⁽ℓ⁾)` |
+| blend (eq. 15, "midpoint (a)") | `p⁽ℓ⁺¹⁾ = a·p⁽ℓ⁻¹⁾ + (1−a)·p⁽ℓ⁾ + h·f(p⁽ℓ⁾)` | divide the rest by `a` |
+| leapfrog (eq. 6) | `p⁽ℓ⁺¹⁾ = 2p⁽ℓ⁾ − p⁽ℓ⁻¹⁾ + h²·f(p⁽ℓ⁾)` | `p⁽ℓ⁻¹⁾ = 2p⁽ℓ⁾ − p⁽ℓ⁺¹⁾ + h²·f(p⁽ℓ⁾)` |
+
+The undoing step needs `f(p⁽ℓ⁾)` — and `p⁽ℓ⁾` is a state the backward pass already holds. So the
+forward pass keeps only the two states at the top of the stack; the backward pass walks down,
+re-runs each block once on the state it has, rebuilds the state below, and backpropagates. Memory for
+activations becomes one block's worth, whatever the depth. **The price is one extra forward pass per
+block.** The pay-off is a larger batch in the same memory.
+
+**Where "Euler" comes in.** The ordinary residual stack *is* the forward Euler method,
+`p⁽ℓ⁺¹⁾ = p⁽ℓ⁾ + f(p⁽ℓ⁾)` — that is the baseline here. The blend rule is the paper's main formulation;
+at `a = 0` it becomes forward Euler and stops being invertible, and the paper shows it behaves like
+forward Euler in expectation. The three reversible rules are each tried with several step sizes `h`,
+and the one that trains best is used for the long runs.
+
+**Three runs, as the exercise asks:**
+
+1. the ordinary residual stack at a fixed batch it can run, on 50 million tokens;
+2. the chosen reversible rule at the same batch, on the same tokens;
+3. the reversible rule at the largest batch that fits in a fixed memory budget, after a short
+   learning-rate check, on the same number of tokens (so fewer, larger steps).
+
+The model is exercise 11's decoder at width 320 and depth 12 — about 21 million parameters, counting
+the embeddings and the untied output head — on exercise 11's FineWeb-Edu corpus.
 
 ## How the pieces fit
 
 | module | owns |
 | --- | --- |
-| `config.py` | every dimension this exercise measures against, in one dataclass |
+| `config.py` | `Preset` and the three scales: `FULL` (published), `LITE` (the notebook), `SMOKE` (the tests) |
+| `stack.py` | the three rules as coefficients, the autograd function that rebuilds in backward, a plain-autograd reference, and the rebuild error |
+| `model.py` | `ChainedGPT`: exercise 11's model with its blocks chained by a chosen rule; `rebuild_agreement`, rebuilt against stored gradients at a run's own scale |
+| `memory.py` | the chunked, recomputed loss every variant shares; bytes kept for backward; the largest-batch search |
+| `train.py` | one run to a token budget: loss, validation, tokens per second, memory |
+| `experiments.py` | the four experiments: trials, fixed batch, largest batch, the run at the largest batch; the validation split cut into a choosing half and a reporting half |
+| `runs.py` | provenance over this package and exercise 11's, and the refusing `save` |
+
+`tools/run_experiments.py` runs them in two processes — the largest-batch search caps the process's
+GPU memory for the rest of its life, so it runs separately — and `tools/render_results.py` writes
+`RESULTS.md`. The baseline's trained weights are saved to `artifacts/checkpoints/` for exercise 14,
+which turns that dense model into a mixture of experts.
 
 ## Run it
 
 ```bash
-uv sync --all-packages
+uv sync --all-packages --extra train
 uv run pytest src/exercises/13-reversibility
+
+# needs exercise 11's corpus first (uv run python src/exercises/11-optimizers-lr-schedules/tools/fetch_corpus.py)
+uv run python src/exercises/13-reversibility/tools/run_experiments.py           # FULL, both stages
+uv run python src/exercises/13-reversibility/tools/render_results.py
+
+uv run python src/exercises/13-reversibility/tools/run_experiments.py --preset lite   # minutes
 ```
+
+### Or run it as a notebook
+
+`notebooks/S13-reversibility.ipynb` builds the three rules, checks on a small model that rebuilding in
+backward gives exactly the gradients that storing does, measures the memory against depth, runs the
+three experiments at the `LITE` scale, and reads the published results.
 
 ## The evidence
 
-Replace this with what was measured, how, and against what noise floor.
+All of it is in [`RESULTS.md`](RESULTS.md). How each number was produced:
+
+- **Correctness before speed.** The memory-saving backward pass is held to ordinary autograd through
+  the same recurrence, for every rule, in float64: the loss must be identical and every gradient
+  must agree to a relative tolerance of 1e-9 (`test_reversible_stack.py`). The states rebuilt from
+  the top are compared with the stored ones layer by layer.
+- **And again in float32, at the published depth.** Inversion amplifies rounding, so the run itself
+  measures how far rebuilt gradients are from stored ones — for every trial candidate on its initial
+  weights, and for the chosen rule before and after its long run — on its own device and dtype. The
+  blend rule's float32 gradients at depth 12 are a few percent off (`DECISIONS.md` D10); `RESULTS.md`
+  says so whenever the measured error is above 0.1%.
+- **Memory is measured two ways.** *Bytes kept for backward* are counted, on any device, by
+  PyTorch's saved-tensor hooks during one forward pass; a second instrument in the tests (which
+  storages are still alive afterwards) agrees with them per sequence for every variant. *The largest
+  batch* is found on the GPU by running real training steps under a hard memory cap until one runs
+  out of memory, doubling and then bisecting. The derived largest batch is printed beside it: the
+  forward pass's bytes per sequence plus, for the reversible model, the block it re-runs during the
+  backward pass. A batch that reached the search ceiling is reported as a lower bound.
+- **Every variant uses the same loss.** At large batch the output logits (`tokens × 10,001`) outgrow
+  the stack's activations, and reversibility does nothing for them. The loss is therefore computed in
+  chunks that are recomputed in backward, for the baseline too; otherwise the head would set every
+  variant's largest batch and the comparison would measure the loss, not the stack.
+- **Speed is steady-state.** The first steps (compilation, allocator warm-up) and evaluation are off
+  the clock, and the device is synchronised before every reading.
+- **The variant is chosen before the long runs**, by validation loss on short runs at the same data
+  and learning rate, on the first half of the validation split; every reported loss is measured on
+  the second half. The fixed-batch runs use the chosen rule and rate as they are; the run at the
+  largest batch re-checks only the learning rate, with a fixed number of short steps at that batch
+  (`DECISIONS.md` D7).
 
 ## What this cannot establish
 
-Replace this. `AGENTS.md` requires it and it is not a formality: state the scale, what the
-measurement was blind to, and which claims are read from sources rather than reproduced here.
+- **One seed per long run.** Each 50-million-token run was trained once and no seed-to-seed spread
+  is measured here, so a difference in final loss between the baseline and a reversible run is
+  reported, not ranked.
+- **The largest-batch run is compared with the baseline at its fixed batch**, not with the baseline
+  at its own largest batch, which would cost another full run (`DECISIONS.md` D7).
+- **The derived largest batch leaves some memory out.** It counts what the forward pass keeps and
+  the block the reversible backward pass re-runs, but not gradient buffers, allocator slack or
+  kernel workspaces, for either variant — which is why the measured batch is the headline.
+- **Apple's GPU has no peak-memory counter.** On MPS the largest batch is measured directly (a step
+  either fits under the cap or raises), but "memory used" is a sample of the allocator after a
+  forward pass, not a peak. The exact, device-independent number is the bytes kept for backward.
+- **The memory budget is ours.** Results are stated for an 8 GiB cap chosen so the search is
+  reproducible and does not starve the machine; the ratio between variants is the transferable part,
+  not the absolute batch sizes.
+- **The model is small and shallow by the paper's standards.** The saving grows with depth, so a 12-
+  block model shows less of it than a deep one; the per-sequence bytes are reported so it can be
+  extrapolated, not so it should be.
+- **The step size `h` and the blend weight `a` were chosen on short runs**, and the paper's stability
+  analysis says the rules are only marginally stable outside a narrow range. A rule that trained in a
+  short trial could still drift over a much longer run; the long runs' curves are kept so that is
+  visible.
+- **How the paper seeds its first step is not stated** in its text; here the stack starts from two
+  copies of the embedding output (`DECISIONS.md` D2).

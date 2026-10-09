@@ -275,7 +275,9 @@ jobs:
             src/exercises/10-training-loop/tests/test_trainloop_step.py \
             src/exercises/10-training-loop/tests/test_trainloop_provenance.py \
             src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py \
-            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py
+            src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py \
+            src/exercises/13-reversibility/tests/test_reversible_stack.py \
+            src/exercises/13-reversibility/tests/test_reversible_pipeline.py
 
   security:
     runs-on: ubuntu-latest

@@ -5,7 +5,18 @@ description = "Exercise 13 — Reversible training: memory against batch size"
 requires-python = ">=3.12"
 dependencies = [
     "numpy>=2",
+    # The decoder, the corpus, the schedules and the provenance helpers are exercise 11's; this
+    # exercise changes only how the blocks are chained.
+    "exercise-11-optimizers-lr-schedules",
+    "exercise-09-loss-functions-output-heads",
 ]
+
+[project.optional-dependencies]
+train = ["torch>=2.6"]
+
+[tool.uv.sources]
+exercise-11-optimizers-lr-schedules = { workspace = true }
+exercise-09-loss-functions-output-heads = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
