@@ -22,7 +22,7 @@ A short continuation of 2,000,000 tokens each, same data, from the same dense mo
 | softmax | 3.0675 |
 | sigmoid | 3.0682 |
 
-- **softmax** is used for the continuation, by 0.0007. One short run each and no seed spread measured, so this decides which router is used, not which is better. It was chosen on the first half of the validation split; every figure on this page is measured on the second half.
+- **softmax** is used for the continuation, by 0.0007. One short run each and no seed spread measured, so this decides which router is used, not which is better. It was chosen on the first half of the validation split, and the two losses above are measured there; every other figure here is measured on the second half.
 
 ## 3 · Training on after the conversion (8 experts, top-2, softmax)
 

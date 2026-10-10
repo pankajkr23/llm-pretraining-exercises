@@ -4,7 +4,9 @@
 experts by copying each block's feed-forward layer into eight experts behind a router — shown to
 start exactly where the dense model stopped, and to keep training and reducing its loss, next to the
 dense model trained on the same further tokens.** The numbers are in [`RESULTS.md`](RESULTS.md) and
-every training step is in [`submission_artifacts/run.log`](submission_artifacts/run.log).
+every training step is in [`submission_artifacts/run.log`](submission_artifacts/run.log). The
+argument is also told as [a page](https://llm-pretraining-demos.vercel.app/14-moe/), with the
+conversion, the router's balance and the cost drawn from the same files.
 
 ## How to read this
 
