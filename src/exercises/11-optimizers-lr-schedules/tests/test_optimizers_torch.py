@@ -264,3 +264,37 @@ def test_a_curve_still_moving_at_the_end_has_not_settled() -> None:
 def test_settling_needs_enough_steps_to_judge() -> None:
     with pytest.raises(ValueError):
         settles_at(np.ones(20), tail=50, window=10)
+
+
+# ----------------------------------------------------------------------- the page's own arithmetic
+
+
+def test_the_page_smooths_exactly_as_the_experiment_did() -> None:
+    """`render_results.py` cannot import `ratios` (torch), so it carries its own trailing mean and
+    its own settling rule for the bias-correction figure. Held here to the package's, on the very
+    series the page draws, so the page's copy cannot quietly become a second definition."""
+    import importlib.util
+    import json
+    from pathlib import Path
+
+    from optimizers.experiments import _first_settled
+
+    exercise = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "render_results_11_smoothing", exercise / "tools" / "render_results.py"
+    )
+    renderer = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(renderer)
+    r = json.loads((exercise / "results" / "bias_correction.json").read_text(encoding="utf-8"))
+    losses = r["result"]["losses"]
+    gap = [abs(u - c) for u, c in zip(losses["uncorrected"], losses["corrected"], strict=True)]
+    noise = [
+        abs(o - c) for o, c in zip(losses["corrected_seed1"], losses["corrected"], strict=True)
+    ]
+    window = r["result"]["smoothing_window"]
+    for series in (gap, noise):
+        np.testing.assert_allclose(
+            renderer._trailing_mean(series, window), smooth(np.asarray(series), window), rtol=1e-12
+        )
+    g, n = smooth(np.asarray(gap), window), smooth(np.asarray(noise), window)
+    assert renderer._first_settled(list(g), list(n)) == _first_settled(g, n)

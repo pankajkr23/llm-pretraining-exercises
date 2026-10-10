@@ -70,6 +70,8 @@ COVERED = [
     "08-modern-attention-variants",
     "09-loss-functions-output-heads",
     "10-training-loop",
+    "11-optimizers-lr-schedules",
+    "12-distributed-training",
     "13-reversibility",
 ]
 
@@ -458,6 +460,8 @@ ON_THE_FLUID_SCALE = {
         "retro-fitted alongside 09; identical 68ch-at-16px declaration"
     ),
     "10-training-loop": "retro-fitted alongside 09; identical 68ch-at-16px declaration",
+    "11-optimizers-lr-schedules": "built on the scale from the start, from exercise 10's sheet",
+    "12-distributed-training": "built on the scale from the start, from exercise 10's sheet",
     "13-reversibility": "built on the scale from the start, copying 10's declaration",
     "06-build-training-dataset": "16px in a 726px column; now 22px in 978px, same words per line",
     "05-datamixtures-and-curriculum": (

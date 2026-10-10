@@ -4,7 +4,9 @@
 hand, bias correction switched off, the per-layer update-to-weight ratio, cosine against WSD stopped
 early, and the learning rate swept across widths in the standard parametrization and in muP.** Every
 measured number is in [`RESULTS.md`](RESULTS.md), which is generated from `results/*.json` and
-carries each run's provenance.
+carries each run's provenance. **[The page](https://llm-pretraining-demos.vercel.app/11-optimizers-lr-schedules/)**
+tells the same story for a general reader, with figures you can drive; its data is generated from
+the same bundles by the same renderer.
 
 ## How to read this
 
@@ -65,7 +67,8 @@ Three tools sit beside them:
 - `tools/fetch_corpus.py` downloads the corpus, checking the dataset's licence on its own card
   first, and contacts no host but Hugging Face's two;
 - `tools/run_experiments.py` runs the experiments and writes one bundle each;
-- `tools/render_results.py` turns those bundles into `RESULTS.md`, sentences included.
+- `tools/render_results.py` turns those bundles into `RESULTS.md`, sentences included, and into
+  `web/data.js`, the numbers the page draws — both from the same computations.
 
 The model is this exercise's own rather than exercise 09's: muP needs per-layer learning rates and
 an output head initialised separately from the embeddings, and exercises 13 and 14 build on its

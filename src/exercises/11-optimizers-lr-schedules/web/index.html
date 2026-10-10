@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>An optimiser's opening is not its steady state</title>
+    <meta
+      name="description"
+      content="Adam is one formula applied the same way at every step, and a run does not behave the same way at every step. Bias correction, warmup, the learning-rate schedule and the best rate across widths, each measured on a small language model and set against the difference two identical runs show for no reason."
+    />
+    <!-- Inline so it costs no request; a missing favicon is a 404 in every reader's console. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230071e3'/%3E%3Cpath d='M7 23 C11 8 15 8 17 15 S23 21 25 9' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/_shared/tokens.css" />
+    <link rel="stylesheet" href="./_shared/components.css" />
+    <link rel="stylesheet" href="./_shared/explainer.css" />
+    <link rel="stylesheet" href="./_shared/page.css" />
+    <link rel="stylesheet" href="./page-extra.css" />
+    <!--
+      Applied before first paint, on purpose. Reading the stored theme from a module would leave
+      the page rendering system colours for a frame and then repainting, which is the flash every
+      theme switcher is judged by.
+    -->
+    <script>
+      try {
+        var t = localStorage.getItem('era5-theme');
+        if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        /* Private mode or blocked storage: the system theme is a fine answer. */
+      }
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shellbar">
+        <a class="back" href="../"><span aria-hidden="true">←</span> Back</a>
+        <div class="themepick">
+          <label for="theme">Theme</label>
+          <select id="theme">
+            <option value="system">System</option>
+            <option value="soft-light">Soft light</option>
+            <option value="tinted-dark">Tinted dark</option>
+            <option value="high-contrast">High contrast</option>
+            <option value="neon">Neon</option>
+          </select>
+        </div>
+      </div>
+      <p class="eyebrow">11 · Optimizers and learning-rate schedules</p>
+      <h1>An optimiser's opening is not its steady state</h1>
+      <p class="lede">
+        Adam is written as one formula, applied the same way at every step. <b>A run does not
+        behave the same way at every step.</b> Its opening is shaped by averages that start empty,
+        weights that start small and a learning rate that starts low — and the opening lasts far
+        longer than its name suggests. Every effect here is measured, and <b>set against the
+        difference two identical runs show for no reason at all</b>.
+      </p>
+      <p class="lede-actions">
+        <a class="jump" href="#results">Skip to what happened <span aria-hidden="true">→</span></a>
+        <a class="jump ghost" href="#glossary">Start with the words you need</a>
+      </p>
+      <aside id="rail" class="rail"></aside>
+      <main id="main"></main>
+      <footer id="foot"></footer>
+    </div>
+
+    <script type="module">
+      import { buildPage } from './chapters.js';
+      import { bindThemePicker } from './_shared/theme.js';
+      import { M } from './data.js';
+
+      buildPage(M);
+
+      /* The picker. The head script already applied the stored choice; this only keeps the control
+       * in step with it and writes changes back. "system" removes the attribute rather than setting
+       * a value, because that is what lets prefers-color-scheme take over again. */
+      bindThemePicker();
+    </script>
+  </body>
+</html>

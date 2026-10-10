@@ -193,6 +193,32 @@
             <div class="meta">Ask what each half of a ratio is counting · every figure from the run</div>
           </span>
         </a>
+        <a class="item" href="/11-optimizers-lr-schedules/">
+          <span class="idx">11</span>
+          <span>
+            <h2>An optimiser's opening is not its steady state</h2>
+            <p>
+              Adam is one formula, applied the same way at every step, and a training run does not
+              behave the same way at every step. Bias correction, warmup, the learning-rate schedule
+              and the best rate for a wider model, each measured on a small language model — and
+              each set against the difference two identical runs show for no reason at all.
+            </p>
+            <div class="meta">Measure the noise floor before ranking anything · every figure from the runs</div>
+          </span>
+        </a>
+        <a class="item" href="/12-distributed-training/">
+          <span class="idx">12</span>
+          <span>
+            <h2>Every weight costs the same bytes; ZeRO chooses where they live</h2>
+            <p>
+              A simulated cluster trains one small model under data parallelism and every ZeRO stage.
+              The bytes each device keeps and sends are counted against arithmetic done by hand, and
+              every stage ends on the same weights — while one stage can never fit a large model,
+              however many devices it is given.
+            </p>
+            <div class="meta">ZeRO moves bytes; it does not remove them · every figure from the run</div>
+          </span>
+        </a>
         <a class="item" href="/13-reversibility/">
           <span class="idx">13</span>
           <span>
