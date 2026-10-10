@@ -2042,4 +2042,5 @@ predates the harness — so it is logged as what it was.
                           of 11-14 is live. CHECKED WITH release.yml's OWN awk EXTRACTOR: 96 lines,
                           stops before [0.16.0], and v0.16.0's notes extract byte-identically to
                           main. Root version stays pinned at 0.0.0.
+                          #201 opened
 ```
