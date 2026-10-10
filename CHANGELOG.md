@@ -12,6 +12,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 13 has a page.** The backward pass walked block by block, with the memory it holds
+  the same at every position; the update rules as coefficients, showing why the ordinary block
+  cannot be undone and why the blend magnifies rounding; every trial candidate against the 1% gate,
+  where the blend is refused with its own measured error; an 8 GiB budget that a reader fills by
+  choosing a batch, against the GPU's measured limit; and the long runs' curves. Every number, and
+  every verdict word, comes from a generated `web/data.js`, written by the same functions as
+  `RESULTS.md`; a test fails if it is stale, another if the page and the document quote different
+  comparisons, and a browser test renders the page from reversed data and requires the words to
+  flip. Every figure is drawn at a phone's width, so nothing that carries an argument sits behind a
+  sideways scroll.
+- **Exercise 13's speed verdict is corrected.** It had called the reversible model's speed
+  unranked, against a "floor" taken from three baseline trials made back to back. In those trials
+  every reversible candidate ran slower than every baseline run; and the same baseline
+  configuration drifted further between its trial and its long run than the long pair differs. The
+  verdict is now "slower, by an amount one long pair cannot pin down", in `RESULTS.md` and on the
+  page.
 - **Exercise 12's page — every weight costs the same bytes; ZeRO chooses where they live.** The
   twelve-part spine on exercise 10's template, every number generated into `web/data.js` by the
   exercise's own renderer. It draws which of a weight's bytes each stage keeps whole, a ring

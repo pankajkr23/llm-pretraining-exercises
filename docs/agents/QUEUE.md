@@ -2013,4 +2013,15 @@ predates the harness — so it is logged as what it was.
                           in PROGRESS): the shared-layer orphan check counts a vendored stylesheet
                           as used when an HTML comment mentions it.
                           #200 opened
+
+2026-10-10  web-13        13's page: the backward pass walked, the rules, the trials and the gate
+                          that refused the blend, the 8 GiB budget, the long runs. A PUBLISHED
+                          VERDICT WAS WRONG: RESULTS.md called the speed gap "inside the machine's
+                          spread"; the back-to-back trials show every reversible run slower than
+                          every baseline run (1.25-1.66x), while the long pair cannot size it (one
+                          configuration drifted 1.44x between runs). Corrected in RESULTS.md, README,
+                          CLAUDE.md and PROGRESS. Two audits also found typed verdicts (now derived,
+                          with a reversed-data test) and the +0.88 large-batch loss missing from the
+                          conclusion.
+                          #199 opened
 ```
