@@ -98,7 +98,7 @@ On the real model, at a constant η = 0.001 with no warmup, the first 20 losses:
 | 19 | 6.7476 | 6.8267 | 6.7276 |
 | 20 | 6.9249 | 7.0228 | 6.9255 |
 
-Measured as a loss, the effect is set against the gap between two seeds of the corrected run (both smoothed over 5 steps): in this run it never falls inside that noise within 600 steps.
+Measured as a loss, the effect is set against the gap between two seeds of the corrected run (both smoothed over 5 steps): in this run it dips inside that noise for 41 of 600 steps and never stays there.
 
 ## 3 · The update-to-weight ratio, per layer
 
