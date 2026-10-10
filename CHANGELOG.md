@@ -10,6 +10,8 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-10-10
+
 ### Added
 
 - **Exercise 14's page — one layer, copied into experts the router learns to share.** The conversion
@@ -5909,7 +5911,8 @@ First tagged release: two interactive exercises live on Vercel with a gated depl
 - **Tooling & conventions:** uv workspace (Python 3.12), ruff lint/format, pytest (unit +
   integration split), GitHub Actions CI, and a PR-only workflow documented in `AGENTS.md`.
 
-[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/pankajkr23/llm-pretraining-exercises/compare/v0.13.0...v0.14.0

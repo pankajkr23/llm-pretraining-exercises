@@ -2034,4 +2034,13 @@ predates the harness — so it is logged as what it was.
                           PHONE WIDTH three figures hid content in a cue-less sideways scroll or cut
                           numbers mid-value; a guard now checks every figure at 390 and 320.
                           #198 opened
+
+2026-10-10  release       v0.17.0 -- [Unreleased] -> [0.17.0] 2026-10-10, 12 entries in 2 blocks
+                          (Added, Fixed): #191 and #193-#200, all merged since v0.16.0 (#192 is
+                          queue-only and has no entry). Exercises 11-14 and their four pages.
+                          PRODUCTION IS BEHIND MAIN: it serves v0.16.0, deployed 2026-10-05, so none
+                          of 11-14 is live. CHECKED WITH release.yml's OWN awk EXTRACTOR: 96 lines,
+                          stops before [0.16.0], and v0.16.0's notes extract byte-identically to
+                          main. Root version stays pinned at 0.0.0.
+                          #201 opened
 ```
