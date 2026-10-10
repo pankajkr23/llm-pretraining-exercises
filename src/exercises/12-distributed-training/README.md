@@ -7,6 +7,10 @@ both equal a formula worked out by hand; all four stages train to bit-identical 
 Activations and allocator memory are not counted — see
 [What this cannot establish](#what-this-cannot-establish).
 
+**The page:** [llm-pretraining-demos.vercel.app/12-distributed-training](https://llm-pretraining-demos.vercel.app/12-distributed-training/)
+draws the same argument — which bytes each stage splits, a ring stepped by hand, the ledger beside
+its formula, and the ladder at scale — with every number generated from `results/zero.json`.
+
 ## How to read this
 
 - **Meeting this for the first time** — read [What this is](#what-this-is), then
@@ -214,7 +218,7 @@ updates is 0.9999 ([`RESULTS.md` §6](RESULTS.md#6--does-the-stage-change-the-an
 | `experiment.py` | runs everything and sets each measurement beside its prediction |
 
 `tools/run_zero.py` writes `results/zero.json`; `tools/render_results.py` turns it into
-[`RESULTS.md`](RESULTS.md).
+[`RESULTS.md`](RESULTS.md) and into `web/data.js`, the page's only source of numbers.
 
 ## Run it
 

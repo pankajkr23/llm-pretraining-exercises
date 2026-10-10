@@ -51,7 +51,8 @@ Both trained from the same initial weights on the same 49,995,776 tokens at peak
 | rebuild error, initial → trained weights | — | 2.6e-04 → 9.7e-05 |
 | gradient error, initial → trained weights | — | 5.3e-05 → 3.9e-05 |
 
-- **After the forward pass, the reversible model kept 58.7× fewer bytes than the baseline** for the backward pass, and ran at 10% fewer tokens per second — inside the machine's own throughput spread of 1.23×, so this does not rank their speed.
+- **After the forward pass, the reversible model kept 58.7× fewer bytes than the baseline** for the backward pass, and ran at 10% fewer tokens per second — smaller than this machine's own drift of 1.44× between two runs of one configuration, so this pair cannot size the difference.
+- In the trials, run back to back at the same batch, every reversible candidate (25,556–27,536 tokens per second) was slower than every baseline run (34,443–42,324), by 1.25–1.66× (1.56× at the chosen rate). **The reversible model is slower; by how much is not pinned down.** The long runs cannot size it: they differ by 1.11×, while the same baseline configuration ran 1.44× apart between its trial and its long run.
 - Its rebuilt gradients on the trained weights agree with stored ones to 3.9e-05 (relative).
 - Final validation loss differs by +0.0494 (reversible minus baseline). One seed each and no seed spread measured, so this is not a ranking.
 
@@ -84,6 +85,7 @@ A larger batch takes fewer, larger steps, so the learning rate is checked first:
 | 2 | 6.6373 |
 | 4 | 6.6383 |
 
+- The checks ended within 0.0071 of each other. No noise floor was measured for a 40-step check, so a gap this small is not evidence that one rate is better than another.
 - The chosen multiplier is the smallest one tried, so a lower one might be better still; it is a best-of-grid, not an optimum.
 
 At 1× the fixed-batch rate, on the full budget, scored on the second half of the validation split:
@@ -96,5 +98,5 @@ At 1× the fixed-batch rate, on the full budget, scored on the second half of th
 | tokens per second | 27,135 |
 | GPU memory after a forward pass (sampled) | 478.7 MiB |
 
-- Against the baseline at its fixed batch of 32 (not at the baseline's own largest batch): **6% fewer tokens per second — inside the machine's own throughput spread of 1.23×, so this does not rank their speed**, final validation loss +0.8845.
+- Against the baseline at its fixed batch of 32 (not at the baseline's own largest batch): **6% fewer tokens per second — smaller than this machine's own drift of 1.44× between two runs of one configuration, so this pair cannot size the difference**, final validation loss +0.8845.
 - The same tokens took 13.2× fewer optimiser steps here (463 against 6,103). At a fixed token budget, fewer and larger steps train less far unless the rate grows with the batch, and the short rate check above can only see the first steps of a run. The loss gap is measured; this explanation of it is not tested here — a run with the rate scaled to the batch would test it.

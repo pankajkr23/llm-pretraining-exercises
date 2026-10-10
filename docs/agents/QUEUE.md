@@ -1993,6 +1993,38 @@ predates the harness — so it is logged as what it was.
                           #192 are independent.
                           #196 opened
 
+2026-10-10  web-11        11's page: Adam by hand against torch, the bias ratio's peak, all 19
+                          matrices settling with and without warmup, three schedule comparisons
+                          each set against its own seed spread, SP vs muP. TWO AUDITS BEFORE THE PR
+                          found verdict words typed while the page claimed they were computed; every
+                          verdict now comes from one function over the data, and a test renders a
+                          reversed result and asserts the words flip. Also: a false "still climbing"
+                          caption, a downsampled gap figure hiding 41 inside-noise steps, and absent
+                          values printing as "step 0". The quoting check SKIPS from a worktree unless
+                          LLM_NOTES_DIR is set; it was run with it set. Pages 12-14 follow.
+                          #197 opened
+
+2026-10-10  web-12        12's page: the stages drawn by hand, the ring at four devices, bytes per
+                          device measured beside the formula, the 30B ladder, the adversary table.
+                          TWO AUDITS BEFORE THE PR found typed verdicts (now flags from
+                          page_numbers(), with a reversed-bundle test), a stages figure that could
+                          not be refuted (it divided the ledger by itself), ZeRO-1's gradient drawn
+                          wrong, and a predict step whose caption gave the answer. OPEN FOR PK (O5
+                          in PROGRESS): the shared-layer orphan check counts a vendored stylesheet
+                          as used when an HTML comment mentions it.
+                          #200 opened
+
+2026-10-10  web-13        13's page: the backward pass walked, the rules, the trials and the gate
+                          that refused the blend, the 8 GiB budget, the long runs. A PUBLISHED
+                          VERDICT WAS WRONG: RESULTS.md called the speed gap "inside the machine's
+                          spread"; the back-to-back trials show every reversible run slower than
+                          every baseline run (1.25-1.66x), while the long pair cannot size it (one
+                          configuration drifted 1.44x between runs). Corrected in RESULTS.md, README,
+                          CLAUDE.md and PROGRESS. Two audits also found typed verdicts (now derived,
+                          with a reversed-data test) and the +0.88 large-batch loss missing from the
+                          conclusion.
+                          #199 opened
+
 2026-10-10  web-14        14's page: the conversion that changes nothing, the router's load balance
                           scrubbed through training, validation beside the dense control, stored vs
                           per-token parameters beside speed. TWO AUDITS BEFORE THE PR found verdict

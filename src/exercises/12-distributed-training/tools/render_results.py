@@ -8,6 +8,11 @@ Every figure, and every verdict word ("matches", "fits"), is a lookup into the b
 comparison computed from it — never a literal in this template. `tests/test_zerosim_results.py`
 re-renders and fails if the tracked `RESULTS.md` differs by a single byte, and it needs no `torch`,
 so a stale document is caught in the ordinary CI job.
+
+It also writes `web/data.js`, the page's only source of numbers: the bundle without its free-text
+notes, plus `page_numbers()` — every ratio and verdict the page quotes, computed here once. The two
+multiples both outputs print (`comm_multiple`, `optimizer_fewer`) are shared functions, so the
+document and the page cannot disagree about them. The same test file checks `data.js` is fresh.
 """
 
 import json
@@ -39,8 +44,29 @@ def _n(value: float) -> str:
     return f"{int(value):,}"
 
 
-def _fewer(baseline: int, value: int) -> str:
-    ratio = baseline / value
+def comm_multiple(stage_block: dict, world_size: int) -> float:
+    """How many `P·(N−1)/N` one device sent per step: the counted total over one ring pass.
+
+    Computed here once, and used by both `RESULTS.md` and the page's `data.js`, so the two cannot
+    print different multiples of the same count.
+    """
+    comm = stage_block["communication"]
+    return comm["per_step_sent"]["total"] / (comm["payload_bytes"] * (world_size - 1) / world_size)
+
+
+def optimizer_fewer(stages: dict, key: str) -> float:
+    """How many times fewer weights this stage's optimiser updates than data parallelism's."""
+    return (
+        stages["0"]["compute"]["optimizer_elements"] / stages[key]["compute"]["optimizer_elements"]
+    )
+
+
+def key_bias_drifted_further(eq: dict) -> bool:
+    """Whether the 64 key-bias weights drifted further from the single device than all the rest."""
+    return eq["fp32_weights_max_abs_key_bias"] > eq["fp32_weights_max_abs_except_key_bias"]
+
+
+def _fewer(ratio: float) -> str:
     return "—" if ratio == 1 else f"{ratio:g}× fewer"
 
 
@@ -135,9 +161,7 @@ def render(run: dict) -> str:
     for key in sorted(stages):
         c = stages[key]["communication"]
         sent, pred = c["per_step_sent"], c["predicted"]
-        multiple = sent["total"] / (
-            c["payload_bytes"] * (topo["world_size"] - 1) / topo["world_size"]
-        )
+        multiple = comm_multiple(stages[key], topo["world_size"])
         comm_rows.append(
             f"| {stages[key]['name']} | {_n(sent.get('reduce_scatter', 0))} | "
             f"{_n(sent.get('all_gather', 0))} | **{_n(sent['total'])}** | {_n(pred['total'])} | "
@@ -168,13 +192,12 @@ def render(run: dict) -> str:
     )
 
     compute_rows = []
-    dp_opt = stages["0"]["compute"]["optimizer_elements"]
     for key in sorted(stages):
         c = stages[key]["compute"]
         compute_rows.append(
             f"| {stages[key]['name']} | {_n(c['forward_flops'])} | {_n(c['recompute_flops'])} | "
             f"{_n(c['backward_flops'])} | {_n(c['optimizer_elements'])} | "
-            f"{_fewer(dp_opt, c['optimizer_elements'])} | {_n(c['optimizer_flops'])} |"
+            f"{_fewer(optimizer_fewer(stages, key))} | {_n(c['optimizer_flops'])} |"
         )
 
     time_rows = "\n".join(
@@ -242,7 +265,7 @@ def render(run: dict) -> str:
     )
     key_bias_verdict = (
         "Here the key-bias weights drifted further than any other weight, as that predicts."
-        if eq["fp32_weights_max_abs_key_bias"] > eq["fp32_weights_max_abs_except_key_bias"]
+        if key_bias_drifted_further(eq)
         else "Here the key-bias weights did **not** drift further than the rest."
     )
     env = prov["environment"]
@@ -432,10 +455,288 @@ is paced by an inter-node link):
 """
 
 
+#: The world size the page's ring figure is drawn at. A design choice for legibility — four
+#: devices fit on a phone — and not a measurement; the page says so wherever it shows the figure.
+RING_DEMO_WORLD_SIZE = 4
+
+#: The world sizes the page's ladder slider can reach. `run["ladder"]` holds four of them; the
+#: slider needs every integer in between, which `formulas.ladder` — the same function that wrote
+#: those four — computes here. A prediction, labelled as one on the page.
+LADDER_SLIDER_SIZES = tuple(range(1, 65))
+
+
+def _sig(value: float, digits: int = 5) -> float:
+    """A series value rounded to `digits` significant figures, for the page only."""
+    return float(f"{value:.{digits}g}")
+
+
+def _without_sources(value: object) -> object:
+    """The bundle with every free-text `source` field removed.
+
+    Those fields are notes for a reader of the JSON — which file the corpus came from, why a size
+    was chosen. The page renders none of them, so they do not travel to it.
+    """
+    if isinstance(value, dict):
+        return {k: _without_sources(v) for k, v in value.items() if k != "source"}
+    if isinstance(value, list):
+        return [_without_sources(v) for v in value]
+    return value
+
+
+def page_numbers(run: dict) -> dict:
+    """Every number the page derives, computed once here rather than in the browser.
+
+    The rule `docs/DESIGN.md` states twice: a generated table under a hand-written sentence looks
+    maintained and only the sentence is wrong. So a ratio the page's prose quotes is a ratio this
+    function returns, and the two multiples `RESULTS.md` also prints come from the same functions.
+    """
+    from zerosim import formulas
+
+    main = run["main_mode"]
+    world = run["topology"]["world_size"]
+    padded = run["model"]["padded"]
+    stages = run["modes"][main]
+    categories = (*CATEGORIES, "total")
+
+    per_weight = {
+        mode: {
+            key: {c: block["memory"]["measured"][c] / padded for c in categories}
+            for key, block in blocks.items()
+        }
+        for mode, blocks in run["modes"].items()
+    }
+    transient_extra = {
+        mode: {
+            key: block["memory"]["peak_total"] - block["memory"]["measured"]["total"]
+            for key, block in blocks.items()
+        }
+        for mode, blocks in run["modes"].items()
+    }
+    multiples = {
+        mode: {key: comm_multiple(block, world) for key, block in blocks.items()}
+        for mode, blocks in run["modes"].items()
+    }
+    # Stage 0 IS data parallelism, so its own difference from itself is no test of anything; the
+    # comparisons worth counting are the ZeRO stages, in every precision.
+    differences = [
+        block["max_abs_vs_dp"]
+        for blocks in run["modes"].values()
+        for key, block in blocks.items()
+        if key != "0"
+    ]
+    # Which of a weight's bytes each stage shards, and the replicated floor, straight from the
+    # formulas the ledger was held to — so the page's per-stage diagram cannot disagree with them.
+    formula = {
+        mode: {
+            key: {
+                "floor": float(formulas.floor_bytes_per_weight(int(key), mode)),
+                "sharded": {c: int(key) >= formulas.SHARDED_FROM[c] for c in CATEGORIES},
+                # The formula's own value at the run's N, per category and in total, so the page
+                # can set it beside the ledger's reading rather than print the ledger twice.
+                "at_world": {
+                    c: float(v) for c, v in formulas.bytes_per_weight(int(key), world, mode).items()
+                },
+                # Optimiser state sharded but gradients not: the device keeps its whole gradient
+                # buffer, yet after the reduce-scatter only its own slice holds the summed
+                # gradient, and only that slice is read by its update (stages._optimizer_view).
+                "grad_slice_only": int(key) >= formulas.SHARDED_FROM["master"]
+                and int(key) < formulas.SHARDED_FROM["grads"],
+            }
+            for key in blocks
+        }
+        for mode, blocks in run["modes"].items()
+    }
+
+    # The ring figure, at a world small enough to draw. Its chunk is a quarter of the real model's
+    # gradient buffer, and the bytes per phase are formulas.comm_bytes_per_step — the function the
+    # counters matched at N = 32 — so the figure states a prediction, not a count.
+    n = RING_DEMO_WORLD_SIZE
+    itemsize = stages["0"]["communication"]["payload_bytes"] // padded
+    demo_padded = sum(-(-u["numel"] // n) * n for u in run["model"]["units"])
+    demo_payload = demo_padded * itemsize
+    if demo_payload % n:
+        raise ValueError(f"a {demo_payload}-byte buffer does not cut into {n} equal chunks")
+    phase = formulas.comm_bytes_per_step(0, n, demo_payload)["reduce_scatter"]
+    if phase.denominator != 1:
+        raise ValueError(f"one ring phase at N = {n} is a fractional byte count: {phase}")
+    ring = {
+        "world_size": n,
+        "units": len(run["model"]["units"]),
+        "padding": demo_padded - run["model"]["params"],
+        "payload_bytes": demo_payload,
+        "chunk_bytes": demo_payload // n,
+        "phase_bytes": int(phase),
+    }
+
+    # The ladder at every N the slider reaches, from the same function as run["ladder"]. Exact
+    # comparisons are made on the formula's own fractions before anything is rounded for display.
+    ladder = run["ladder"]
+    dense = formulas.ladder(ladder["params"], LADDER_SLIDER_SIZES, main, ladder["card_bytes"])
+    for row in dense:
+        published = next(
+            (
+                r
+                for r in ladder["rows"]
+                if (r["stage"], r["world_size"]) == (row["stage"], row["world_size"])
+            ),
+            None,
+        )
+        if published is not None and (published["bytes"], published["fits"]) != (
+            row["bytes"],
+            row["fits"],
+        ):
+            raise ValueError(f"the slider's ladder disagrees with the published one at {row}")
+    first_fit = {}
+    first_headroom = {}
+    for stage in range(4):
+        rows = [r for r in dense if r["stage"] == stage]
+        fit = [r["world_size"] for r in rows if r["fits"]]
+        room = [r["world_size"] for r in rows if r["bytes"] < ladder["card_bytes"]]
+        first_fit[str(stage)] = fit[0] if fit else None
+        first_headroom[str(stage)] = room[0] if room else None
+    slider = {
+        "world_sizes": list(LADDER_SLIDER_SIZES),
+        "gib": {
+            str(stage): [_sig(r["gib"]) for r in dense if r["stage"] == stage] for stage in range(4)
+        },
+        "fits": {
+            str(stage): [r["fits"] for r in dense if r["stage"] == stage] for stage in range(4)
+        },
+        "floor_gib": {
+            str(stage): next(r["floor_bytes"] for r in dense if r["stage"] == stage) / 2**30
+            for stage in range(4)
+        },
+        "never_fits": {
+            str(stage): next(r["never_fits"] for r in dense if r["stage"] == stage)
+            for stage in range(4)
+        },
+        "first_fit": first_fit,
+        "first_headroom": first_headroom,
+        # True where the first size that fits fills the card to the byte, leaving nothing for
+        # activations — so the page may say so only when it is so.
+        "exact_fill": {
+            k: first_fit[k] is not None and first_headroom[k] != first_fit[k] for k in first_fit
+        },
+    }
+
+    return {
+        "per_weight": per_weight,
+        "transient_extra": transient_extra,
+        "comm_multiple": multiples,
+        "optimizer_fewer": {key: optimizer_fewer(stages, key) for key in stages},
+        "zero3_sent_over_dp": stages["3"]["communication"]["per_step_sent"]["total"]
+        / stages["0"]["communication"]["per_step_sent"]["total"],
+        "dp_bytes_over_zero3": stages["0"]["memory"]["measured"]["total"]
+        / stages["3"]["memory"]["measured"]["total"],
+        "max_abs_vs_dp": max(differences),
+        "zero_runs_compared": len(differences),
+        # The verdict words the page prints, decided here and not in the browser.
+        "memory_equal": {
+            mode: {
+                key: {
+                    c: block["memory"]["measured"][c] == block["memory"]["predicted"][c]
+                    for c in categories
+                }
+                for key, block in blocks.items()
+            }
+            for mode, blocks in run["modes"].items()
+        },
+        "scaling_all_match": all(r["measured"] == r["predicted"] for r in run["scaling"]["rows"]),
+        "identical_to_dp": {
+            mode: {key: block["max_abs_vs_dp"] == 0 for key, block in blocks.items()}
+            for mode, blocks in run["modes"].items()
+        },
+        "formula": formula,
+        "key_bias_drifted_further": key_bias_drifted_further(run["equivalence"]),
+        # One run, one seed, one bare `>`: the ratio is reported so the page can say how far apart
+        # the two maxima are, and that no noise floor was measured for it.
+        "key_bias_ratio": (
+            run["equivalence"]["fp32_weights_max_abs_key_bias"]
+            / run["equivalence"]["fp32_weights_max_abs_except_key_bias"]
+            if run["equivalence"]["fp32_weights_max_abs_except_key_bias"]
+            else None
+        ),
+        "reference_differs": run["equivalence"]["fp32_weights_max_abs_except_key_bias"] > 0
+        or run["equivalence"]["fp32_weights_max_abs_key_bias"] > 0,
+        "all_memory_equal": all(
+            block["memory"]["measured"][c] == block["memory"]["predicted"][c]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+            for c in categories
+        ),
+        "all_comm_equal": all(
+            block["communication"]["per_step_sent"]["total"]
+            == block["communication"]["predicted"]["total"]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+        ),
+        "all_ranks_identical": all(
+            block["memory"]["ranks_identical"] and block["communication"]["ranks_identical"]
+            for blocks in run["modes"].values()
+            for block in blocks.values()
+        )
+        and all(
+            block["compute"]["flops_ranks_identical"]
+            and block["compute"]["optimizer_elements_ranks_identical"]
+            for block in stages.values()
+        ),
+        "all_identical_to_dp": all(d == 0 for d in differences),
+        "zero12_send_same_as_dp": all(
+            stages[k]["communication"]["per_step_sent"]["total"]
+            == stages["0"]["communication"]["per_step_sent"]["total"]
+            for k in ("1", "2")
+        ),
+        "padded_world_sizes": sorted(
+            {r["world_size"] for r in run["scaling"]["rows"] if r["measured"] != r["measured_real"]}
+        ),
+        # Whether a stage's two kinds of transient buffer were held at the same moment: its peak
+        # above the persistent total is their sum if so, the larger alone if not.
+        "transient_together": {
+            mode: {
+                key: min(block["memory"]["transient_peak"].values()) > 0
+                and block["memory"]["peak_total"] - block["memory"]["measured"]["total"]
+                == sum(block["memory"]["transient_peak"].values())
+                for key, block in blocks.items()
+            }
+            for mode, blocks in run["modes"].items()
+        },
+        "passes_per_unit": {
+            key: block["communication"]["collectives_per_step"] / len(run["model"]["units"])
+            for key, block in stages.items()
+        },
+        "ring": ring,
+        "slider": slider,
+    }
+
+
+def render_page_data(run: dict) -> str:
+    """Generate `web/data.js` — every figure the page draws, read from the same bundle.
+
+    **The page must not hold a number of its own.** `chapters.js` reads `M.*` and writes nothing;
+    this file is regenerated by `main()` and checked against a fresh render by
+    `tests/test_zerosim_results.py`. It needs no `torch`: `formulas` is pure arithmetic.
+    """
+    page = _without_sources(run)
+    page["page"] = page_numbers(run)
+    return (
+        "/* GENERATED by tools/render_results.py. Do not edit.\n"
+        " *\n"
+        " * Every number the page draws is in here, read from results/zero.json or computed\n"
+        " * from it by zerosim.formulas. `chapters.js` holds none of its own.\n"
+        " */\n"
+        "export const M = " + json.dumps(page, indent=2, sort_keys=True) + ";\n"
+    )
+
+
 def main() -> int:
-    """Render `results/zero.json` into `RESULTS.md`."""
-    OUT.write_text(render(json.loads(RESULTS.read_text(encoding="utf-8"))), encoding="utf-8")
+    """Render `results/zero.json` into `RESULTS.md`, and into `web/data.js` when the page exists."""
+    run = json.loads(RESULTS.read_text(encoding="utf-8"))
+    OUT.write_text(render(run), encoding="utf-8")
     print(f"wrote {OUT}")
+    page_data = EXERCISE / "web" / "data.js"
+    if page_data.parent.is_dir():
+        page_data.write_text(render_page_data(run), encoding="utf-8")
+        print(f"wrote web/{page_data.name}")
     return 0
 
 
