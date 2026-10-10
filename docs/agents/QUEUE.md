@@ -2024,4 +2024,14 @@ predates the harness — so it is logged as what it was.
                           with a reversed-data test) and the +0.88 large-batch loss missing from the
                           conclusion.
                           #199 opened
+
+2026-10-10  web-14        14's page: the conversion that changes nothing, the router's load balance
+                          scrubbed through training, validation beside the dense control, stored vs
+                          per-token parameters beside speed. TWO AUDITS BEFORE THE PR found verdict
+                          words typed while the page claimed they were computed (now one function
+                          over the data, with a reversed-run test), a figure opening on a state its
+                          caption contradicted, and an unmeasured "drift apart" in the title. AT
+                          PHONE WIDTH three figures hid content in a cue-less sideways scroll or cut
+                          numbers mid-value; a guard now checks every figure at 390 and 320.
+                          #198 opened
 ```

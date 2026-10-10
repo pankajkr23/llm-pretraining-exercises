@@ -61,6 +61,7 @@ SPINE_ENFORCED: frozenset[str] = frozenset(
         "11-optimizers-lr-schedules",
         "12-distributed-training",
         "13-reversibility",
+        "14-moe",
     }
 )
 

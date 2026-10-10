@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 14's page — one layer, copied into experts the router learns to share.** The conversion
+  drawn as a figure the reader can try to break (any two experts give the dense output once the kept
+  weights are rescaled; used as scored, the output shrinks), the router's balance stepped through
+  training with a guess before the idle count is revealed, every verdict chosen from the data, the converted model against its dense
+  control on validation and on paired training batches, and what a token pays against what the
+  model stores. Every number is generated into `web/data.js` by `tools/render_results.py`, the
+  first block's per-expert loads parsed from the training log only after each row is checked
+  against the results file; `RESULTS.md` renders byte-identical.
 - **Exercise 13 has a page.** The backward pass walked block by block, with the memory it holds
   the same at every position; the update rules as coefficients, showing why the ordinary block
   cannot be undone and why the blend magnifies rounding; every trial candidate against the 1% gate,
