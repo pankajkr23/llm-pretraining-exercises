@@ -59,6 +59,7 @@ SPINE_ENFORCED: frozenset[str] = frozenset(
         "09-loss-functions-output-heads",
         "10-training-loop",
         "11-optimizers-lr-schedules",
+        "12-distributed-training",
     }
 )
 

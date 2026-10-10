@@ -12,6 +12,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Added
 
+- **Exercise 12's page — every weight costs the same bytes; ZeRO chooses where they live.** The
+  twelve-part spine on exercise 10's template, every number generated into `web/data.js` by the
+  exercise's own renderer. It draws which of a weight's bytes each stage keeps whole, a ring
+  stepped chunk by chunk, each device's ledger beside its hand formula in both precisions, measured
+  bytes per weight from one device to thirty-two, the thirty-billion-weight ladder with a
+  prediction to make before the answer, and an attempt to find a ZeRO run whose weights differ from
+  data parallelism's. Registered in the spine, prose-measure and CI-shard ledgers, with a browser
+  test, a drift test for `data.js`, and the count and markup guards.
 - **Exercise 11's page.** One argument told for a ladder of readers: an optimiser's opening is not
   its steady state, and every effect is set against the difference two identical runs show for no
   reason. Adam written out step by step for one real weight; the bias-correction gap as a
