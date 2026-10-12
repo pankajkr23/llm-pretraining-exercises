@@ -2055,4 +2055,15 @@ predates the harness — so it is logged as what it was.
                           attempt (standards pattern .github/workflows/*.yml); PK added the path
                           to .claude/UNIT.md. Redeploy is PK's: deploy.yml on main after merge.
                           #202 opened
+
+2026-10-12  deploy-token  THE PIN WAS NOT THE FIX. deploy.yml on main (run 38222031579, CLI 62.7.0)
+                          failed identically, so the CLI was ruled out. VERCEL_TOKEN was stored
+                          2026-07-09 19:10Z; a 90-day expiry ends 2026-10-07 19:10Z, and the last
+                          good deploy finished 02:38Z that day. ORG/PROJECT IDs unchanged since
+                          2026-07-09 and the project was never recreated. PK made a new token in
+                          the dashboard (`vercel tokens create` refused from a CLI login), set the
+                          secret, re-ran: success. v0.17.0 LIVE 2026-10-12; pages 11-14 serve 200;
+                          standards snapshotted at v0.17.0 (8/8). This PR corrects #202's comment
+                          and changelog entry, which blamed the CLI. The pin stays.
+                          #203 opened
 ```
