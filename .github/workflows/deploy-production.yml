@@ -23,9 +23,10 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Install Vercel CLI
-        # Pinned, not @latest. v0.16.0 deployed with 62.7.0 on 2026-10-07; v0.17.0's run installed
-        # 63.1.2 and failed at `vercel pull` with "Could not retrieve Project Settings", under the
-        # same secrets. Raise the pin deliberately, after a deploy has proved the new version.
+        # Pinned, not @latest, so a deploy installs the CLI the last deploy proved. Raise it
+        # deliberately. "Could not retrieve Project Settings" at `vercel pull` is NOT a CLI problem:
+        # v0.17.0 hit it under both 63.1.2 and 62.7.0, and a new VERCEL_TOKEN fixed it (the old one
+        # fits a 90-day expiry). Check the token first.
         run: npm install -g vercel@62.7.0
 
       - name: Pull Vercel project settings

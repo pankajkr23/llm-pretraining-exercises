@@ -12,11 +12,13 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ### Fixed
 
-- **The production deploy installed whichever Vercel CLI was newest, and the newest one failed.**
-  v0.16.0 deployed with CLI 62.7.0 on 2026-10-07. v0.17.0's deploy installed 63.1.2 and stopped at
-  `vercel pull` with "Could not retrieve Project Settings", under the same workflow and secrets, so
-  v0.17.0 never reached production. `deploy-production.yml` now installs 62.7.0. If a deploy still
-  fails with the pin, the CLI was not the cause and the token is the next thing to check.
+- **v0.17.0 did not reach production until the Vercel token was replaced, and the first fix blamed
+  the wrong thing.** Its deploy stopped at `vercel pull` with "Could not retrieve Project
+  Settings". The only visible change from v0.16.0's deploy was the CLI, 63.1.2 instead of 62.7.0,
+  so `deploy-production.yml` was pinned to 62.7.0 — and the pinned deploy failed identically. The
+  cause was `VERCEL_TOKEN`: stored on 2026-07-09, which fits a 90-day expiry ending on 2026-10-07,
+  hours after the last good deploy. A new token deployed v0.17.0 on 2026-10-12. The pin stays, so a
+  deploy installs a CLI that has deployed before; its comment now says to check the token first.
 
 ## [0.17.0] — 2026-10-10
 
