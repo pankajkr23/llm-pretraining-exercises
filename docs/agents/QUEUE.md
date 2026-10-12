@@ -2065,4 +2065,5 @@ predates the harness — so it is logged as what it was.
                           secret, re-ran: success. v0.17.0 LIVE 2026-10-12; pages 11-14 serve 200;
                           standards snapshotted at v0.17.0 (8/8). This PR corrects #202's comment
                           and changelog entry, which blamed the CLI. The pin stays.
+                          #203 opened
 ```
