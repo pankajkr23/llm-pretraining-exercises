@@ -2043,4 +2043,16 @@ predates the harness — so it is logged as what it was.
                           stops before [0.16.0], and v0.16.0's notes extract byte-identically to
                           main. Root version stays pinned at 0.0.0.
                           #201 opened
+
+2026-10-12  deploy-pin    v0.17.0's production deploy (run 38081423458) FAILED at `vercel pull`:
+                          "Could not retrieve Project Settings". The release job succeeded, so the
+                          tag and the GitHub Release exist; production still serves v0.16.0. The
+                          only visible difference from v0.16.0's good deploy: `vercel@latest`
+                          installed CLI 63.1.2 where that run had 62.7.0. Pinned to 62.7.0. NOT A
+                          CONFIRMED CAUSE: an expired or rescoped VERCEL_TOKEN gives the same
+                          error, and the token cannot be seen from here. If the pinned deploy also
+                          fails, the token is next. GUARD: the agent_guard hook blocked the first
+                          attempt (standards pattern .github/workflows/*.yml); PK added the path
+                          to .claude/UNIT.md. Redeploy is PK's: deploy.yml on main after merge.
+                          #202 opened
 ```
