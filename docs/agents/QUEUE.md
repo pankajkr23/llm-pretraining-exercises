@@ -2054,4 +2054,5 @@ predates the harness — so it is logged as what it was.
                           fails, the token is next. GUARD: the agent_guard hook blocked the first
                           attempt (standards pattern .github/workflows/*.yml); PK added the path
                           to .claude/UNIT.md. Redeploy is PK's: deploy.yml on main after merge.
+                          #202 opened
 ```
