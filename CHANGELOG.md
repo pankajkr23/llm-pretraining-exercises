@@ -10,6 +10,14 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The production deploy installed whichever Vercel CLI was newest, and the newest one failed.**
+  v0.16.0 deployed with CLI 62.7.0 on 2026-10-07. v0.17.0's deploy installed 63.1.2 and stopped at
+  `vercel pull` with "Could not retrieve Project Settings", under the same workflow and secrets, so
+  v0.17.0 never reached production. `deploy-production.yml` now installs 62.7.0. If a deploy still
+  fails with the pin, the CLI was not the cause and the token is the next thing to check.
+
 ## [0.17.0] — 2026-10-10
 
 ### Added
