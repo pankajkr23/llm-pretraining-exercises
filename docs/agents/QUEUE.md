@@ -2099,5 +2099,8 @@ predates the harness — so it is logged as what it was.
                           I had a script restructure the guard-protected measurements.json; undone,
                           the restructured copy kept in reruns/. 09 docstring kept as published (it
                           pins 12's digest); correction is D10. CSS: two unused stylesheets and nine
-                          dead classes removed, 24/24 screenshots identical.
+                          dead classes removed, 24/24 screenshots identical. 13 FULL re-run on
+                          05e8cfe (13:58-15:55): memory holds (58.7x; largest batch 6.1x -> 5.8x),
+                          losses hold; speed DIVERGES (trials overlap; long pair 16% slower at 1.02x
+                          drift). Published verdict kept, dated note added.
 ```

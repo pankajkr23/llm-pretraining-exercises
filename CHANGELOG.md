@@ -46,7 +46,9 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   read that 0 as missing and trained at a batch the device could not hold. Evaluation is `no_grad`,
   the probe measures a validation pass, the run starts from an empty cache, `largest_found` refuses
   a measured 0, and LITE's budget is 2 GiB. The published FULL results stay; a FULL re-run on the
-  fixed code is added beside them.
+  fixed code is added beside them. It reproduces the memory saving (58.7×) and the losses; its
+  largest batch is 5.8× the baseline's, against 6.1×; and its speed trials overlap, so the published
+  "every reversible candidate slower" verdict is not reproduced. Both are in its README.
 - **Exercise 06's demo reported the mixture as met from the wrong corpus's report** — it now uses
   that report only when its shard ids are the shards actually read, and recomputes otherwise.
 - **Smaller fixes a reviewer would have read:** the root README still said notebooks were untracked
