@@ -137,6 +137,8 @@ identically.
 
 ## D9 · Agents edit a staged copy of the notebook builder; PK installs it
 
+**Superseded 2026-10-24.** The builder is installed at `tools/build_notebook.py` and tracked, with the notebook, so neither the staging nor the guard's refusal applies any more.
+
 **Decision.** Agents write the builder at `artifacts/staged/build_notebook.py`; PK copies it into
 `tools/build_notebook.py`, where the installed builder lives.
 

@@ -153,6 +153,8 @@ meant to measure one. Off everywhere keeps every experiment about the thing it n
 
 ## D12 · The notebook builder is staged until PK installs it
 
+**Superseded 2026-10-24.** The builder is installed at `tools/build_notebook.py` and tracked, with the notebook, so neither the staging nor the guard's refusal applies any more.
+
 **Decision.** `artifacts/staged/build_notebook.py` holds the builder; PK copies it to
 `tools/build_notebook.py`.
 

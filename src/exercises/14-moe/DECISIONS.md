@@ -98,6 +98,8 @@ code, and writing as the run goes means a crash still leaves a log.
 
 ## D9 · The notebook builder is staged until PK installs it
 
+**Superseded 2026-10-24.** The builder is installed at `tools/build_notebook.py` and tracked, with the notebook, so neither the staging nor the guard's refusal applies any more.
+
 **Decision.** `artifacts/staged/build_notebook.py`; PK copies it to `tools/build_notebook.py`.
 
 **Why.** The guard forbids agents from writing any `tools/build_notebook.py`.

@@ -1,5 +1,7 @@
 # 14 · From a dense model to a mixture of experts
 
+**Notebook:** [`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/14-moe.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Exercise 13's dense 21M-parameter model, trained on 50 million tokens, converted into a mixture of
 experts by copying each block's feed-forward layer into eight experts behind a router — shown to
 start exactly where the dense model stopped, and to keep training and reducing its loss, next to the
@@ -16,6 +18,9 @@ conversion, the router's balance and the cost drawn from the same files.
   The conversion is one class, `moe.layer.MoE`.
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence), then
   [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/14-moe.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 
@@ -78,7 +83,7 @@ uv run python src/exercises/14-moe/tools/run_experiments.py --preset lite    # s
 
 ### Or run it as a notebook
 
-`notebooks/S14-moe.ipynb` trains a small dense model, converts it, checks the conversion changes
+[`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) trains a small dense model, converts it, checks the conversion changes
 nothing, watches the router balance itself, and continues the MoE against the dense model, plotting
 both curves — then reads the published results.
 

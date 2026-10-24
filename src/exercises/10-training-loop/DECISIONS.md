@@ -6,6 +6,11 @@ Why this exercise is shaped the way it is, and what would overturn each choice.
 
 ## D1 · This exercise's notebook IS tracked, and that is a written exception
 
+**Superseded 2026-10-24: it is no longer an exception.** Every topic notebook and builder is
+tracked now, and this one was renamed to
+[`notebooks/10-training-loop.ipynb`](../../../notebooks/10-training-loop.ipynb). The `.gitignore`
+negation described below is gone with the rule it excepted. Kept as decided, for the record.
+
 **Decision.** `notebooks/S10-training-loop.ipynb` is committed, against the repo-wide rule that
 gitignores every topic notebook.
 

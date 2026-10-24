@@ -103,12 +103,11 @@ as the vocabulary-wide recovery rate at `d_p = 32`, is in no evidence file in th
 `budget` (pure numpy) and `heads` (torch, behind an `importorskip`). 32 tests pass. `ruff` clean.
 Registered in the root README table, the CI `rest` shard, and `OPTIONAL_DEPENDENCY_GATES`.
 
-**The notebook.** `notebooks/S07-model-embeddings-internals.ipynb`, 27 cells, every code cell
-executed and verified, outputs stripped. Builder at `tools/build_notebook.py`. Both are gitignored
-and both are in the outside-the-repo backup store. **Do not quote its size here** — this line said
-*"115 files, 19.5 MB"* long after it held 132; a snapshot of a store that grows every topic is a
-number that is wrong by the next one. `uv run python tools/backup_local_only.py --verify` reports it
-and exits non-zero when it is behind, which is the only form of that claim worth making.
+**The notebook.** [`notebooks/07-model-embeddings-internals.ipynb`](../../../notebooks/07-model-embeddings-internals.ipynb),
+built by `tools/build_notebook.py`; both are **tracked** since 2026-10-24, when the notebook was
+rebuilt as a learning bench that trains the arms on the offline tokenization corpus.
+`tests/test_notebooks_run.py` executes it end to end, so its cell count is not quoted here — a count
+typed into a log is the number that goes stale first.
 
 **The page.** `web/`, published at `/07-model-embeddings-internals/` — **fourteen sections, six
 inline-SVG figures and a left rail**, rebuilt to the audience ladder and required spine now recorded

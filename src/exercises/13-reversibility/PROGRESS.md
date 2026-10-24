@@ -6,7 +6,7 @@ the work can be picked up cold. Newest entries at the top of each section.
 **Where the work lives:** this file does not name branch or PR numbers — `git log` and `gh pr list`
 answer that correctly and a markdown file goes stale.
 
-**Deliverable shape:** a public link to this exercise's README, and the notebook in the repository. Topic notebooks are gitignored, so tracking this one needs a named `.gitignore` exemption like exercise 10's — `.gitignore` is a standards file, so that change is PK's. The submission platform's own field list has not been checked
+**Deliverable shape:** a public link to this exercise's README, and the notebook in the repository. The notebook is tracked, as every topic notebook has been since 2026-10-24. The submission platform's own field list has not been checked
 against this yet; that is PK's, before submitting.
 
 ---
@@ -19,9 +19,10 @@ against this yet; that is PK's, before submitting.
 | O2 | **Reversible stack** | **done** | Midpoint, blend and leapfrog update rules with a custom autograd function that rebuilds each layer's input in the backward pass; matches stored autograd to rtol 1e-9 in float64 (`test_reversible_stack.py`). |
 | O3 | **Memory measurement** | **done** | Exact bytes kept for backward by saved-tensor hooks; the largest batch found under a GPU memory cap, in a separate process. |
 | O4 | **Published run** | **done** | Attempt 5, commit `eb74fb6`, Apple M4 GPU, 17:21–19:21 with no watchdog pause. All four bundles from one commit and today's code (a test enforces it); `RESULTS.md` is their render. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` after the published run; the executed copy sits beside the builder. |
-| O6 | **Notebook tracked in the repository** | **PK's** | Needs the `.gitignore` exemption above. |
+| O5 | **Notebook** | **done** | Installed into `tools/build_notebook.py` and tracked, with the notebook, since 2026-10-24; `tests/test_notebooks_run.py` executes it at `LITE`. |
+| O6 | **Notebook tracked in the repository** | **done** | [`notebooks/13-reversibility.ipynb`](../../../notebooks/13-reversibility.ipynb), since 2026-10-24. |
 | O7 | **Submission** | **PK's** | The README link and the notebook, once merged and public. |
+| O8 | **LITE's capped stage fails on Apple's GPU** | **open — PK** | Found 2026-10-24 by executing the notebook on MPS: `tools/run_experiments.py --preset lite` dies in `train.evaluate` inside `max_batch_run`, under LITE's 1 GiB cap. The search probes training steps only, so evaluation's memory is never measured. FULL (8 GiB) is unaffected and CUDA was not tried. A fix changes the package, whose code digest the published results pin, so it needs a FULL re-run of 13 and then 14. Until then the notebook runs this one stage on the CPU under MPS, and says so. |
 
 ---
 

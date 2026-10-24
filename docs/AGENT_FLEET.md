@@ -236,7 +236,8 @@ uv run ruff check . && uv run ruff format --check .
 uv run pytest -m "not integration" -n auto --dist loadfile
 bash deploy/vercel/build.sh                                # once, serially
 uv run pytest -m integration -n auto --dist loadfile <paths>
-uv run pytest tests/test_notebook_builders.py tests/test_local_only_files_present.py   # LOCAL-ONLY
+uv run pytest tests/test_local_only_files_present.py      # LOCAL-ONLY
+uv run pytest -m integration tests/test_notebooks_run.py  # the network notebooks run only here
 uv run pytest tests/test_no_confidential_leaks.py          # quoting half is local-only
 uv run python tools/backup_local_only.py --verify
 uv run pre-commit run --all-files

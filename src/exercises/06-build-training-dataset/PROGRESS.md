@@ -51,6 +51,7 @@ are deferred by decision rather than pending.
 | O6 | **The web explainer** | **done** | **14 sections** — the three interactive chapters, three interaction families, plus the narrative spine and a drawn pipeline figure (v0.11.0). Every figure derived from the run by `tools/build_web_data.py`. **25 browser tests**. |
 | O8 | **Rebuild-in-place safety** | **done** | `tools/backup_local_only.py` versions the 113 gitignored, unrecoverable files into a git store outside the repo; `post-checkout`/`post-merge` hooks run it. |
 | O7 | **Cloud (multi-GPU, NCCL, FSDP)** | **deferred — PK's decision** | Local only for now. §"What this cannot establish" in the README states what that costs. |
+| O9 | **`run_demo.py` reports the mixture as met from the wrong corpus** | **open — PK** | Found 2026-10-24 by the notebook's lite run on the tracked corpus: with `--shards` pointing at other shards, the producer still reads the tracked `results/corpus_build.json`, which describes the fetched corpus, and marks the mixture met. `verify.py` catches it (the agentic floor is breached), so the auditor holds; the producer's claim does not. The notebook shows both rather than hiding the disagreement. |
 
 ---
 

@@ -152,30 +152,19 @@ itself while both halves look fine:
    (`INV-4`, `INV-4b`). A schedule-only lane counts as funded — long-context holds no budget but
    `long-eval` is still bought by the sequence-length schedule.
 
-## The notebook is generated, and it is not tracked
+## The notebook is generated, and both it and its builder are tracked
 
-`notebooks/S05-datamixtures-and-curriculum.ipynb` is **gitignored** — regenerate it with
-`uv run python tools/build_notebook.py` — **on a checkout that has it.** Neither the notebook nor the builder is tracked, so a fresh clone has neither. It is emitted by
-that builder rather than edited in place. A notebook edited by hand accumulates execution counts, metadata and stray
-outputs that make every diff unreadable; this way the committed file is exactly what the builder
-emits, and the cells are diffable as Python.
+[`notebooks/05-datamixtures-and-curriculum.ipynb`](../../../notebooks/05-datamixtures-and-curriculum.ipynb)
+is emitted by `tools/build_notebook.py` and never edited in place: a notebook edited by hand
+accumulates execution counts, metadata and stray outputs that make every diff unreadable, and
+`tests/test_notebook_builders.py` fails when the tracked notebook is not byte-identical to what the
+builder writes.
 
-**The loop is: edit the builder → run it → execute every code cell → commit.** The middle step is
-not optional. `test_mixture_notebook.py` checks the structural rules (imports the package, no
-committed outputs, covers all seven requirement items, shows a guard failing) *and* now executes it:
-`test_the_notebook_runs_end_to_end` runs all 37 code cells through nbclient, and its twin appends a
-raising cell and requires the runner to catch it. `nbclient` and `ipykernel` are in the root `dev`
-group so the runner is installed there.
-
-Since the notebook is untracked, **every test in that file skips in CI** — it has nothing to read.
-The tracked `notebooks/hello.ipynb` is what keeps the harness under test: stdlib-only, executed by
-`test_the_sample_notebook_runs`, and it proves a notebook in this repo opens and runs. It cannot
-prove this one is right. That check belongs to whoever has the notebook, before the PR.
-
-It proves one thing only — **no cell raises**. It does not check that a printed number is right;
-that is `test_mixture_spec_render.py`'s job. It also runs in about two seconds, because the
-notebook reads the proxy results from the tracked `results/step0.json` rather than training
-anything, so do not read a fast pass as a shallow one.
+**The loop is: edit the builder → run it → commit both.** `test_mixture_notebook.py` checks the
+structural rules (imports the package, no committed outputs, covers the mixture's items, shows a
+guard failing, carries a Colab badge for itself); `tests/test_notebooks_run.py` executes it end to
+end in CI's torch job. That proves one thing only — **no cell raises** — and not that a printed
+number is right, which is `test_mixture_spec_render.py`'s job.
 
 `tools/build_notebook.py` is excluded from ruff for the same reason `notebooks/` is — it is a
 notebook document in Python clothing, and one of its lines is a Colab badge URL that cannot wrap.

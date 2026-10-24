@@ -1,5 +1,7 @@
 # 06 · Building the Training Dataset
 
+**Notebook:** [`notebooks/06-build-training-dataset.ipynb`](../../../notebooks/06-build-training-dataset.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/06-build-training-dataset.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **A training run eats data for weeks. This is the system that remembers what it ate, why, what the
 model learned from it, and how to reconstruct any of it.**
 
@@ -30,6 +32,7 @@ documents -> tokenized shards -> manifests -> mixture schedule -> packing -> bat
 | **Meeting this for the first time** | [The problem](#the-problem) — why a training run needs a ledger at all | [The vocabulary](#the-vocabulary), which nine words carry the whole system |
 | **Changing the code** | [Layout](#layout) and [Run it](#run-it) | [The producer/auditor wall](#the-producerauditor-wall) — the one structural rule that must not be broken |
 | **Deciding whether to believe it** | [What it cannot establish](#what-it-cannot-establish) | [`DECISIONS.md`](DECISIONS.md) — what we chose, what we inherited, and what we invented, each with what would overturn it |
+| **Running it yourself** | [`notebooks/06-build-training-dataset.ipynb`](../../../notebooks/06-build-training-dataset.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/06-build-training-dataset.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
 Also here: [`PROGRESS.md`](PROGRESS.md) is the running log — findings, changes, and what is still
 open, written so the work can be picked up cold. [`NOTICE`](NOTICE) is the authoritative statement
@@ -133,7 +136,7 @@ tests/           # discovered by `uv run pytest` from the repo root
 tools/
   fetch_corpus.py   # TRACKED — a corpus needs a tracked way to fetch and licence-check it
   build_corpus.py   # TRACKED — fetched text to sealed shards, with the guards that matter
-  build_notebook.py # local-only, gitignored — back it up
+  build_notebook.py # TRACKED — writes notebooks/06-build-training-dataset.ipynb; rebuild, never hand-edit
   build_web_data.py # derives web/data.js from the run, so no page figure is typed by hand
 artifacts/       # heavy regenerable output (gitignored)
 results/         # TRACKED — measured evidence a document renders; it must survive a clone

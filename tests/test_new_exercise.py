@@ -176,7 +176,10 @@ def test_the_generated_builder_satisfies_the_notebook_guards(generated) -> None:
     """`tests/test_notebook_builders.py` looks for two literals and a file-path `NOTEBOOK_OUT`."""
     _, root = generated
     source = (root / "tools" / "build_notebook.py").read_text(encoding="utf-8")
-    assert "'clone'" in source, "no Colab clone step the guard can see"
+    assert "'clone'" in source or '"clone"' in source, "no Colab clone step the guard can see"
+    assert "/Users/" not in source and "pathlib.Path.cwd()" in source, (
+        "the setup cell must find the repo root at run time, never bake in the build machine's path"
+    )
     assert "IN_COLAB" in source, "does not detect Colab"
     assert 'os.environ.get("NOTEBOOK_OUT") or' in source, (
         "NOTEBOOK_OUT must be treated as a full file path; the guard passes a file, not a directory"

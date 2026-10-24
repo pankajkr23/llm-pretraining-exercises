@@ -20,7 +20,7 @@ local like every other topic notebook.
 | O2 | **The corpus** | **done** | FineWeb-Edu slice, licence checked on the card at fetch time, disjoint validation and training rows; shared with exercises 13 and 14 (`DECISIONS.md` D1–D3). |
 | O3 | **The five experiments** | **done** | `optimizers.experiments`; each tested end to end at the `SMOKE` preset on a synthetic corpus. |
 | O4 | **Published run** | **done** | `FULL` preset on an Apple M4 GPU; `RESULTS.md` rendered from `results/*.json`. A test fails if any bundle's code digest or settings differ from today's, or if `RESULTS.md` differs from a fresh render. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Built and executed end to end at `LITE` after the published run; the executed copy sits beside the builder. |
+| O5 | **Notebook** | **done** | Installed into `tools/build_notebook.py` and tracked, with the notebook, since 2026-10-24; `tests/test_notebooks_run.py` executes it at `LITE`. |
 | O6 | **muP checked against the authors' code** | **not done** | The rules are the paper's Table 3; no comparison with the `mup` package (README limits). |
 | O7 | **Submission** | **PK's** | The README link, once merged and public. |
 

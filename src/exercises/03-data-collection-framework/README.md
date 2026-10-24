@@ -1,5 +1,7 @@
 # 03 · Data Collection & Sourcing — a decision framework
 
+**Notebook:** [`notebooks/03-data-collection-framework.ipynb`](../../../notebooks/03-data-collection-framework.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/03-data-collection-framework.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 A framework for **deciding the pre-training data mix** of an India-first 40B model: grade every
 candidate source through five gates, budget the tokens, measure the tokenizer tax, and then try to
 actually assemble the corpus from what survives. The answer is uncomfortable, which is the point —
@@ -48,6 +50,7 @@ uv run pytest -m "not integration"      # the invariants, and the proofs they ca
 | **Meeting this for the first time** | [What it builds, and what it found](#what-it-builds-and-what-it-found), then the [live page](https://llm-pretraining-demos.vercel.app/03-data-collection-framework/) — thirteen chapters in the order a reader asks them | [What it produces](#what-it-produces) for the headline counts |
 | **Changing the code** | [Layout](#layout) and [Run it](#run-it) — note `ingest` is a **separate stage**, and skipping it rebuilds from a stale catalogue | [Two rules worth knowing before you change anything](#two-rules-worth-knowing-before-you-change-anything), then [Tests](#tests) |
 | **Deciding whether to believe it** | [What it cannot tell you](#what-it-cannot-tell-you) | [Tests](#tests) for which guards exist, and [`NOTICE`](NOTICE) for scope and affiliation |
+| **Running it yourself** | [`notebooks/03-data-collection-framework.ipynb`](../../../notebooks/03-data-collection-framework.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/03-data-collection-framework.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
 The deep material is in [`docs/`](./docs/) — `ATLAS.md` is the source research, `FRAMEWORK.md` the
 method, `DECISIONS.md` the resolved answers, `OPEN.md` what was deliberately left open.

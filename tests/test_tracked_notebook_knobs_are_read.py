@@ -1,6 +1,6 @@
 """A knob a tracked notebook offers is a knob its cells actually read.
 
-`notebooks/S10-training-loop.ipynb` opened with a configuration cell that declared four knobs and
+Exercise 10's notebook opened with a configuration cell that declared four knobs and
 printed them back as a profile line:
 
     LITE   = True
@@ -17,8 +17,8 @@ hard-coded. Change one of these, re-run from here, and watch what moves."*
 also broke `AGENTS.md`'s rule that a `lite` profile finishes quickly with the full run one variable
 away: `LITE` shortened one cell of three, so the short profile still trained 440 steps.
 
-Nothing could see it. `tests/test_notebook_builders.py` builds but never executes and skips on a
-clone; `test_tracked_notebooks_are_portable.py` scans for absolute paths; CI executes only
+Nothing could see it at the time: the builders were untracked,
+`test_tracked_notebooks_are_portable.py` scans for absolute paths, and CI executed only
 `hello.ipynb`. This reads the **tracked** notebook, which a clone does have, and asks the one
 question a static check can answer: is every name this notebook defines as a knob used by anything?
 """

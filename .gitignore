@@ -279,32 +279,11 @@ REQUIREMENTS.md
 # the hyperparameters, live in tracked prose where they survive a clone.
 **/docs/*-recovered.md
 
-# Topic notebooks are local-only. They are source material rather than this repo's
-# deliverable, and executing one bakes real corpus text into a tracked file. `notebooks/hello.ipynb`
-# is deliberately NOT matched: it is the tracked sample that keeps the notebook harness under test
-# on a fresh clone.
-notebooks/S[0-9][0-9]-*.ipynb
-
-# ...with exactly one exception, and it is a requirement rather than a preference. Exercise 10's
-# submission says the notebook "should also be there" and offers no alternative — where exercise
-# 09's offered "the ipynb file OR training logs", which is why 09's stays local. There is nothing
-# to fall back to here.
-#
-# The rule above exists to keep the course's own material off a public remote. This notebook is our
-# training loop: it imports the exercise's package and re-implements nothing, so it carries no more
-# of that material than the package does. See 10-training-loop/DECISIONS.md D1.
-#
-# The negation WORKS because the pattern above is a FILE pattern, not a directory one.
-!notebooks/S10-training-loop.ipynb
-
-# ...and so is the script that generates one. A generator is the notebook in another form -- keeping
-# it would version the same course material as Python, which is the thing the rule above exists to
-# prevent. Both stay on a working checkout and neither is pushed.
-#
-# The cost is real and is named here rather than discovered later: the builder was the recoverable
-# copy, so a lost working tree now loses the notebook AND the means to rebuild it, and CI can no
-# longer check that a builder exists or still runs. Back these up outside the repo.
-src/exercises/*/tools/build_notebook.py
+# Topic notebooks (`notebooks/NN-<exercise>.ipynb`) and their builders
+# (`src/exercises/*/tools/build_notebook.py`) are TRACKED, and nothing here ignores them. They were
+# local-only until 2026-10-24, when every one was rebuilt to carry our own prose only and the
+# confidentiality gates were extended to read notebook cells. Executed copies are never tracked:
+# outputs are stripped at build time, and `*.executed.ipynb` lives under a gitignored `artifacts/`.
 
 # ...but the submission bundle IS the deliverable, and the requirements names `run.log` specifically.
 #

@@ -63,7 +63,7 @@ def _checker():
 #: `test_no_tracked_file_quotes_the_confidential_material`, and asserted equal to it by
 #: `tests/test_quote_check_receipt.py`** — a digest wider than the check is not a stricter receipt,
 #: it is a receipt that goes stale for reasons the check cannot see.
-READ_SUFFIXES = frozenset({".md", ".py", ".txt"})
+READ_SUFFIXES = frozenset({".md", ".py", ".txt", ".ipynb"})
 
 
 def covered_files() -> list[str]:

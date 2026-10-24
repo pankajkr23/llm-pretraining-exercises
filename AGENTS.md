@@ -134,9 +134,11 @@ renamed, or overwritten — locally or on the remote — without PK's explicit p
 the file.** This is not a style preference and it does not yield to a tidy-up, a "stale" file, or a
 rule elsewhere in this document. If something there looks wrong, **say so and stop.**
 
-These are the only files in the repo with **no second copy**. Both are gitignored, so git cannot
-restore them: `notebooks/S[0-9][0-9]-*.ipynb` and `src/exercises/*/tools/build_notebook.py`. A
-deletion here is permanent in a way that no other deletion in this repo is.
+**The rule stands even though both are now tracked.** Until 2026-10-24 the topic notebooks and
+their builders were gitignored, which made them the files here with **no second copy**; since then
+`notebooks/NN-<exercise>.ipynb` and `src/exercises/*/tools/build_notebook.py` are in git, so a
+deletion is recoverable — but it is still PK's decision, and still named file by file. The files
+with no second copy now are the ones `tools/backup_local_only.py::PATTERNS` lists.
 
 **This now covers `REQUIREMENTS.md` too.** All four of exercises 01–04's requirement documents were destroyed by an
 ordinary branch switch after the commit that untracked them, and were recoverable only because
@@ -224,37 +226,18 @@ than a deliberate builder run — plus the two below, whose **flags** are the pa
 - **`git stash -a` / `--all`** stashes ignored files, which is all of these. Plain `git stash -u`
   is **safe** here for the same reason. This document said the opposite for months.
 
-**And the branch hazard is retired while the tag hazard is live.** The paths are untracked on every
-branch now, so a branch switch no longer destroys them — but **eleven tags still carry them**:
-`v0.1.0` through `v0.6.2` track between one and five of these files each. `git checkout v0.4.0`
-overwrites five live files with stale tagged copies, and switching back deletes them. So
-`git checkout <tag>`, `git bisect` and any checkout by SHA are now the remaining live path for the
-exact failure that has already happened twice — run the tripwire after each of them.
-
-**It has already happened once, and not by anyone deciding to delete anything.** After the builders
-were untracked, an ordinary `git checkout main && git pull` destroyed all five: `checkout` restored
-them as tracked files from the pre-merge `main`, then the fast-forward applied the commit that
-removed them from the index, so git deleted the working-tree copies. Recovered from the removal
-commit's parent (`db9b288^`). **So the danger is routine git operations, not carelessness** — after
-any branch switch, pull, merge, rebase or stash, verify:
-
-```bash
-ls notebooks/*.ipynb src/exercises/*/tools/build_notebook.py
-```
-
-and if anything is missing, restore it before doing anything else:
-
-```bash
-git checkout "$(git log --all --diff-filter=D --format=%H -1 -- 'src/exercises/*/tools/build_notebook.py')^" \
-  -- 'src/exercises/*/tools/build_notebook.py'
-```
-
-That recovery works only while the removal commit is still reachable. **Keep a backup outside the
-repo** — it is the real safety net.
+**The notebook hazard is retired; the requirement-document hazard is not.** After the builders
+were first untracked, an ordinary `git checkout main && git pull` destroyed all five: `checkout`
+restored them as tracked files from the pre-merge `main`, then the fast-forward applied the commit
+that removed them from the index. Now that notebooks and builders are tracked, a commit from before
+2026-10-24 removes them on checkout and switching back restores them — git owns them. The same
+mechanism still threatens every gitignored file in `PATTERNS`, and **eleven tags** (`v0.1.0` to
+`v0.6.2`) track old copies of some of them, so after `git checkout <tag>`, `git bisect` or any
+checkout by SHA, run the tripwire and `tools/backup_local_only.py --verify`.
 
 **Tests must never write to the real paths.** `tests/test_notebook_builders.py` builds through
-`NOTEBOOK_OUT` into a temporary directory for exactly this reason: a test that wrote to
-`notebooks/` would destroy the only copy that exists.
+`NOTEBOOK_OUT` into a temporary directory, so a test run can never overwrite the notebook someone
+has open; it then compares that build with the tracked notebook byte for byte.
 
 ## Repo layout & naming
 
@@ -266,9 +249,10 @@ repo** — it is the real safety net.
       --title "Loss functions and output heads" --package lossheads \
       --summary "One sentence for the root README row." [--dry-run]
   ```
-  It writes the whole skeleton, **including the three gitignored files** (`REQUIREMENTS.md`, seeded from the local
-  requirement text when one exists; `tools/build_notebook.py`; and the notebook it
-  builds), joins the `rest` CI shard, adds the root README row, and prints what is left for you.
+  It writes the whole skeleton — the gitignored `REQUIREMENTS.md` (seeded from the local
+  requirement text when one exists), plus the tracked `tools/build_notebook.py` and the
+  `notebooks/NN-<exercise>.ipynb` it builds — joins the `rest` CI shard, adds the root README row,
+  and prints what is left for you.
 
   **The sequencing is the reason it exists.** `tests/_exercises.py::exercises_in` only counts a
   directory that has a `pyproject.toml`, so a new exercise is invisible to every guard until that
@@ -289,76 +273,63 @@ repo** — it is the real safety net.
   was scaffolded with `pyproject.toml` and modules but no `CLAUDE.md`, `PROGRESS.md`, `NOTICE` or
   `REQUIREMENTS.md`, because a convention that lives only in prose gets skipped under momentum.
   `tests/test_exercise_skeleton.py` now checks the universal ones (`README.md`, `CLAUDE.md`,
-  `pyproject.toml`, `tests/`) — **`tools/` is deliberately not among them**, because the only
-  file some exercises keep there is the gitignored `build_notebook.py` and git does not track
-  empty directories, so `tools/` exists on a working checkout and not in a clone. Requiring it
-  passed locally and failed CI: write the guard for what a clone has, not for what your machine
-  has. It also asserts **no `REQUIREMENTS.md` is ever tracked** — checked with
+  `pyproject.toml`, `tests/`). `tools/` was left out while the only file some exercises kept
+  there was a gitignored builder, because requiring it passed locally and failed CI — write the
+  guard for what a clone has, not for what your machine has. Builders are tracked now, and
+  `tests/test_notebook_builders.py` asserts every exercise has one. It also asserts **no `REQUIREMENTS.md` is ever tracked** — checked with
   `git ls-files`, not by reading `.gitignore`, because a file already in the index stays tracked
   whatever the ignore rules say afterwards.
 - **Shared code:** deferred — add `src/common/` (its own member) only when a 2nd exercise needs to reuse something. No premature abstraction.
-- **Notebooks:** top-level `notebooks/`, one per topic — see below.
+- **Notebooks:** top-level `notebooks/`, one per exercise, named exactly like its folder — see below.
 
-## Every topic builds a Colab notebook — locally, never tracked
+## Every exercise builds a Colab notebook — tracked, built, and executed
 
-`notebooks/SNN-slug.ipynb`, zero-padded topic id first (`S04-data-cleaning-dedup.ipynb`), so
-lexical sort = topic order. **A source material's work is not done until its notebook runs the shipped
-code end to end.** Four rules keep it from rotting:
+`notebooks/NN-<exercise>.ipynb`, named exactly like the exercise's folder
+(`04-data-cleaning-dedup.ipynb`), so lexical sort = exercise order. `notebooks/README.md` maps all
+of them in pipeline order. **An exercise's work is not done until its notebook runs the shipped code
+end to end.** The rules, each enforced rather than remembered:
 
-- **It imports the exercise's package; it never re-implements it.** A notebook that copies logic
-  drifts from the pipeline within a week and then teaches the wrong thing. Importing means it
-  cannot disagree with what ships.
-- **Colab-first.** Cell one clones the repo and installs the exercise; the badge at the top opens
-  it. It must run on a free tier with no local setup, because that is where it gets used.
-- **A `lite` profile finishes in under ten minutes**, with the full run one variable away. A
-  notebook nobody waits for is a notebook nobody runs.
-- **Outputs are stripped, always.** Executed outputs bloat diffs, and on any exercise that touches
-  real data they bake PII or licensed text into the file.
+- **It is a laboratory for the person learning, not the web page again.** It runs the exercise's own
+  pipeline, with knobs worth varying on an M-series GPU or Colab, and never embeds or re-tells a
+  page. Exercise 08's first notebook was a tour of its page with zero attention implementations in
+  it, and was rebuilt for exactly this reason.
+- **It imports the exercise's package; it never re-implements it.** Code in a cell is invisible to
+  every test. Where a notebook needs runnable code the package lacks, the code goes **into the
+  package, with tests**, and the notebook imports it — which is why exercise 01, whose page is
+  hand-written browser JavaScript, now has a small `foundations` package.
+- **It is linked into one path.** Cell two says where it sits — previous and next notebook, what it
+  takes from earlier exercises — and the last cell says what it hands on. Knobs default to the
+  exercise's recorded decision, so experiments vary while the path converges.
+- **Colab-first.** The setup cell clones the repo and `pip install -e`s every member in the
+  exercise's workspace closure (`test_every_notebook_installs_its_whole_workspace_closure_on_colab`);
+  off Colab it finds the repo root at run time. No absolute path is ever baked in
+  (`tests/test_tracked_notebooks_are_portable.py`).
+- **One knobs cell; `LITE = True` finishes in under ten minutes**, with the full run one variable
+  away, and every knob is read by a later cell (`tests/test_tracked_notebook_knobs_are_read.py`).
+- **Outputs are stripped, always**, and nothing it runs may write a tracked file — executing a
+  notebook must never overwrite `results/` or `web/`.
+- **It executes end to end.** `tests/test_notebooks_run.py` runs every tracked notebook at `LITE` in
+  CI's torch job and fails on any raised cell or any changed tracked file. The notebooks whose lite
+  run downloads data are named in its `NEEDS_THE_NETWORK` ledger and run in the local gate instead.
 
 Write it to be read at two depths: plain what-and-why before each step, the arithmetic and caveats
-after it. It is the artifact people learn from and teach from, not a run log.
+after it.
 
-**Both the notebook and its builder are gitignored** — `notebooks/S[0-9][0-9]-*.ipynb` and
-`src/exercises/*/tools/build_notebook.py`. **One notebook is exempt and it is named in
-`.gitignore`:** `notebooks/S10-training-loop.ipynb`, because exercise 10's submission requires the
-ipynb in the repository and offers no alternative — exercise 09's offered "the ipynb file *or*
-training logs", which is why 09's stays local. The exemption is narrow by construction: it names one
-path, the reason is written where the rule is, and `backup_local_only.py` needs no change because
-`collect` drops anything git already tracks. **A builder is never exempt.** A generator is the notebook in another form, so tracking
-it would keep the same course material in the repo as Python, which is what untracking the notebook
-was for. Every exercise has a builder; they live on a working checkout and are never pushed.
+**The builder is the source; the notebook is its output.** Both are tracked.
+`tests/test_notebook_builders.py` rebuilds every notebook into a temporary path and requires it to
+be **byte-identical** to the tracked one, so editing the notebook by hand — or changing a builder
+without rebuilding — goes red. Rebuild with
+`uv run python src/exercises/<exercise>/tools/build_notebook.py`.
 
-**Name the cost, because it is the whole trade.** The builder used to be the recoverable copy — it
-is why exercise 04's notebook could be rebuilt after it left the working tree on a branch switch
-(recovered from `68abb44^`). Now nothing tracked can restore either one. **Back up
-`tools/build_notebook.py` outside the repo**, and treat losing a working tree as losing the
-notebooks.
-
-**CI can no longer see them.** It cannot check that an exercise has a builder, nor that a builder
-still runs against the package it imports. `tests/test_notebook_builders.py` skips entirely on a
-fresh clone and is a *local* gate — run it on the checkout that has the builders, before opening a
-PR:
-
-```bash
-uv run pytest tests/test_notebook_builders.py
-```
-
-It builds through `NOTEBOOK_OUT` into a temporary path, because a test that wrote to the real
-location would destroy the only copy of the notebook that exists.
-
-**An exercise with no Python package still gets a notebook, and it still must not re-implement.**
-Exercise 01's proofs are hand-written browser JavaScript; rebuilding them in numpy would be a
-second implementation that drifts from the site and then teaches what the site does not do. Its
-notebook embeds the shipped pages themselves and runs the exercise's own test suite instead. A notebook is derived from
-the package it imports, so tracking it means versioning a second copy of numbers the modules
-already own, and the one that drifts is the one nobody regenerates.
-
-The cost is real and worth naming: every rule above is checked by tests that read the notebook,
-and on a fresh clone there is nothing for them to read, so **they all skip**. A rule that only
-skips is not a rule. What stops that from adding up to no coverage is `notebooks/hello.ipynb` — a
-tracked, stdlib-only sample that CI executes top to bottom. It cannot check that a topic notebook
-is correct; it checks that a notebook in this repo opens and runs, which is the part CI can still
-see. Anything stronger has to be run by whoever has the notebook, before the PR.
+**They became tracked on 2026-10-24, and it took a rewrite rather than a `git add`.** While they were
+gitignored, nothing checked their prose: measured against the reference material, seven of the
+notebooks then on disk carried banned words, two named confidential source files and three held
+verbatim runs of it — all invisible to every gate, because the gates read tracked files only, and
+the quoting half read Markdown, Python and plain-text files only. Each was rebuilt with our own prose, the quoting
+half and its receipt now read notebook cells (`_prose_of`, with a twin that plants a sentence wrapped
+across two cell lines), and only then were they added. **Before tracking a class of file that was
+local-only, measure it against the gates that would refuse it — and check that the gates can read
+it at all.**
 
 ## Five data concerns — keep them physically separate
 
@@ -375,12 +346,9 @@ see. Anything stronger has to be run by whoever has the notebook, before the PR.
   grades. Check the platform before calling a topic done, and record the required *shape* — not
   the requirements' wording — in the exercise's `PROGRESS.md`. A deliverable specified as a **public URL**
   is not satisfied by a file in the repo, however correct that file is.
-- **Topic notebooks** → top-level `notebooks/`, **gitignored** except the tracked
-  `hello.ipynb` sample. Their generators (`*/tools/build_notebook.py`) are gitignored too — a
-  generator is the same material in another form. Keep a backup outside the repo; nothing tracked
-  can rebuild either. This does **not** extend to other `tools/` scripts: a dataset fetcher such as
-  `05-…/tools/fetch_proxy_corpus.py` stays tracked, because a corpus needs a tracked way to fetch
-  and licence-check it.
+- **Topic notebooks** → top-level `notebooks/`, **tracked**, with their builders
+  (`*/tools/build_notebook.py`), outputs stripped. Executed copies are never tracked: they carry
+  local paths and, on a data exercise, real corpus text.
 - **Datasets** → top-level `data/`, **gitignored** (+ a tracked manifest/download script). A
   fetcher **verifies the licence at fetch time from the source itself**, not from our own
   catalogue, and refuses anything that declares none — an unverifiable licence is not a permissive

@@ -1,5 +1,7 @@
 # 12 · Distributed training: ZeRO on 32 simulated GPUs
 
+**Notebook:** [`notebooks/12-distributed-training.ipynb`](../../../notebooks/12-distributed-training.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/12-distributed-training.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Thirty-two simulated devices train one small model four ways — plain data parallelism and ZeRO
 stages 1, 2 and 3. On every device, the bytes of every persistent buffer each stage keeps (weights,
 gradients, master copy, Adam moments) and every byte the ring collectives send are counted, and
@@ -22,6 +24,9 @@ its formula, and the ladder at scale — with every number generated from `resul
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence) and
   [`RESULTS.md`](RESULTS.md), then [What this cannot establish](#what-this-cannot-establish), and
   [`DECISIONS.md`](DECISIONS.md) for every choice that could have gone the other way.
+- **Running it yourself** — [`notebooks/12-distributed-training.ipynb`](../../../notebooks/12-distributed-training.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/12-distributed-training.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 
@@ -233,7 +238,7 @@ uv run python src/exercises/12-distributed-training/tools/render_results.py
 uv run pytest src/exercises/12-distributed-training
 ```
 
-A Colab notebook (`notebooks/S12-distributed-training.ipynb`, kept local like every topic
+A Colab notebook ([`notebooks/12-distributed-training.ipynb`](../../../notebooks/12-distributed-training.ipynb), tracked like every topic
 notebook here) walks the same path with every hand calculation checked by `assert` against the
 ledger.
 

@@ -1,5 +1,7 @@
 # 11 · Optimizers and learning-rate schedules
 
+**Notebook:** [`notebooks/11-optimizers-lr-schedules.ipynb`](../../../notebooks/11-optimizers-lr-schedules.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/11-optimizers-lr-schedules.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Five experiments on what an optimiser actually does to a small language model: Adam written out by
 hand, bias correction switched off, the per-layer update-to-weight ratio, cosine against WSD stopped
 early, and the learning rate swept across widths in the standard parametrization and in muP.** Every
@@ -16,6 +18,9 @@ the same bundles by the same renderer.
   [Run it](#run-it). Every experiment is one function in `optimizers.experiments`.
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence) for how each number was
   measured and against what noise, then [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/11-optimizers-lr-schedules.ipynb`](../../../notebooks/11-optimizers-lr-schedules.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/11-optimizers-lr-schedules.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 
@@ -93,7 +98,7 @@ uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py 
 
 ### Or run it as a notebook
 
-`notebooks/S11-optimizers-lr-schedules.ipynb` runs all five experiments at the `LITE` scale with a
+[`notebooks/11-optimizers-lr-schedules.ipynb`](../../../notebooks/11-optimizers-lr-schedules.ipynb) runs all five experiments at the `LITE` scale with a
 plot and the asserts that state each lesson, then reads the published results. On Colab it clones
 the repository, installs exercises 09 and 11, and fetches a small slice of the same corpus.
 

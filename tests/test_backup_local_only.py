@@ -48,7 +48,7 @@ def fake_repo(tmp_path: Path) -> Path:
     """
     root = tmp_path / "repo"
     for relative in (
-        "notebooks/S01-introductions.ipynb",
+        "notebooks/01-introductions.ipynb",
         "src/exercises/01-introductions/tools/build_notebook.py",
         "src/exercises/01-introductions/REQUIREMENTS.md",
         "docs/REQUIREMENTS.md",
@@ -70,8 +70,6 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
     """One miss here is one file with no copy anywhere."""
     found = {str(p) for p in backup.collect(fake_repo)[0]}
     for expected in (
-        "notebooks/S01-introductions.ipynb",
-        "src/exercises/01-introductions/tools/build_notebook.py",
         "src/exercises/01-introductions/REQUIREMENTS.md",
         "docs/REQUIREMENTS.md",
         "docs/EXPLAINER_PROMPT.md",
@@ -79,6 +77,20 @@ def test_it_collects_every_protected_class(fake_repo: Path) -> None:
         "src/exercises/01-x/docs/topic-a.html",
     ):
         assert expected in found, f"{expected} would not be backed up"
+
+
+def test_a_tracked_class_is_not_collected(fake_repo: Path) -> None:
+    """Notebooks and builders are tracked, so git restores them and the store must not claim them.
+
+    The twin of the test above: a pattern left behind after a class became tracked would make the
+    store a second, stale copy of files git already versions.
+    """
+    found = {str(p) for p in backup.collect(fake_repo)[0]}
+    for tracked in (
+        "notebooks/01-introductions.ipynb",
+        "src/exercises/01-introductions/tools/build_notebook.py",
+    ):
+        assert tracked not in found, f"{tracked} is tracked, yet the backup still collects it"
 
 
 def test_the_notes_corpus_glob_reaches_both_depths(fake_repo: Path) -> None:
@@ -142,7 +154,7 @@ def test_a_credential_shaped_name_is_recognised(name: str) -> None:
         "topic-a.md",
         "REQUIREMENTS.md",
         "build_notebook.py",
-        "S01-introductions.ipynb",
+        "01-introductions.ipynb",
         "diagram.svg",
     ],
 )
@@ -166,12 +178,12 @@ def test_collect_skips_a_credential_and_names_it_rather_than_aborting(fake_repo:
 
     assert skipped == ["src/exercises/01-x/src/solution/deploy.env"]
     assert not any("deploy.env" in str(f) for f in files), "the credential was collected anyway"
-    assert len(files) >= 9, "skipping one file cost the rest their backup"
+    assert len(files) >= 8, "skipping one file cost the rest their backup"
 
 
 def test_the_real_corpus_is_not_swallowed_by_the_forbidden_rules(fake_repo: Path) -> None:
     """End to end: the protected set survives the credential filter."""
-    assert len(backup.collect(fake_repo)[0]) >= 9, "the forbidden patterns swallowed the corpus"
+    assert len(backup.collect(fake_repo)[0]) >= 8, "the forbidden patterns swallowed the corpus"
 
 
 # --- the store ---------------------------------------------------------------------------------
@@ -195,9 +207,9 @@ def test_verify_reports_a_file_the_store_never_received(fake_repo: Path, tmp_pat
     files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
-    _make(fake_repo, "notebooks/S02-tokenization.ipynb", "new work")
+    _make(fake_repo, "src/exercises/02-tokenization/REQUIREMENTS.md", "new work")
     absent, _, _, _ = backup.verify(fake_repo, dest, backup.collect(fake_repo)[0])
-    assert "notebooks/S02-tokenization.ipynb" in absent
+    assert "src/exercises/02-tokenization/REQUIREMENTS.md" in absent
 
 
 def test_verify_reports_a_file_that_has_changed_since_the_snapshot(
@@ -208,9 +220,11 @@ def test_verify_reports_a_file_that_has_changed_since_the_snapshot(
     files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
-    (fake_repo / "notebooks/S01-introductions.ipynb").write_text("rebuilt", encoding="utf-8")
+    (fake_repo / "src/exercises/01-introductions/REQUIREMENTS.md").write_text(
+        "rebuilt", encoding="utf-8"
+    )
     _, differing, _, _ = backup.verify(fake_repo, dest, files)
-    assert "notebooks/S01-introductions.ipynb" in differing
+    assert "src/exercises/01-introductions/REQUIREMENTS.md" in differing
 
 
 def test_the_store_keeps_the_previous_version_of_an_overwritten_file(
@@ -223,7 +237,7 @@ def test_the_store_keeps_the_previous_version_of_an_overwritten_file(
     call it a backup. Reaching the earlier version is the whole point.
     """
     dest = tmp_path / "store"
-    notebook = "notebooks/S01-introductions.ipynb"
+    notebook = "src/exercises/01-introductions/REQUIREMENTS.md"
 
     backup.snapshot(fake_repo, dest, backup.collect(fake_repo)[0], message="good")
     (fake_repo / notebook).write_text("BROKEN REBUILD", encoding="utf-8")
@@ -387,11 +401,11 @@ def test_verify_reports_a_file_that_has_been_lost_from_the_checkout(
     files, _ = backup.collect(fake_repo)
     backup.snapshot(fake_repo, dest, files, message="test")
 
-    (fake_repo / "notebooks/S01-introductions.ipynb").unlink()
+    (fake_repo / "src/exercises/01-introductions/REQUIREMENTS.md").unlink()
     remaining, _ = backup.collect(fake_repo)
     _, _, lost, _ = backup.verify(fake_repo, dest, remaining)
 
-    assert "notebooks/S01-introductions.ipynb" in lost
+    assert "src/exercises/01-introductions/REQUIREMENTS.md" in lost
 
 
 def test_a_total_loss_is_reported_rather_than_looking_like_a_clone(
@@ -420,7 +434,7 @@ def test_the_verify_command_exits_non_zero_on_a_loss(fake_repo: Path, tmp_path: 
     dest = tmp_path / "store"
     assert _run("--root", str(fake_repo), "--dest", str(dest)).returncode == 0
 
-    (fake_repo / "notebooks/S01-introductions.ipynb").unlink()
+    (fake_repo / "src/exercises/01-introductions/REQUIREMENTS.md").unlink()
     finished = _run("--verify", "--root", str(fake_repo), "--dest", str(dest))
 
     assert finished.returncode == 1

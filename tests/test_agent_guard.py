@@ -21,6 +21,7 @@ is this repository's recurring defect — a gate whose result depends on a file 
 pointing the other way for once. Anything asserting a *default* now runs against an empty root.
 """
 
+import fnmatch
 import json
 import subprocess
 import sys
@@ -630,7 +631,9 @@ def test_creating_a_branch_is_not_a_write_to_a_file_named_after_it(rules) -> Non
 
 def test_checking_out_over_an_irreplaceable_file_is_still_refused(rules) -> None:
     """The other half: the fix above must not blind the guard to a real working-tree overwrite."""
-    assert decide(_bash("git checkout -- notebooks/S10-training-loop.ipynb"), REPO_ROOT, rules), (
+    assert decide(
+        _bash("git checkout -- src/exercises/10-training-loop/REQUIREMENTS.md"), REPO_ROOT, rules
+    ), (
         "`git checkout -- <path>` overwrites the working tree and is the exact command AGENTS.md "
         "names as prohibited on these paths"
     )
@@ -639,19 +642,19 @@ def test_checking_out_over_an_irreplaceable_file_is_still_refused(rules) -> None
 @pytest.mark.parametrize(
     "command",
     [
-        "echo x > notebooks/S10-training-loop.ipynb",
-        "rm src/exercises/10-training-loop/tools/build_notebook.py",
-        "mv notebooks/S10-training-loop.ipynb /tmp/nb",
+        "echo x > src/exercises/10-training-loop/REQUIREMENTS.md",
+        "rm docs/REQUIREMENTS.md",
+        "mv src/exercises/10-training-loop/REQUIREMENTS.md /tmp/nb",
     ],
 )
 def test_the_files_git_cannot_restore_are_refused(rules, tmp_path, command: str) -> None:
     """**The policy protected the backup tool and not one byte of what it exists to protect.**
 
-    `tools/backup_local_only.py` and the tripwire were in `[guards]`; `notebooks/**` and
-    `src/exercises/*/tools/build_notebook.py` were in no section at all. These are the files
-    `AGENTS.md` calls the only ones in the repository with no second copy — gitignored, so
-    `git checkout` cannot bring them back — and the backup store is a high-water mark that never
-    removes, so it cannot undo an overwrite that was itself backed up.
+    `tools/backup_local_only.py` and the tripwire were in `[guards]`; the files with no second
+    copy were in no section at all. They are gitignored, so `git checkout` cannot bring them back,
+    and the backup store is a high-water mark that never removes, so it cannot undo an overwrite
+    that was itself backed up. (Notebooks and builders were in this class until they became
+    tracked; requirement documents still are.)
 
     Refusing the write is the only moment at which the content still exists.
 
@@ -759,7 +762,7 @@ def test_a_working_note_is_refused_by_default_and_allowed_when_named(tmp_path, r
     )
 
 
-def test_naming_a_notebook_still_does_not_unlock_it(tmp_path, rules) -> None:
+def test_naming_a_requirement_document_still_does_not_unlock_it(tmp_path, rules) -> None:
     """The twin, and the reason the two sections are separate.
 
     If naming a file in `UNIT.md` unlocked `[irreplaceable]` too, this change would have quietly
@@ -767,12 +770,13 @@ def test_naming_a_notebook_still_does_not_unlock_it(tmp_path, rules) -> None:
     """
     root = _root_with_unit(
         tmp_path,
-        "- scope: notebooks/\nnotebooks/S10-training-loop.ipynb\n"
-        "src/exercises/10-training-loop/tools/build_notebook.py\n",
+        "- scope: src/exercises/10-training-loop/\n"
+        "src/exercises/10-training-loop/REQUIREMENTS.md\n"
+        "docs/REQUIREMENTS.md\n",
     )
     for rel in (
-        "notebooks/S10-training-loop.ipynb",
-        "src/exercises/10-training-loop/tools/build_notebook.py",
+        "src/exercises/10-training-loop/REQUIREMENTS.md",
+        "docs/REQUIREMENTS.md",
     ):
         payload = {
             "tool_name": "Write",
@@ -817,3 +821,15 @@ def test_a_relative_file_path_is_resolved_against_the_repo_not_the_process(tmp_p
     # guard's business, which is what stops the fix from turning into a block on everything.
     outside = {"tool_name": "Write", "tool_input": {"file_path": "/etc/hosts"}}
     assert decide(outside, tmp_path, rules) is None
+
+
+def test_a_tracked_notebook_and_its_builder_are_no_longer_irreplaceable(rules) -> None:
+    """They left the class when they became tracked: git restores them, and rebuilding a notebook
+    by editing its builder is the ordinary workflow. A pattern left behind would block it."""
+    for rel in (
+        "notebooks/01-introductions.ipynb",
+        "src/exercises/01-introductions/tools/build_notebook.py",
+    ):
+        assert not any(
+            fnmatch.fnmatch(rel, pattern) for pattern in rules["irreplaceable"]["patterns"]
+        ), f"{rel} is tracked, yet still listed as having no second copy"

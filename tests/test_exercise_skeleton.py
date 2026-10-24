@@ -43,11 +43,10 @@ REQUIRED = ("README.md", "CLAUDE.md", "pyproject.toml", "PROGRESS.md")
 
 #: Directories a FRESH CLONE has.
 #:
-#: `tools/` is deliberately NOT here. For most exercises its only content is the gitignored
-#: `build_notebook.py`, and git does not track empty directories — so `tools/` exists on a working
-#: checkout and not in a clone. Requiring it passed locally and failed CI, which is the same
-#: mistake in the same shape as requiring `artifacts/` would be: **write the guard for what a clone
-#: has, not for what your machine has.**
+#: `tools/` is not here: while builders were gitignored it existed on a working checkout and not in
+#: a clone, and requiring it passed locally and failed CI — **write the guard for what a clone has,
+#: not for what your machine has.** Builders are tracked now, and `tests/test_notebook_builders.py`
+#: requires one per exercise, so the requirement lives where the reason for it does.
 REQUIRED_DIRS = ("tests",)
 
 

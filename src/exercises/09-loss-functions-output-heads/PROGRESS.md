@@ -164,7 +164,7 @@ what happens to head 2 over training relative to head 1.
 ## What is left, in order
 
 1. **The notebook** — imports the package, `lite` under ten minutes, MPS and CUDA, outputs stripped,
-   built by the local builder. Gitignored; `results/` is the tracked evidence instead.
+   built by `tools/build_notebook.py`. Both tracked since 2026-10-24; `results/` stays the evidence.
 2. **The web page** — the twelve-part spine in order, a mechanism figure and not only results, one
    failure in the opening tiles, six themes, built to `docs/DESIGN.md`.
 3. **Both registrations** — the landing card in `deploy/vercel/index.html` and the `SPINE_ENFORCED`
@@ -175,7 +175,8 @@ what happens to head 2 over training relative to head 1.
 
 ## Decisions taken (2026-09-03)
 
-- **The notebook stays local; `results/` is tracked.** The wording offers *"the ipynb file **or**
+- **The notebook stays local; `results/` is tracked** (superseded 2026-10-24 — every notebook is
+  tracked now; see `DECISIONS.md` D1). The wording offers *"the ipynb file **or**
   training logs"*, and training logs are our own output rather than course material — so tracked
   `results/` plus a README rendering them satisfies it with no exception to the convention.
   Exercise 10's requirement offers no such alternative, and **its** notebook is tracked under a

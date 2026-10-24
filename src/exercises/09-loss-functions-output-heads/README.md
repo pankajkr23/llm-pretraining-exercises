@@ -1,5 +1,7 @@
 # 09 · Loss functions and output heads
 
+**Notebook:** [`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/09-loss-functions-output-heads.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Almost everything that can go wrong between a model's output and its loss goes wrong silently, and
 the worst of it makes the number look better.** This exercise builds those few lines, makes each one
 observable, and then trains a model with the bug on purpose to show what it costs.
@@ -16,6 +18,9 @@ correct one is still at **4.14**. Nothing raises. The curve looks like a triumph
 - **Deciding whether to believe it** — the numbers are in **[RESULTS.md](RESULTS.md)**, generated
   from `results/*.json` and never typed by hand. Then read
   [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/09-loss-functions-output-heads.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 

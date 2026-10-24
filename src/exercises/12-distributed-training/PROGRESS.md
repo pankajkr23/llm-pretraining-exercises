@@ -25,7 +25,7 @@ login-walled preview does not satisfy it. Both submission and merging are PK's.
 | 5 | Stages 0–3 | **done** | Bit-identical to each other in both precisions. |
 | 6 | Measurements, producer, `RESULTS.md` | **done** | Every persistent memory category and every communication count equals its formula. |
 | 7 | README, `DECISIONS.md`, `CLAUDE.md` | **done** | |
-| 8 | Topic notebook (local only) | **done** | Built and executed end to end; not tracked, by policy. |
+| 8 | Topic notebook | **done** | Built and executed end to end; tracked with its builder since 2026-10-24. |
 | 9 | CI registration of the torch-gated test files | **done — lead** | Landed in the same pull request as this exercise. |
 | 10 | Audit fixes | **done** | See the change log entry below. |
 | 11 | Review, merge, submission | **open — PK** | |

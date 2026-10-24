@@ -1,5 +1,7 @@
 # 02 · Tokenization — a balanced multilingual BPE
 
+**Notebook:** [`notebooks/02-tokenization.ipynb`](../../../notebooks/02-tokenization.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/02-tokenization.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 Exercise 02 requirement. Build **one 10,000-token BPE vocabulary**
 shared across India's Wikipedia article in **English, Hindi, Telugu, and a fourth language**, tuned
 so all four are tokenized about equally efficiently.
@@ -66,6 +68,7 @@ read it top to bottom on a first pass — pick your row.
 | **Meeting this for the first time** | [What it builds, and what it found](#what-it-builds-and-what-it-found), then paste your own text into the [live encoder](https://llm-pretraining-demos.vercel.app/02-tokenization/) | [What a "unit" is, and why it is not a word](#what-a-unit-is-and-why-it-is-not-a-word) — the denominator is the whole argument |
 | **Changing the code** | [Layout](#layout) — it carries a data-flow diagram and a sequence for one `uv run python -m tokenization` | [Run it](#run-it), then [Tests](#tests) |
 | **Deciding whether to believe it** | [v2 — the graded measurement](#v2--the-graded-measurement) | [A criticism of the metric we just optimized](#a-criticism-of-the-metric-we-just-optimized), then [Faithfulness](#faithfulness) |
+| **Running it yourself** | [`notebooks/02-tokenization.ipynb`](../../../notebooks/02-tokenization.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/02-tokenization.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
 **The one thing to know before reading any table:** there are **two profiles**, v1 and v2, they use
 different denominators, and they are never ranked against each other — the same tokenizer scores

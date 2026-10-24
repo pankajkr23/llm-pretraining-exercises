@@ -111,16 +111,6 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         why="FLORES-200 lands under exercise 03's gitignored data/ and is never fetched in CI",
     ),
     Expected(
-        path="src/exercises/04-data-cleaning-dedup/tests/test_notebook.py",
-        pattern=r"no topic notebook at ",
-        why="topic notebooks are local-only and gitignored, so no CI checkout has one to read",
-    ),
-    Expected(
-        path="src/exercises/04-data-cleaning-dedup/tests/test_publication_invariants.py",
-        pattern=r"notebook missing",
-        why="the same local-only notebook, reached here through a skipif rather than a call",
-    ),
-    Expected(
         path="src/exercises/04-data-cleaning-dedup/tests/test_tokens.py",
         pattern=r"FLORES-200 dev not on disk",
         why="FLORES-200 lands under exercise 03's gitignored data/ and is never fetched in CI",
@@ -138,12 +128,6 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_languages.py",
         pattern=r"FLORES-200 is absent",
         why="FLORES-200 lands under exercise 03's gitignored data/ and is never fetched in CI",
-    ),
-    Expected(
-        path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_notebook.py",
-        pattern=r"no topic notebook",
-        why="topic notebooks are local-only and gitignored, so no CI checkout has one to read",
-        sites=2,
     ),
     Expected(
         path="src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_spec_render.py",
@@ -191,7 +175,6 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         path="tests/test_local_only_files_present.py",
         pattern=r"this is a fresh clone, not a loss",
         why="the tripwire's whole subject is gitignored, so a clone has none of it by design",
-        sites=3,
     ),
     Expected(
         path="tests/test_local_only_files_present.py",
@@ -219,9 +202,13 @@ EXPECTED_IN_CI: tuple[Expected, ...] = (
         why="this half of the leak gate is a pre-commit check; CI has nothing to compare against",
     ),
     Expected(
-        path="tests/test_notebook_builders.py",
-        pattern=r"no notebook builders on this checkout",
-        why="the builders are gitignored, which makes this a local gate rather than a CI one",
+        path="tests/test_notebooks_run.py",
+        pattern=r"this notebook's lite run needs the network",
+        why=(
+            "these notebooks download corpora from Hugging Face; a push should not depend on a "
+            "third party's availability, so they run in the local gate and are ledgered by name"
+        ),
+        jobs=frozenset({"train"}),
     ),
     Expected(
         path="tests/test_standards_history.py",

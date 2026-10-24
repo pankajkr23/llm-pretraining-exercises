@@ -1,8 +1,9 @@
 """The topic notebook, held to the repo's notebook rules.
 
-`AGENTS.md` requires every topic to ship `notebooks/SNN-slug.ipynb` that imports the exercise's
-package rather than re-implementing it, and that carries no committed outputs. Both are checkable,
-so they are checked here rather than remembered.
+`AGENTS.md` requires every exercise to ship `notebooks/NN-<exercise>.ipynb` that imports the
+exercise's package rather than re-implementing it, and that carries no committed outputs. Both are
+checkable, so they are checked here rather than remembered. The notebook is tracked, so these run
+everywhere; that it executes end to end is `tests/test_notebooks_run.py`.
 
 The rule that matters most on this exercise is the first. A notebook that copied the arithmetic
 would keep printing the old numbers after the inventory changed, and it would look right while
@@ -18,22 +19,15 @@ from mixture import export
 
 REPO_ROOT = export.EXERCISE_ROOT.parents[2]
 NOTEBOOKS = REPO_ROOT / "notebooks"
-NOTEBOOK = NOTEBOOKS / "S05-datamixtures-and-curriculum.ipynb"
-# Tracked, stdlib-only, and the only notebook a fresh clone or CI ever sees.
+NOTEBOOK = NOTEBOOKS / "05-datamixtures-and-curriculum.ipynb"
+# Tracked and stdlib-only: the notebook that keeps the execution harness itself under test.
 SAMPLE = NOTEBOOKS / "hello.ipynb"
 
 
 @pytest.fixture(scope="module")
 def nb() -> dict:
-    """The topic notebook, when there is one.
-
-    Skips rather than fails when absent. Topic notebooks are gitignored, so a fresh clone and CI
-    genuinely do not have one, and a hard failure there would be reporting the design as a defect.
-    The rules below therefore protect the author's checkout, not the pipeline — which is why
-    `notebooks/hello.ipynb` is tracked and executed instead: see `test_the_sample_notebook_runs`.
-    """
-    if not NOTEBOOK.exists():
-        pytest.skip(f"no topic notebook at {NOTEBOOK}; they are local-only and gitignored")
+    """The topic notebook. Tracked, so its absence fails rather than skips."""
+    assert NOTEBOOK.is_file(), f"{NOTEBOOK} is tracked and must exist"
     return json.loads(NOTEBOOK.read_text(encoding="utf-8"))
 
 
@@ -111,25 +105,23 @@ def test_the_notebook_can_detect_colab_without_crashing_off_colab(nb):
     assert "except ImportError" in source
 
 
-def test_the_notebook_says_how_to_open_it_on_colab(nb):
-    """It must not carry an "Open in Colab" badge, and must say what to do instead.
+def test_the_notebook_carries_a_colab_badge_for_itself(nb):
+    """The badge links a blob path on GitHub, which resolves now that the notebook is tracked.
 
-    The badge is a link to a blob path on GitHub. Topic notebooks are gitignored, so that path
-    404s — and a badge that looks right and goes nowhere is worse than no badge, because a reader
-    blames their setup. The replacement is the upload route, which needs no repository copy.
+    This test used to forbid the badge, because the path 404'd while notebooks were gitignored.
+    Exercise 04's test required one at the same time; tracking the notebooks removed the reason
+    for the disagreement, so both now ask for the same thing.
     """
     text = "\n".join(
         "".join(cell["source"]) for cell in nb["cells"] if cell["cell_type"] == "markdown"
     )
-    assert "colab.research.google.com" not in text, (
-        "the Colab badge points at a gitignored path; GitHub returns 404 for it"
-    )
-    assert "Upload notebook" in text, "the notebook must say how to open it on Colab instead"
+    assert "colab.research.google.com" in text
+    assert NOTEBOOK.name in text, "the badge must point at this notebook, not another"
 
 
 def test_the_notebook_is_named_with_its_topic_id():
     """`AGENTS.md`: zero-padded topic id first, so lexical sort equals topic order."""
-    assert NOTEBOOK.name.startswith("S05-")
+    assert NOTEBOOK.name.startswith("05-")
     assert NOTEBOOK.suffix == ".ipynb"
 
 
@@ -170,22 +162,20 @@ def test_every_topic_notebook_follows_the_naming_rule():
     """The rule is repo-wide, so it is checked repo-wide rather than for this topic alone.
 
     `hello.ipynb` is exempt by name. It is not a topic notebook — it is the tracked sample, and
-    the `SNN-` rule exists so that lexical sort equals topic order, which a sample has no part in.
+    the `NN-` rule exists so that lexical sort equals exercise order, which a sample has no part in.
     """
     for path in NOTEBOOKS.glob("*.ipynb"):
         if path.name == SAMPLE.name:
             continue
-        assert path.name[0] == "S" and path.name[1:3].isdigit(), (
-            f"{path.name} does not start with a zero-padded topic id (SNN-)"
+        assert path.name[:2].isdigit() and path.name[2] == "-", (
+            f"{path.name} does not start with a zero-padded exercise id (NN-)"
         )
 
 
 def test_the_sample_notebook_is_present_and_tracked():
-    """The sample is the only notebook a fresh clone gets, so its absence must be loud.
+    """The sample needs no exercise package at all, so it is what proves the harness itself works.
 
-    Topic notebooks are gitignored, which means every rule in this file that reads one skips in
-    CI. The sample is what stops that from adding up to no coverage at all — so it is checked for
-    existence, for being tracked, and (below) for actually running.
+    It is checked for existence, for being tracked, and (below) for actually running.
     """
     assert SAMPLE.exists(), f"the tracked sample notebook is missing at {SAMPLE}"
     tracked = subprocess.run(
@@ -254,25 +244,6 @@ def test_the_sample_notebook_runs() -> None:
     pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
     failures = _execute(SAMPLE)
     assert not failures, "the sample notebook raised: " + "; ".join(
-        f"cell {i}: {name}: {value}" for i, name, value in failures
-    )
-
-
-@pytest.mark.integration
-def test_the_topic_notebook_runs_end_to_end() -> None:
-    """Every code cell executes without raising.
-
-    AGENTS.md: "a source material's work is not done until its notebook runs the shipped code end
-    to end."
-    This proves only that — no cell raises. It does not check that any printed number is right;
-    that is what the module tests and `test_mixture_spec_render.py` are for.
-    """
-    if not NOTEBOOK.exists():
-        pytest.skip("no topic notebook; they are local-only and gitignored")
-    pytest.importorskip("nbclient", reason="nbclient is not installed")
-    pytest.importorskip("ipykernel", reason="no kernel to run the notebook in")
-    failures = _execute(NOTEBOOK)
-    assert not failures, "cells raised: " + "; ".join(
         f"cell {i}: {name}: {value}" for i, name, value in failures
     )
 

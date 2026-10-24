@@ -41,9 +41,9 @@ Every defect this repo has paid for was that shape. Not a wrong answer — a *ri
 3. **Does a derived number answer the question that was asked?** A right number answering an
    adjacent question is far harder to catch than a wrong one, because a reader checks the
    arithmetic and stops.
-4. **Did "the suite passed" include the local-only gates?** `test_notebook_builders`,
-   `test_local_only_files_present`, `test_standards_history`, and the quoting half of the leak
-   check all **skip in CI**. An agent watching only CI believes it is finished when it is not.
+4. **Did "the suite passed" include the local-only gates?** `test_local_only_files_present`,
+   `test_standards_history`, the quoting half of the leak check, and the notebooks
+   `tests/test_notebooks_run.py` ledgers as needing the network all **skip in CI**. An agent watching only CI believes it is finished when it is not.
 5. **Can this test fail?** Look for assertions that are true by construction, parametrize lists that
    are empty, and tests that trigger the behaviour they then measure.
 6. **Was a limit stated, or implied?** A quantity pinned to a constant by construction is not a

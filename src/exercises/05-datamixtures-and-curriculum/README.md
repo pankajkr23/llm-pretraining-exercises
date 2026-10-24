@@ -1,5 +1,7 @@
 # 05 · Data mixtures and curriculum
 
+**Notebook:** [`notebooks/05-datamixtures-and-curriculum.ipynb`](../../../notebooks/05-datamixtures-and-curriculum.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/05-datamixtures-and-curriculum.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **What V5 reads, in what order, and what happens to every share when it is checked against the
 data that actually exists.**
 
@@ -26,6 +28,7 @@ Four documents, and the right one depends on what you came for. Start with your 
 | **Meeting this for the first time** | [`METHOD.md`](METHOD.md) — the glossary and the apparatus from scratch: what a *lane* and an *arm* are, what **bits per byte** measures, what it is divided by and why that denominator, and how big the model actually is | this page, top to bottom — it is the recipe in reading order |
 | **Changing the code** | [Layout](#layout) and [Reproduce](#reproduce) — which module owns which number | [The guards](#the-guards), then the pipeline diagrams in [`METHOD.md`](METHOD.md) |
 | **Deciding whether to believe it** | [`SPEC.md`](SPEC.md) — the deliverable, every share argued against its own supply | [What the proxy ran](#what-the-proxy-ran) and [What it cannot tell you](#what-it-cannot-tell-you), then [`EXPERIMENTS.md`](EXPERIMENTS.md) |
+| **Running it yourself** | [`notebooks/05-datamixtures-and-curriculum.ipynb`](../../../notebooks/05-datamixtures-and-curriculum.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/05-datamixtures-and-curriculum.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
 **Two things to know before reading any table below.** Every number on this page is *generated* from the modules the tests pin — if a sentence states a count, it was computed rather than typed. And every measurement here is **proxy-scale**: a 4-layer model over 1.78M tokens, three orders of magnitude below the scale these shares are for. [What it cannot tell you](#what-it-cannot-tell-you) is not a footnote — read it beside the results, not after them.
 
