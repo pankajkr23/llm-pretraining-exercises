@@ -601,7 +601,7 @@ def test_step0_refuses_to_write_an_unprovenanced_bundle(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
-def test_step0_can_write_its_own_results_with_provenance(tmp_path, monkeypatch):
+def test_step0_can_write_its_own_results_with_provenance(tmp_path, monkeypatch, stable_checks):
     """Two steps of one arm, purely to prove the bundle — provenance included — can be written.
 
     The last line of a long job is the one to test first: Step 0 is twenty trained models, and a
