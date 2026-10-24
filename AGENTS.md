@@ -498,6 +498,33 @@ producer of evidence is tracked code with a tracked entry point, or it is a numb
 material scratchpad" put the code outside the boundary of things anyone would look for, and it stayed
 lost for weeks longer than it had to.
 
+## A published experiment is never rewritten — a re-run is added beside it
+
+**`results/*.json` is the historical record of what was run and concluded, and it stays exactly as
+published** — numbers, provenance (or its absence) and the conclusions documents drew from it. PK's
+rule, 2026-10-24: keep historical experiments intact; if a later run diverges, keep the original
+rationale and show clearly why the new experiment was added.
+
+- **A re-run goes to `results/reruns/YYYY-MM-DD/<name>.json`**, each with a complete provenance block,
+  produced from a committed tree where possible. Never point a producer's output at the historical
+  file. **Nothing is discarded:** a run made from an uncommitted tree is kept and labelled as such
+  (its `code_digest` says exactly what ran), never thrown away for imperfect provenance.
+- **Every exercise leads with its best solution**, whichever run produced it, and names the
+  candidates: runs that did better, approaches that could, and the hypotheses worth testing next.
+  Chronology decides where a file lives; evidence decides what a reader sees first.
+- **Every re-run set carries a `README.md`** beside it: why it was run, what differs from the
+  historical run (inputs, code, corpus, settings), the key numbers side by side, and the conclusion —
+  holds, or diverges, and why.
+- **Documents keep the historical conclusion and add a dated note** where a re-run diverges, linking
+  the re-run's README. Never silently replace a published number or verdict.
+- **A historical file that predates the provenance rule stays on
+  `tests/test_results_carry_provenance.py::NOT_YET_COVERED`.** The ledger records history; its
+  entries are not removed by re-running into the historical file.
+- **Reproducing an old run whose inputs have drifted is itself a finding.** Exercise 05's code lane
+  read the live repository, which grew fivefold after its run; the re-run's corpus was a different
+  experiment, and its H3 verdict differed. The fix was to freeze the input and run a new, dated
+  experiment — not to overwrite the old one.
+
 ## Reporting a measurement
 
 Three rules, each learned by getting it wrong in `02-tokenization` (see that exercise's `CLAUDE.md`):

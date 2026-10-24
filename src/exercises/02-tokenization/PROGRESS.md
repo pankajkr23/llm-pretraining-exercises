@@ -48,9 +48,9 @@ one article and it silently stops being comparable with the rest.
 
 The cost is that this exercise **redistributes CC BY-SA text**, and has said so only in a
 parenthetical inside `CLAUDE.md` — a file addressed to coding agents — for its entire life so far.
-A `NOTICE` carrying the attribution, and a guard keeping it honest in both directions, are **open in
-#150 and not yet merged**. Until that lands, this row is the accurate statement of where the
-exercise stands rather than where it is about to stand.
+A `NOTICE` carrying the attribution, and a guard keeping it honest in both directions
+(`tests/test_tokenization_notice.py`), have since **landed** (#150), so the obligation is now stated
+where a reader of the work finds it.
 
 ## What this exercise cannot establish
 

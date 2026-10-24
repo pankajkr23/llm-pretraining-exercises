@@ -53,6 +53,11 @@ the "single canvas" block — `.canvas` and the `.unit` family, a grid of one sq
 exercise 03's one-page rebuild replaced. No code in any exercise sets either class. They were
 removed from all eight vendored copies, and screenshots of the seven pages that link the stylesheet
 hashed identically before and after at 2000, 1180 and 390px.
+
+**Both tables above are dated snapshots, written by hand from this tool's output on the day named —
+not current figures.** Pages have been added since, and on 2026-10-24 exercises 07 and 12 stopped
+vendoring the stylesheet at all (`tests/test_vendored_shared_layer.py::DELIBERATELY_NOT_VENDORED`).
+Run the tool for today's numbers rather than quoting these.
 """
 
 import argparse

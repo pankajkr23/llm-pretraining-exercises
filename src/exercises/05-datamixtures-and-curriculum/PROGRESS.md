@@ -29,8 +29,28 @@ and is O8 below. What remains is your call.
 | O5 | **Exercise 04's dedup is in-memory** | **done** | `accumulate.py` — append-only shards, persistent signature index, cross-shard dedup. Measured: 40.5 GB vs 0.55 GB at the 1B gate. Exercise 04's published numbers are untouched; the store is a continuation, not a replacement. |
 | O6 | **The 1B rung** | **deprioritised — not scheduled** | Priced at **~34 h and ~$98** on rented H100s against **105 days** locally, and not being spent. It no longer resolves O8; E4 replaced it with the question that could still be asked for nothing. |
 | O7 | **The proxy corpus funds all six lanes** | **done** | `tools/fetch_proxy_corpus.py` — 523k → **1,784,212 tokens**. STEM, reasoning and agentic are openly-licensed **stand-ins**, declared as such. Three candidate sources refused on licence grounds. |
-| O8 | **H3 is refuted; 18% stands as an upper bound** | **decided, not deferred** | Refuted under **two** independent STEM stand-ins (gain 1.12% and 1.72%, each clearing its own spread), so the finding is not an artefact of the substitution. The share does not move, because every measurement behind it is proxy-scale and this spec does not let a 4-layer model set a 40B share. What changes is the burden of proof: 18% is now the number that has to justify itself, instrumented against its 12% floor at real scale. |
+| O8 | **H3 is refuted; 18% stands as an upper bound** | **decided, not deferred** | Refuted under **two** independent STEM stand-ins (gain 1.12% and 1.72%, each clearing its own spread), so the finding is not an artefact of the substitution. The share does not move, because every measurement behind it is proxy-scale and this spec does not let a 4-layer model set a 40B share. What changes is the burden of proof: 18% is now the number that has to justify itself, instrumented against its 12% floor at real scale. **Dated note, 2026-10-24:** kept as decided; on the frozen-lane re-run the refutation does not reproduce (H3 `supported`, E4 `qualified`) — see F12. |
 | O9 | **E1–E4 — the free experiments** | **done** | Repetition curve, seam warmup band, scale transfer, and the STEM stand-in sensitivity check that replaced the 1B rung. All local, all $0. See `EXPERIMENTS.md`. |
+
+### F12 · 2026-10-24 — the code lane is frozen, and H3 diverges on it
+
+**What happened.** Adding provenance to the five results files meant re-running them, and the
+re-run could not reproduce the published corpus: the code lane read this repository's own Python
+from the working tree, which had grown from 87 files to several hundred since the published run.
+So the lane is now read from git at a pinned commit (`corpus.CODE_LANE_COMMIT`), every producer
+writes a provenance block and refuses without one, and **no producer may write over a published
+run** — new runs go to `results/reruns/YYYY-MM-DD/`.
+
+**What it found.** On the frozen lane H1 and H2 hold. H3 reads `supported` where it was published
+`refuted`: the STEM gain its second clause watches is 0.93% against a 2.41% seed spread, under the
+1% bar. E4 reads `qualified` where it read `refuted`. A Step 0 on the live lane, run before the
+freeze, already showed the same H3 flip, so freezing did not cause it.
+
+**What did not change.** The published files, and every conclusion drawn from them, stay exactly as
+they were. Each document carries a dated note beside the H3 conclusion, the E4 note and the
+upper-bound decision, linking [`results/reruns/2026-10-24/README.md`](results/reruns/2026-10-24/README.md),
+which is generated and has every number side by side. Whether the upper-bound decision should
+change is open — it is listed in the README's *Best result, and what could beat it*.
 
 ### F11 · The two lessons to carry into every later topic
 

@@ -1,0 +1,3933 @@
+{
+ "config": {
+  "run_tokens": 2000000000000.0,
+  "model_params": 40000000000.0,
+  "indic_floor": 0.12,
+  "agentic_floor": 0.02,
+  "protected_ceiling": 0.2,
+  "anneal_share": 0.02,
+  "max_synthetic_share_of_indic": 0.5,
+  "warmup_band_tokens": 3000000000.0,
+  "opus_keep_fraction": 0.4,
+  "tokenizer_id": "s02-bpe-10000",
+  "proxy_params": 1000000000.0,
+  "proxy_tokens": 2000000000.0
+ },
+ "model": {
+  "vocab_size": 10000,
+  "context": 256,
+  "layers": 4,
+  "heads": 4,
+  "width": 256,
+  "seed": 0
+ },
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "steps": 500,
+ "batch": 16,
+ "device": "mps:apple-silicon",
+ "throughput": {
+  "tflops_median": 3.223657061291417,
+  "tokens_per_second_median": 92872.60226325042,
+  "runs": 20
+ },
+ "corpus": {
+  "web": {
+   "lane": "web",
+   "train_tokens": 100660,
+   "heldout_tokens": 10331,
+   "heldout_bytes": 59861,
+   "unk_share": 0.0,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "36928ac774304f4b",
+   "sources": [
+    "src/exercises/02-tokenization/corpus/v2/en.faithful.txt"
+   ]
+  },
+  "indic": {
+   "lane": "indic",
+   "train_tokens": 70572,
+   "heldout_tokens": 8228,
+   "heldout_bytes": 66427,
+   "unk_share": 0.0,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "16d09b4f0d52de20",
+   "sources": [
+    "src/exercises/02-tokenization/corpus/v2/hi.faithful.txt",
+    "src/exercises/02-tokenization/corpus/v2/te.faithful.txt",
+    "src/exercises/02-tokenization/corpus/v2/mai.faithful.txt"
+   ]
+  },
+  "code": {
+   "lane": "code",
+   "train_tokens": 1970257,
+   "heldout_tokens": 230935,
+   "heldout_bytes": 434080,
+   "unk_share": 0.0011211539379013043,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "6274793c15975e31",
+   "sources": [
+    "src/exercises/01-introductions/src/foundations/__init__.py",
+    "src/exercises/01-introductions/src/foundations/config.py",
+    "src/exercises/01-introductions/src/foundations/data.py",
+    "src/exercises/01-introductions/src/foundations/experiments.py",
+    "src/exercises/01-introductions/src/foundations/models.py",
+    "src/exercises/01-introductions/src/foundations/train.py",
+    "src/exercises/01-introductions/tests/test_foundations_claims.py",
+    "src/exercises/01-introductions/tests/test_foundations_parts.py",
+    "src/exercises/01-introductions/tests/test_introductions_render.py",
+    "src/exercises/01-introductions/tests/test_web_bundle.py",
+    "src/exercises/01-introductions/tools/build_notebook.py",
+    "src/exercises/02-tokenization/src/tokenization/__init__.py",
+    "src/exercises/02-tokenization/src/tokenization/__main__.py",
+    "src/exercises/02-tokenization/src/tokenization/ablate.py",
+    "src/exercises/02-tokenization/src/tokenization/bpe_scratch.py",
+    "src/exercises/02-tokenization/src/tokenization/config.py",
+    "src/exercises/02-tokenization/src/tokenization/corpus.py",
+    "src/exercises/02-tokenization/src/tokenization/explainer.py",
+    "src/exercises/02-tokenization/src/tokenization/faithfulness.py",
+    "src/exercises/02-tokenization/src/tokenization/fourth_language.py",
+    "src/exercises/02-tokenization/src/tokenization/holdout.py",
+    "src/exercises/02-tokenization/src/tokenization/metrics.py",
+    "src/exercises/02-tokenization/src/tokenization/tokenizer.py",
+    "src/exercises/02-tokenization/src/tokenization/widget.py",
+    "src/exercises/02-tokenization/tests/test_ablate.py",
+    "src/exercises/02-tokenization/tests/test_bpe_scratch.py",
+    "src/exercises/02-tokenization/tests/test_corpus_paths.py",
+    "src/exercises/02-tokenization/tests/test_faithfulness.py",
+    "src/exercises/02-tokenization/tests/test_js_encoder.py",
+    "src/exercises/02-tokenization/tests/test_metrics.py",
+    "src/exercises/02-tokenization/tests/test_submission.py",
+    "src/exercises/02-tokenization/tests/test_tokenization_notice.py",
+    "src/exercises/02-tokenization/tests/test_tokenizer.py",
+    "src/exercises/02-tokenization/tests/test_v1_retained.py",
+    "src/exercises/02-tokenization/tests/test_widget_render.py",
+    "src/exercises/02-tokenization/tools/build_notebook.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/__init__.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/__main__.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/catalog.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/config.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/coverage.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/export.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/fertility.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/fetch_benchmarks.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/gotchas.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/grade.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/ingest.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/measure_fertility.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/milestones.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/mix.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/modalities.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/models.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/orphans.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/run_cost.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/shingles.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/sourcing.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/vocab_sweep.py",
+    "src/exercises/03-data-collection-framework/src/dataframework/vocab_trade.py",
+    "src/exercises/03-data-collection-framework/tests/test_catalog.py",
+    "src/exercises/03-data-collection-framework/tests/test_compute.py",
+    "src/exercises/03-data-collection-framework/tests/test_config.py",
+    "src/exercises/03-data-collection-framework/tests/test_gotchas.py",
+    "src/exercises/03-data-collection-framework/tests/test_ingest.py",
+    "src/exercises/03-data-collection-framework/tests/test_invariants.py",
+    "src/exercises/03-data-collection-framework/tests/test_models.py",
+    "src/exercises/03-data-collection-framework/tests/test_render.py",
+    "src/exercises/03-data-collection-framework/tools/build_notebook.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/__init__.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/__main__.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/config.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/corpus.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/decontaminate.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/dedup.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/export.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/fetch.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/formats.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/langid.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/manifest.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/normalize.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/pii.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/pipeline.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/quality.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/records.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/sources.py",
+    "src/exercises/04-data-cleaning-dedup/src/datacleaning/tokens.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_agreement.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_bundle.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_decontaminate.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_dedup.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_formats.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_langid.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_normalize.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_notebook.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_page_render.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_pii.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_publication_invariants.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_quality.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_tokens.py",
+    "src/exercises/04-data-cleaning-dedup/tests/test_wiring.py",
+    "src/exercises/04-data-cleaning-dedup/tools/build_notebook.py",
+    "src/exercises/06-build-training-dataset/run_demo.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/__init__.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/checkpoint.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/config.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/corpus.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/evidence.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/feed.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/firewall.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/fork.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/ledger.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/manifest.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/masks.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/metrics.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/mixture.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/model.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/opus.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/opus_score.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/pack.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/plan.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/replay.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/resume.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/runner.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/shards.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/spec.py",
+    "src/exercises/06-build-training-dataset/src/trainingdata/train.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_build_corpus.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_checkpoint.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_config.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_corpus.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_crash.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_docs.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_feed.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_fetch_corpus.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_firewall.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_fork.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_ledger.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_manifest.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_masks.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_metrics.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_mixture.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_opus.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_opus_score.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_pack.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_plan.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_render.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_replay.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_shards.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_spec.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py",
+    "src/exercises/06-build-training-dataset/tests/test_trainingdata_verify.py",
+    "src/exercises/06-build-training-dataset/tools/build_corpus.py",
+    "src/exercises/06-build-training-dataset/tools/build_notebook.py",
+    "src/exercises/06-build-training-dataset/tools/build_web_data.py",
+    "src/exercises/06-build-training-dataset/tools/fetch_corpus.py",
+    "src/exercises/06-build-training-dataset/verify.py",
+    "src/exercises/07-model-embeddings-internals/evidence.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/arms.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/decode.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/experiment.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/fourier.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/paired.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/sanity_lb.py",
+    "src/exercises/07-model-embeddings-internals/prior-run/stress.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/__init__.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/budget.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/codec.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/collisions.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/config.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/decode.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/experiment.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/heads.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/runlog.py",
+    "src/exercises/07-model-embeddings-internals/src/embeddings/summary.py",
+    "src/exercises/07-model-embeddings-internals/tests/conftest.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_budget.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_codec.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_collisions.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_decode.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_docs.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_evidence.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_evidence_numbers.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_experiment.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_heads.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_page_data.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_page_source.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_render.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_research.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_summary.py",
+    "src/exercises/07-model-embeddings-internals/tests/test_embeddings_verify.py",
+    "src/exercises/07-model-embeddings-internals/tools/build_notebook.py",
+    "src/exercises/07-model-embeddings-internals/tools/build_web_data.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_lane_sensitivity.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_lock_samples.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_parallel_text.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_position_schemes.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_unk_confound.py",
+    "src/exercises/07-model-embeddings-internals/tools/measure_wrap_recovery.py",
+    "src/exercises/07-model-embeddings-internals/tools/publish_rerun.py",
+    "src/exercises/07-model-embeddings-internals/tools/run_experiment.py",
+    "src/exercises/07-model-embeddings-internals/verify.py",
+    "src/exercises/08-modern-attention-variants/src/attention/__init__.py",
+    "src/exercises/08-modern-attention-variants/src/attention/cache.py",
+    "src/exercises/08-modern-attention-variants/src/attention/catalogue.py",
+    "src/exercises/08-modern-attention-variants/src/attention/config.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/__init__.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/base.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/core.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/data.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/delta.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/describe.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/experiments.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/hparams.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/hybrid.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/linear.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/mla.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/model.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/ops.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/positions.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/registry.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/runs.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/sources.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/sparse.py",
+    "src/exercises/08-modern-attention-variants/src/attention/lab/ssm.py",
+    "src/exercises/08-modern-attention-variants/src/attention/sources.py",
+    "src/exercises/08-modern-attention-variants/src/attention/story.py",
+    "src/exercises/08-modern-attention-variants/src/attention/timeline.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_cache.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_catalogue.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_diagrams.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_docs.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_core.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_delta.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_hybrid.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_linear.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_mla.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_positions.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_runtime.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_sources.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_sparse.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_lab_ssm.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_measures.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_q2_answer.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_render.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_story.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_themes.py",
+    "src/exercises/08-modern-attention-variants/tests/test_attention_timeline.py",
+    "src/exercises/08-modern-attention-variants/tools/build_lab_docs.py",
+    "src/exercises/08-modern-attention-variants/tools/build_notebook.py",
+    "src/exercises/08-modern-attention-variants/tools/build_q2_answer.py",
+    "src/exercises/08-modern-attention-variants/tools/build_web_data.py",
+    "src/exercises/08-modern-attention-variants/tools/verify_lab_sources.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/__init__.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/config.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/harness.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/heads.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/losses.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/masks.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/memory.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/model.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/provenance.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/shift.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/tokenizer.py",
+    "src/exercises/09-loss-functions-output-heads/src/lossheads/training.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_arithmetic.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_equivalences.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_harness.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_provenance.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_render.py",
+    "src/exercises/09-loss-functions-output-heads/tests/test_lossheads_results.py",
+    "src/exercises/09-loss-functions-output-heads/tools/build_notebook.py",
+    "src/exercises/09-loss-functions-output-heads/tools/render_results.py",
+    "src/exercises/10-training-loop/src/trainloop/__init__.py",
+    "src/exercises/10-training-loop/src/trainloop/accumulation.py",
+    "src/exercises/10-training-loop/src/trainloop/config.py",
+    "src/exercises/10-training-loop/src/trainloop/floats.py",
+    "src/exercises/10-training-loop/src/trainloop/gradcheck.py",
+    "src/exercises/10-training-loop/src/trainloop/harness.py",
+    "src/exercises/10-training-loop/src/trainloop/mfu.py",
+    "src/exercises/10-training-loop/src/trainloop/provenance.py",
+    "src/exercises/10-training-loop/src/trainloop/step.py",
+    "src/exercises/10-training-loop/src/trainloop/telemetry.py",
+    "src/exercises/10-training-loop/tests/test_trainloop_provenance.py",
+    "src/exercises/10-training-loop/tests/test_trainloop_render.py",
+    "src/exercises/10-training-loop/tests/test_trainloop_results.py",
+    "src/exercises/10-training-loop/tests/test_trainloop_smoke.py",
+    "src/exercises/10-training-loop/tests/test_trainloop_step.py",
+    "src/exercises/10-training-loop/tools/build_notebook.py",
+    "src/exercises/10-training-loop/tools/render_results.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/__init__.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/ablation.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/adam.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/config.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/corpus.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/data.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/experiments.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/model.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/ratios.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/runs.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/schedules.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/sweep.py",
+    "src/exercises/11-optimizers-lr-schedules/src/optimizers/train.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_adam.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_analysis.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_corpus.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_pipeline.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_render.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_results.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_schedules.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_smoke.py",
+    "src/exercises/11-optimizers-lr-schedules/tests/test_optimizers_torch.py",
+    "src/exercises/11-optimizers-lr-schedules/tools/build_notebook.py",
+    "src/exercises/11-optimizers-lr-schedules/tools/fetch_corpus.py",
+    "src/exercises/11-optimizers-lr-schedules/tools/render_results.py",
+    "src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py",
+    "src/exercises/12-distributed-training/src/zerosim/__init__.py",
+    "src/exercises/12-distributed-training/src/zerosim/adamw.py",
+    "src/exercises/12-distributed-training/src/zerosim/collectives.py",
+    "src/exercises/12-distributed-training/src/zerosim/config.py",
+    "src/exercises/12-distributed-training/src/zerosim/experiment.py",
+    "src/exercises/12-distributed-training/src/zerosim/flat.py",
+    "src/exercises/12-distributed-training/src/zerosim/formulas.py",
+    "src/exercises/12-distributed-training/src/zerosim/model.py",
+    "src/exercises/12-distributed-training/src/zerosim/precision.py",
+    "src/exercises/12-distributed-training/src/zerosim/provenance.py",
+    "src/exercises/12-distributed-training/src/zerosim/reference.py",
+    "src/exercises/12-distributed-training/src/zerosim/stages.py",
+    "src/exercises/12-distributed-training/src/zerosim/timing.py",
+    "src/exercises/12-distributed-training/src/zerosim/world.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_adamw.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_collectives.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_docs.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_formulas.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_model.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_precision.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_producer.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_provenance.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_render.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_results.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_smoke.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_stages.py",
+    "src/exercises/12-distributed-training/tests/test_zerosim_world.py",
+    "src/exercises/12-distributed-training/tools/build_notebook.py",
+    "src/exercises/12-distributed-training/tools/render_results.py",
+    "src/exercises/12-distributed-training/tools/run_zero.py",
+    "src/exercises/13-reversibility/src/reversible/__init__.py",
+    "src/exercises/13-reversibility/src/reversible/config.py",
+    "src/exercises/13-reversibility/src/reversible/experiments.py",
+    "src/exercises/13-reversibility/src/reversible/memory.py",
+    "src/exercises/13-reversibility/src/reversible/model.py",
+    "src/exercises/13-reversibility/src/reversible/runs.py",
+    "src/exercises/13-reversibility/src/reversible/stack.py",
+    "src/exercises/13-reversibility/src/reversible/train.py",
+    "src/exercises/13-reversibility/tests/test_reversible_page_render.py",
+    "src/exercises/13-reversibility/tests/test_reversible_pipeline.py",
+    "src/exercises/13-reversibility/tests/test_reversible_render.py",
+    "src/exercises/13-reversibility/tests/test_reversible_results.py",
+    "src/exercises/13-reversibility/tests/test_reversible_smoke.py",
+    "src/exercises/13-reversibility/tests/test_reversible_stack.py",
+    "src/exercises/13-reversibility/tools/build_notebook.py",
+    "src/exercises/13-reversibility/tools/render_results.py",
+    "src/exercises/13-reversibility/tools/run_experiments.py",
+    "src/exercises/14-moe/src/moe/__init__.py",
+    "src/exercises/14-moe/src/moe/config.py",
+    "src/exercises/14-moe/src/moe/experiments.py",
+    "src/exercises/14-moe/src/moe/layer.py",
+    "src/exercises/14-moe/src/moe/runs.py",
+    "src/exercises/14-moe/src/moe/train.py",
+    "src/exercises/14-moe/tests/test_moe_layer.py",
+    "src/exercises/14-moe/tests/test_moe_page_wording.py",
+    "src/exercises/14-moe/tests/test_moe_pipeline.py",
+    "src/exercises/14-moe/tests/test_moe_render.py",
+    "src/exercises/14-moe/tests/test_moe_results.py",
+    "src/exercises/14-moe/tests/test_moe_smoke.py",
+    "src/exercises/14-moe/tools/build_notebook.py",
+    "src/exercises/14-moe/tools/render_results.py",
+    "src/exercises/14-moe/tools/run_experiments.py"
+   ]
+  },
+  "stem": {
+   "lane": "stem",
+   "train_tokens": 239401,
+   "heldout_tokens": 26532,
+   "heldout_bytes": 62545,
+   "unk_share": 0.00010153009615276142,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "36ad512f872a1fe0",
+   "sources": [
+    "data/proxy/stem.txt"
+   ]
+  },
+  "reasoning": {
+   "lane": "reasoning",
+   "train_tokens": 558024,
+   "heldout_tokens": 61787,
+   "heldout_bytes": 138835,
+   "unk_share": 0.0020320061105211507,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "86d2f7ff421a5463",
+   "sources": [
+    "data/proxy/reasoning.txt"
+   ]
+  },
+  "agentic": {
+   "lane": "agentic",
+   "train_tokens": 428790,
+   "heldout_tokens": 50273,
+   "heldout_bytes": 117411,
+   "unk_share": 0.00011118696966741441,
+   "tokenizer": "ours/s02-bpe-10000",
+   "content_hash": "0643259689563b50",
+   "sources": [
+    "data/proxy/agentic.txt"
+   ]
+  }
+ },
+ "arms": {
+  "A": {
+   "arm": "A",
+   "name": "V5 candidate",
+   "shares": {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02,
+    "long_context": 0.0
+   },
+   "effective_shares": {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02
+   },
+   "dropped_lanes": [],
+   "per_seed": {
+    "0": {
+     "web": 1.8142092186396614,
+     "indic": 1.341468638441305,
+     "code": 3.5575317057927682,
+     "stem": 3.2593162680788894,
+     "reasoning": 3.295576099359533,
+     "agentic": 3.2129797939597124
+    },
+    "1": {
+     "web": 1.82066845425106,
+     "indic": 1.3515784314598427,
+     "code": 3.582138727171671,
+     "stem": 3.301257256625443,
+     "reasoning": 3.339509459453397,
+     "agentic": 3.2414651327715367
+    },
+    "2": {
+     "web": 1.8192398239630807,
+     "indic": 1.3306986381823607,
+     "code": 3.561772178300134,
+     "stem": 3.276639708729157,
+     "reasoning": 3.3322657203383983,
+     "agentic": 3.2071201136125844
+    },
+    "3": {
+     "web": 1.8042857276083655,
+     "indic": 1.3330028688225741,
+     "code": 3.545397894653437,
+     "stem": 3.244336676861158,
+     "reasoning": 3.272879022056109,
+     "agentic": 3.1881978504778385
+    },
+    "4": {
+     "web": 1.8127105634979224,
+     "indic": 1.3318515174095087,
+     "code": 3.563438785327682,
+     "stem": 3.2393037491124392,
+     "reasoning": 3.2970424715253706,
+     "agentic": 3.2061908365936636
+    }
+   },
+   "weighted": {
+    "0": 2.5371438185035253,
+    "1": 2.5570377968379345,
+    "2": 2.5428991334118707,
+    "3": 2.524938039723087,
+    "4": 2.5341671776921935
+   },
+   "records": [
+    {
+     "arm": "A-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "A-s0",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 18.615331867913483,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 108916.6722563113,
+      "tflops": 3.780555202019517
+     },
+     "final_loss": 5.910329256057739,
+     "loss_curve": [
+      [
+       0,
+       9.244925498962402
+      ],
+      [
+       62,
+       7.017779350280762
+      ],
+      [
+       124,
+       6.825957298278809
+      ],
+      [
+       186,
+       6.543306350708008
+      ],
+      [
+       248,
+       7.089272499084473
+      ],
+      [
+       310,
+       6.279276371002197
+      ],
+      [
+       372,
+       5.977901458740234
+      ],
+      [
+       434,
+       6.011191368103027
+      ],
+      [
+       496,
+       5.953652381896973
+      ],
+      [
+       499,
+       6.038066864013672
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.4541995525360107
+      ],
+      [
+       62,
+       0.5639983415603638
+      ],
+      [
+       124,
+       0.6158050894737244
+      ],
+      [
+       186,
+       0.5489010214805603
+      ],
+      [
+       248,
+       0.8080384731292725
+      ],
+      [
+       310,
+       0.8536671996116638
+      ],
+      [
+       372,
+       0.7706840634346008
+      ],
+      [
+       434,
+       0.7998660206794739
+      ],
+      [
+       496,
+       0.6888859272003174
+      ],
+      [
+       499,
+       0.7734537720680237
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 39168,
+      "code": 564736,
+      "indic": 378624,
+      "reasoning": 161792,
+      "stem": 242176,
+      "web": 661504
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "A-s1",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 18.509452702855924,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 109539.705606053,
+      "tflops": 3.8021810185506597
+     },
+     "final_loss": 5.953716239929199,
+     "loss_curve": [
+      [
+       0,
+       9.254362106323242
+      ],
+      [
+       62,
+       7.31110954284668
+      ],
+      [
+       124,
+       6.866512775421143
+      ],
+      [
+       186,
+       5.98325252532959
+      ],
+      [
+       248,
+       6.857803821563721
+      ],
+      [
+       310,
+       6.155118942260742
+      ],
+      [
+       372,
+       6.393462181091309
+      ],
+      [
+       434,
+       6.490348815917969
+      ],
+      [
+       496,
+       6.032011032104492
+      ],
+      [
+       499,
+       5.801069259643555
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.7564294338226318
+      ],
+      [
+       62,
+       0.5931216478347778
+      ],
+      [
+       124,
+       0.5163671374320984
+      ],
+      [
+       186,
+       1.21317458152771
+      ],
+      [
+       248,
+       0.5999529957771301
+      ],
+      [
+       310,
+       0.9415462017059326
+      ],
+      [
+       372,
+       0.7568466067314148
+      ],
+      [
+       434,
+       0.6827985644340515
+      ],
+      [
+       496,
+       0.7748134136199951
+      ],
+      [
+       499,
+       0.7558636665344238
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 36096,
+      "code": 577536,
+      "indic": 366336,
+      "reasoning": 162560,
+      "stem": 244480,
+      "web": 660992
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "A-s2",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 19.832269867969444,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 102233.38092401577,
+      "tflops": 3.548574631097715
+     },
+     "final_loss": 5.8938468551635745,
+     "loss_curve": [
+      [
+       0,
+       9.193374633789062
+      ],
+      [
+       62,
+       7.2877197265625
+      ],
+      [
+       124,
+       6.578411102294922
+      ],
+      [
+       186,
+       7.37106990814209
+      ],
+      [
+       248,
+       6.170830249786377
+      ],
+      [
+       310,
+       5.993566036224365
+      ],
+      [
+       372,
+       6.051441192626953
+      ],
+      [
+       434,
+       5.730500221252441
+      ],
+      [
+       496,
+       5.6756391525268555
+      ],
+      [
+       499,
+       5.873372554779053
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       5.051392078399658
+      ],
+      [
+       62,
+       0.5605877637863159
+      ],
+      [
+       124,
+       0.47722381353378296
+      ],
+      [
+       186,
+       0.62360680103302
+      ],
+      [
+       248,
+       0.7020716071128845
+      ],
+      [
+       310,
+       0.7056889533996582
+      ],
+      [
+       372,
+       0.7208918333053589
+      ],
+      [
+       434,
+       0.7533413171768188
+      ],
+      [
+       496,
+       0.7824002504348755
+      ],
+      [
+       499,
+       0.7804392576217651
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 47872,
+      "code": 583424,
+      "indic": 363520,
+      "reasoning": 153856,
+      "stem": 242176,
+      "web": 657152
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "A-s3",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 23.934672541101463,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 84710.5802896727,
+      "tflops": 2.940348969040932
+     },
+     "final_loss": 5.889209280014038,
+     "loss_curve": [
+      [
+       0,
+       9.260154724121094
+      ],
+      [
+       62,
+       7.460919380187988
+      ],
+      [
+       124,
+       7.373185157775879
+      ],
+      [
+       186,
+       6.663844585418701
+      ],
+      [
+       248,
+       6.241368293762207
+      ],
+      [
+       310,
+       6.268528461456299
+      ],
+      [
+       372,
+       6.130544185638428
+      ],
+      [
+       434,
+       6.079606056213379
+      ],
+      [
+       496,
+       6.120471954345703
+      ],
+      [
+       499,
+       4.945050239562988
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.2152280807495117
+      ],
+      [
+       62,
+       0.5692079663276672
+      ],
+      [
+       124,
+       0.6264416575431824
+      ],
+      [
+       186,
+       0.5929977297782898
+      ],
+      [
+       248,
+       0.7094494104385376
+      ],
+      [
+       310,
+       0.6845009922981262
+      ],
+      [
+       372,
+       0.7206927537918091
+      ],
+      [
+       434,
+       0.8078047037124634
+      ],
+      [
+       496,
+       0.7962915301322937
+      ],
+      [
+       499,
+       0.779042661190033
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 44288,
+      "code": 574720,
+      "indic": 369664,
+      "reasoning": 158720,
+      "stem": 240384,
+      "web": 660224
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "A-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "A-s4",
+      "shares": {
+       "web": 0.32,
+       "code": 0.28,
+       "indic": 0.18,
+       "stem": 0.12,
+       "reasoning": 0.08,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.32,
+      "code": 0.28,
+      "indic": 0.18,
+      "stem": 0.12,
+      "reasoning": 0.08,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 30.065308006160194,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 67437.19371125597,
+      "tflops": 2.340780600555974
+     },
+     "final_loss": 5.883282861709595,
+     "loss_curve": [
+      [
+       0,
+       9.264745712280273
+      ],
+      [
+       62,
+       7.30974817276001
+      ],
+      [
+       124,
+       6.710698127746582
+      ],
+      [
+       186,
+       6.528245449066162
+      ],
+      [
+       248,
+       5.8065409660339355
+      ],
+      [
+       310,
+       6.05671501159668
+      ],
+      [
+       372,
+       6.040613174438477
+      ],
+      [
+       434,
+       5.975681304931641
+      ],
+      [
+       496,
+       5.78631591796875
+      ],
+      [
+       499,
+       6.216170310974121
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.835503339767456
+      ],
+      [
+       62,
+       0.6808416843414307
+      ],
+      [
+       124,
+       0.671676754951477
+      ],
+      [
+       186,
+       0.5498189330101013
+      ],
+      [
+       248,
+       0.7535610795021057
+      ],
+      [
+       310,
+       0.7600153088569641
+      ],
+      [
+       372,
+       0.8469005823135376
+      ],
+      [
+       434,
+       0.7680763602256775
+      ],
+      [
+       496,
+       0.9195792078971863
+      ],
+      [
+       499,
+       0.7918232679367065
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 43520,
+      "code": 560384,
+      "indic": 378112,
+      "reasoning": 162048,
+      "stem": 250368,
+      "web": 653568
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    }
+   ]
+  },
+  "B": {
+   "arm": "B",
+   "name": "Naive web-heavy",
+   "shares": {
+    "web": 0.7,
+    "code": 0.2,
+    "stem": 0.05,
+    "indic": 0.03,
+    "reasoning": 0.02,
+    "agentic": 0.0,
+    "long_context": 0.0
+   },
+   "effective_shares": {
+    "web": 0.7,
+    "code": 0.2,
+    "stem": 0.05,
+    "indic": 0.03,
+    "reasoning": 0.02
+   },
+   "dropped_lanes": [],
+   "per_seed": {
+    "0": {
+     "web": 1.7864437308508119,
+     "indic": 1.4466895217444924,
+     "code": 3.689716034271947,
+     "stem": 3.544639642305669,
+     "reasoning": 3.6274859152304084,
+     "agentic": 3.3643726002650824
+    },
+    "1": {
+     "web": 1.7919651632823916,
+     "indic": 1.450554165578871,
+     "code": 3.704540974792933,
+     "stem": 3.5569030350082635,
+     "reasoning": 3.7188687867624766,
+     "agentic": 3.3763192952440018
+    },
+    "2": {
+     "web": 1.797693422268253,
+     "indic": 1.4462606878618383,
+     "code": 3.7121973853674413,
+     "stem": 3.5679676763408503,
+     "reasoning": 3.6486171676590105,
+     "agentic": 3.391052692550613
+    },
+    "3": {
+     "web": 1.7678348616947352,
+     "indic": 1.4366731461060718,
+     "code": 3.662910665289375,
+     "stem": 3.5532700279109757,
+     "reasoning": 3.624783327409655,
+     "agentic": 3.344698014080254
+    },
+    "4": {
+     "web": 1.7768883531633024,
+     "indic": 1.4439905576342522,
+     "code": 3.6805293458257164,
+     "stem": 3.5441701938158348,
+     "reasoning": 3.6121299747594686,
+     "agentic": 3.3691380906511808
+    }
+   },
+   "weighted": {
+    "0": 2.6480296796828284,
+    "1": 2.663664328043453,
+    "2": 2.6628706352684905,
+    "3": 2.6331923381461277,
+    "4": 2.6407243732693044
+   },
+   "records": [
+    {
+     "arm": "B-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "B-s0",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 30.393070164194796,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 66709.94371567514,
+      "tflops": 2.315537369221366
+     },
+     "final_loss": 6.210051832199096,
+     "loss_curve": [
+      [
+       0,
+       9.255130767822266
+      ],
+      [
+       62,
+       7.467886447906494
+      ],
+      [
+       124,
+       6.837468147277832
+      ],
+      [
+       186,
+       6.958754539489746
+      ],
+      [
+       248,
+       6.955647945404053
+      ],
+      [
+       310,
+       6.543965816497803
+      ],
+      [
+       372,
+       6.450119495391846
+      ],
+      [
+       434,
+       6.193630695343018
+      ],
+      [
+       496,
+       6.308269500732422
+      ],
+      [
+       499,
+       6.343054294586182
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.4580845832824707
+      ],
+      [
+       62,
+       0.783003568649292
+      ],
+      [
+       124,
+       0.7835246920585632
+      ],
+      [
+       186,
+       0.6417312622070312
+      ],
+      [
+       248,
+       0.7340089678764343
+      ],
+      [
+       310,
+       0.7005919218063354
+      ],
+      [
+       372,
+       0.7335565090179443
+      ],
+      [
+       434,
+       0.8019685745239258
+      ],
+      [
+       496,
+       0.8478720188140869
+      ],
+      [
+       499,
+       0.7840574383735657
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 417024,
+      "indic": 54016,
+      "reasoning": 38144,
+      "stem": 96512,
+      "web": 1442304
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "B-s1",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 26.864425276144175,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 75472.30134867074,
+      "tflops": 2.6196834291874733
+     },
+     "final_loss": 6.233839015960694,
+     "loss_curve": [
+      [
+       0,
+       9.256141662597656
+      ],
+      [
+       62,
+       7.6266889572143555
+      ],
+      [
+       124,
+       6.886883735656738
+      ],
+      [
+       186,
+       6.314002990722656
+      ],
+      [
+       248,
+       6.6284027099609375
+      ],
+      [
+       310,
+       6.480664253234863
+      ],
+      [
+       372,
+       6.654687404632568
+      ],
+      [
+       434,
+       6.473222732543945
+      ],
+      [
+       496,
+       6.169203281402588
+      ],
+      [
+       499,
+       6.374397277832031
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.7783918380737305
+      ],
+      [
+       62,
+       0.4374125599861145
+      ],
+      [
+       124,
+       0.4756363034248352
+      ],
+      [
+       186,
+       1.2485713958740234
+      ],
+      [
+       248,
+       0.575995683670044
+      ],
+      [
+       310,
+       0.5905724167823792
+      ],
+      [
+       372,
+       0.779823899269104
+      ],
+      [
+       434,
+       0.7590148448944092
+      ],
+      [
+       496,
+       0.760998010635376
+      ],
+      [
+       499,
+       0.7164097428321838
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 404480,
+      "indic": 63744,
+      "reasoning": 37120,
+      "stem": 108288,
+      "web": 1434368
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "B-s2",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 22.98213940896676,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 88221.55169805203,
+      "tflops": 3.062216640418683
+     },
+     "final_loss": 6.249426488876343,
+     "loss_curve": [
+      [
+       0,
+       9.219139099121094
+      ],
+      [
+       62,
+       7.6039628982543945
+      ],
+      [
+       124,
+       7.0759477615356445
+      ],
+      [
+       186,
+       7.383307933807373
+      ],
+      [
+       248,
+       6.601348400115967
+      ],
+      [
+       310,
+       6.271867752075195
+      ],
+      [
+       372,
+       6.175604343414307
+      ],
+      [
+       434,
+       6.363220691680908
+      ],
+      [
+       496,
+       6.113795280456543
+      ],
+      [
+       499,
+       6.187994956970215
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.312528133392334
+      ],
+      [
+       62,
+       0.640584409236908
+      ],
+      [
+       124,
+       0.5753065943717957
+      ],
+      [
+       186,
+       0.6237453818321228
+      ],
+      [
+       248,
+       0.7047118544578552
+      ],
+      [
+       310,
+       0.6254116892814636
+      ],
+      [
+       372,
+       0.7123114466667175
+      ],
+      [
+       434,
+       0.7027110457420349
+      ],
+      [
+       496,
+       0.7471809983253479
+      ],
+      [
+       499,
+       0.7767807841300964
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 421376,
+      "indic": 65536,
+      "reasoning": 37888,
+      "stem": 104704,
+      "web": 1418496
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "B-s3",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 21.50676326555549,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 94273.60012127942,
+      "tflops": 3.2722864366704725
+     },
+     "final_loss": 6.175055303573608,
+     "loss_curve": [
+      [
+       0,
+       9.261066436767578
+      ],
+      [
+       62,
+       7.474919319152832
+      ],
+      [
+       124,
+       7.422808647155762
+      ],
+      [
+       186,
+       6.842669486999512
+      ],
+      [
+       248,
+       6.739691734313965
+      ],
+      [
+       310,
+       6.474025249481201
+      ],
+      [
+       372,
+       6.482247352600098
+      ],
+      [
+       434,
+       6.144847869873047
+      ],
+      [
+       496,
+       5.850749969482422
+      ],
+      [
+       499,
+       5.858090877532959
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.510521650314331
+      ],
+      [
+       62,
+       0.4693014919757843
+      ],
+      [
+       124,
+       0.4373631477355957
+      ],
+      [
+       186,
+       0.584036111831665
+      ],
+      [
+       248,
+       0.7778237462043762
+      ],
+      [
+       310,
+       0.8953272104263306
+      ],
+      [
+       372,
+       0.8085271716117859
+      ],
+      [
+       434,
+       0.7873020172119141
+      ],
+      [
+       496,
+       0.82679283618927
+      ],
+      [
+       499,
+       0.7470703721046448
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 422144,
+      "indic": 63232,
+      "reasoning": 38400,
+      "stem": 95232,
+      "web": 1428992
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "B-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "B-s4",
+      "shares": {
+       "web": 0.7,
+       "code": 0.2,
+       "stem": 0.05,
+       "indic": 0.03,
+       "reasoning": 0.02,
+       "agentic": 0.0,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "web": 0.7,
+      "code": 0.2,
+      "stem": 0.05,
+      "indic": 0.03,
+      "reasoning": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.685382531170035,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 98017.04159663498,
+      "tflops": 3.4022232668171637
+     },
+     "final_loss": 6.161983556747437,
+     "loss_curve": [
+      [
+       0,
+       9.26118278503418
+      ],
+      [
+       62,
+       7.346874237060547
+      ],
+      [
+       124,
+       6.9637956619262695
+      ],
+      [
+       186,
+       6.87576961517334
+      ],
+      [
+       248,
+       6.056033134460449
+      ],
+      [
+       310,
+       6.41868257522583
+      ],
+      [
+       372,
+       6.480411529541016
+      ],
+      [
+       434,
+       6.324263095855713
+      ],
+      [
+       496,
+       6.034858703613281
+      ],
+      [
+       499,
+       6.329282283782959
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.7686281204223633
+      ],
+      [
+       62,
+       0.4774940013885498
+      ],
+      [
+       124,
+       0.4900563657283783
+      ],
+      [
+       186,
+       0.6283000111579895
+      ],
+      [
+       248,
+       0.8385519981384277
+      ],
+      [
+       310,
+       0.727469265460968
+      ],
+      [
+       372,
+       0.7271728515625
+      ],
+      [
+       434,
+       0.7712432742118835
+      ],
+      [
+       496,
+       0.8896672129631042
+      ],
+      [
+       499,
+       0.8053487539291382
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 406784,
+      "indic": 55040,
+      "reasoning": 37376,
+      "stem": 102656,
+      "web": 1446144
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    }
+   ]
+  },
+  "C": {
+   "arm": "C",
+   "name": "No protected floor",
+   "shares": {
+    "indic": 0.04,
+    "agentic": 0.0,
+    "web": 0.384,
+    "code": 0.336,
+    "stem": 0.144,
+    "reasoning": 0.096,
+    "long_context": 0.0
+   },
+   "effective_shares": {
+    "indic": 0.04,
+    "web": 0.384,
+    "code": 0.336,
+    "stem": 0.144,
+    "reasoning": 0.096
+   },
+   "dropped_lanes": [],
+   "per_seed": {
+    "0": {
+     "web": 1.824871928408454,
+     "indic": 1.4300320584340975,
+     "code": 3.5282331948182,
+     "stem": 3.2092506730369146,
+     "reasoning": 3.257596839923587,
+     "agentic": 3.2850476121452785
+    },
+    "1": {
+     "web": 1.8304337329197649,
+     "indic": 1.4395235600070027,
+     "code": 3.550778277446671,
+     "stem": 3.2346025513911374,
+     "reasoning": 3.2973240402449218,
+     "agentic": 3.307182789454701
+    },
+    "2": {
+     "web": 1.8187906119445758,
+     "indic": 1.4213030143018743,
+     "code": 3.522544284476774,
+     "stem": 3.2392285015770845,
+     "reasoning": 3.2788654894644016,
+     "agentic": 3.29102622153717
+    },
+    "3": {
+     "web": 1.810111247339997,
+     "indic": 1.4239167595276099,
+     "code": 3.537172835055627,
+     "stem": 3.209044933742212,
+     "reasoning": 3.2570263172002187,
+     "agentic": 3.287956874950398
+    },
+    "4": {
+     "web": 1.8114044469159152,
+     "indic": 1.4268275303701285,
+     "code": 3.5241175075133104,
+     "stem": 3.181620979548634,
+     "reasoning": 3.261307841248967,
+     "agentic": 3.2873865750251596
+    }
+   },
+   "weighted": {
+    "0": 2.5406888623591612,
+    "1": 2.5571528381962776,
+    "2": 2.5409971218272442,
+    "3": 2.5373556446034353,
+    "4": 2.5316781569296998
+   },
+   "records": [
+    {
+     "arm": "C-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "C-s0",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.286021780397277,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 99946.65400385336,
+      "tflops": 3.469201132307064
+     },
+     "final_loss": 5.714126319885254,
+     "loss_curve": [
+      [
+       0,
+       9.246513366699219
+      ],
+      [
+       62,
+       7.026262283325195
+      ],
+      [
+       124,
+       6.512182235717773
+      ],
+      [
+       186,
+       5.868922233581543
+      ],
+      [
+       248,
+       6.705625534057617
+      ],
+      [
+       310,
+       5.9026970863342285
+      ],
+      [
+       372,
+       5.73609733581543
+      ],
+      [
+       434,
+       5.972002029418945
+      ],
+      [
+       496,
+       5.7389302253723145
+      ],
+      [
+       499,
+       5.927106857299805
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.7559120655059814
+      ],
+      [
+       62,
+       0.5143293738365173
+      ],
+      [
+       124,
+       0.5980132818222046
+      ],
+      [
+       186,
+       0.7588338255882263
+      ],
+      [
+       248,
+       0.6515268683433533
+      ],
+      [
+       310,
+       0.8162412643432617
+      ],
+      [
+       372,
+       0.7716670632362366
+      ],
+      [
+       434,
+       0.8586602807044983
+      ],
+      [
+       496,
+       0.7027900815010071
+      ],
+      [
+       499,
+       0.7849560976028442
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 683008,
+      "indic": 79616,
+      "reasoning": 204800,
+      "stem": 294912,
+      "web": 785664
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "C-s1",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.255831791320816,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 100095.61793797815,
+      "tflops": 3.474371749113493
+     },
+     "final_loss": 5.740788536071777,
+     "loss_curve": [
+      [
+       0,
+       9.229681015014648
+      ],
+      [
+       62,
+       7.260219573974609
+      ],
+      [
+       124,
+       6.580690383911133
+      ],
+      [
+       186,
+       5.990823745727539
+      ],
+      [
+       248,
+       6.546785354614258
+      ],
+      [
+       310,
+       6.019221782684326
+      ],
+      [
+       372,
+       5.687128067016602
+      ],
+      [
+       434,
+       6.278534412384033
+      ],
+      [
+       496,
+       5.86869478225708
+      ],
+      [
+       499,
+       5.864693641662598
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.550379991531372
+      ],
+      [
+       62,
+       0.4922233819961548
+      ],
+      [
+       124,
+       0.6284525394439697
+      ],
+      [
+       186,
+       1.3541736602783203
+      ],
+      [
+       248,
+       0.5902714729309082
+      ],
+      [
+       310,
+       1.000047206878662
+      ],
+      [
+       372,
+       0.8102989792823792
+      ],
+      [
+       434,
+       0.7639892101287842
+      ],
+      [
+       496,
+       0.7841721773147583
+      ],
+      [
+       499,
+       0.78892982006073
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 685312,
+      "indic": 78336,
+      "reasoning": 201216,
+      "stem": 295680,
+      "web": 787456
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "C-s2",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.386459659348475,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 99454.2472738887,
+      "tflops": 3.452109434719237
+     },
+     "final_loss": 5.700722188949585,
+     "loss_curve": [
+      [
+       0,
+       9.202262878417969
+      ],
+      [
+       62,
+       7.252099514007568
+      ],
+      [
+       124,
+       6.488288879394531
+      ],
+      [
+       186,
+       7.001047134399414
+      ],
+      [
+       248,
+       6.184595108032227
+      ],
+      [
+       310,
+       5.782032012939453
+      ],
+      [
+       372,
+       5.804079532623291
+      ],
+      [
+       434,
+       5.665924549102783
+      ],
+      [
+       496,
+       5.595625877380371
+      ],
+      [
+       499,
+       5.635849475860596
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       4.9056243896484375
+      ],
+      [
+       62,
+       0.5167631506919861
+      ],
+      [
+       124,
+       0.6440830826759338
+      ],
+      [
+       186,
+       0.584057092666626
+      ],
+      [
+       248,
+       0.6954874396324158
+      ],
+      [
+       310,
+       0.6604617834091187
+      ],
+      [
+       372,
+       0.7830593585968018
+      ],
+      [
+       434,
+       0.7268995642662048
+      ],
+      [
+       496,
+       0.8489964008331299
+      ],
+      [
+       499,
+       0.7311562299728394
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 707072,
+      "indic": 79360,
+      "reasoning": 195584,
+      "stem": 273920,
+      "web": 792064
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "C-s3",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 20.23946142513887,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 100176.57868512618,
+      "tflops": 3.4771819393942756
+     },
+     "final_loss": 5.675472965240479,
+     "loss_curve": [
+      [
+       0,
+       9.25993537902832
+      ],
+      [
+       62,
+       7.2995195388793945
+      ],
+      [
+       124,
+       6.430915832519531
+      ],
+      [
+       186,
+       6.621892929077148
+      ],
+      [
+       248,
+       5.941179275512695
+      ],
+      [
+       310,
+       6.1285176277160645
+      ],
+      [
+       372,
+       5.426092624664307
+      ],
+      [
+       434,
+       5.88959264755249
+      ],
+      [
+       496,
+       5.558838367462158
+      ],
+      [
+       499,
+       5.140079498291016
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       4.503373146057129
+      ],
+      [
+       62,
+       0.5547245144844055
+      ],
+      [
+       124,
+       0.565338671207428
+      ],
+      [
+       186,
+       0.5948828458786011
+      ],
+      [
+       248,
+       0.7515224814414978
+      ],
+      [
+       310,
+       0.6794793605804443
+      ],
+      [
+       372,
+       0.7549111843109131
+      ],
+      [
+       434,
+       0.7732189297676086
+      ],
+      [
+       496,
+       0.7527174353599548
+      ],
+      [
+       499,
+       0.7090882658958435
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 691712,
+      "indic": 81152,
+      "reasoning": 197376,
+      "stem": 290816,
+      "web": 786944
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "C-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "C-s4",
+      "shares": {
+       "indic": 0.04,
+       "agentic": 0.0,
+       "web": 0.384,
+       "code": 0.336,
+       "stem": 0.144,
+       "reasoning": 0.096,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.04,
+      "web": 0.384,
+      "code": 0.336,
+      "stem": 0.144,
+      "reasoning": 0.096
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 21.049353834212525,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 96322.19667971824,
+      "tflops": 3.3433943048728665
+     },
+     "final_loss": 5.718683996200562,
+     "loss_curve": [
+      [
+       0,
+       9.261063575744629
+      ],
+      [
+       62,
+       6.690317153930664
+      ],
+      [
+       124,
+       6.634367942810059
+      ],
+      [
+       186,
+       6.3941144943237305
+      ],
+      [
+       248,
+       5.784771919250488
+      ],
+      [
+       310,
+       6.027409076690674
+      ],
+      [
+       372,
+       5.888028621673584
+      ],
+      [
+       434,
+       5.9240617752075195
+      ],
+      [
+       496,
+       5.855457782745361
+      ],
+      [
+       499,
+       6.140874862670898
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.021427869796753
+      ],
+      [
+       62,
+       0.6637719869613647
+      ],
+      [
+       124,
+       0.5540918707847595
+      ],
+      [
+       186,
+       0.6209131479263306
+      ],
+      [
+       248,
+       0.7300724983215332
+      ],
+      [
+       310,
+       0.742326557636261
+      ],
+      [
+       372,
+       0.7975143790245056
+      ],
+      [
+       434,
+       0.8116006851196289
+      ],
+      [
+       496,
+       0.9580453038215637
+      ],
+      [
+       499,
+       0.8192771673202515
+      ]
+     ],
+     "tokens_per_lane": {
+      "code": 678400,
+      "indic": 83712,
+      "reasoning": 202752,
+      "stem": 301056,
+      "web": 782080
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    }
+   ]
+  },
+  "D": {
+   "arm": "D",
+   "name": "Indic halved",
+   "shares": {
+    "indic": 0.09,
+    "web": 0.356,
+    "code": 0.3115,
+    "stem": 0.1335,
+    "reasoning": 0.089,
+    "agentic": 0.02,
+    "long_context": 0.0
+   },
+   "effective_shares": {
+    "indic": 0.09,
+    "web": 0.356,
+    "code": 0.3115,
+    "stem": 0.1335,
+    "reasoning": 0.089,
+    "agentic": 0.02
+   },
+   "dropped_lanes": [],
+   "per_seed": {
+    "0": {
+     "web": 1.8171022631912634,
+     "indic": 1.3887748390227446,
+     "code": 3.5194460041927615,
+     "stem": 3.215051382727096,
+     "reasoning": 3.260594338369351,
+     "agentic": 3.1921020035852465
+    },
+    "1": {
+     "web": 1.8320516772967608,
+     "indic": 1.3993852566151659,
+     "code": 3.5713530583119333,
+     "stem": 3.2668092694549262,
+     "reasoning": 3.320668608582964,
+     "agentic": 3.2427580780471543
+    },
+    "2": {
+     "web": 1.821860234514278,
+     "indic": 1.3791339656188661,
+     "code": 3.5513332972489224,
+     "stem": 3.273538770285183,
+     "reasoning": 3.3097796094771272,
+     "agentic": 3.208414080369261
+    },
+    "3": {
+     "web": 1.8001346540421241,
+     "indic": 1.382363805684651,
+     "code": 3.528934511784934,
+     "stem": 3.219296066250615,
+     "reasoning": 3.251755616016347,
+     "agentic": 3.176230716877901
+    },
+    "4": {
+     "web": 1.8087992967019426,
+     "indic": 1.3756534845044106,
+     "code": 3.5300810163913923,
+     "stem": 3.1949788524186715,
+     "reasoning": 3.266391801422885,
+     "agentic": 3.1893261835557705
+    }
+   },
+   "weighted": {
+    "0": 2.527392829487776,
+    "1": 2.560650501835206,
+    "2": 2.5473880148854406,
+    "3": 2.522950829185438,
+    "4": 2.523351416820192
+   },
+   "records": [
+    {
+     "arm": "D-s0",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 0
+     },
+     "train": {
+      "arm": "D-s0",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 0,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 22.16556726192357,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 91471.60440522143,
+      "tflops": 3.1750276859123616
+     },
+     "final_loss": 5.790939559936524,
+     "loss_curve": [
+      [
+       0,
+       9.241806030273438
+      ],
+      [
+       62,
+       7.051969528198242
+      ],
+      [
+       124,
+       6.989046573638916
+      ],
+      [
+       186,
+       6.446383476257324
+      ],
+      [
+       248,
+       7.0055131912231445
+      ],
+      [
+       310,
+       5.826340675354004
+      ],
+      [
+       372,
+       5.7927117347717285
+      ],
+      [
+       434,
+       5.924887180328369
+      ],
+      [
+       496,
+       5.865168571472168
+      ],
+      [
+       499,
+       5.685978889465332
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       2.491675615310669
+      ],
+      [
+       62,
+       0.5022522807121277
+      ],
+      [
+       124,
+       0.661493718624115
+      ],
+      [
+       186,
+       0.5438176393508911
+      ],
+      [
+       248,
+       0.807901918888092
+      ],
+      [
+       310,
+       0.8436496257781982
+      ],
+      [
+       372,
+       0.7960155010223389
+      ],
+      [
+       434,
+       0.8968932628631592
+      ],
+      [
+       496,
+       0.7270497679710388
+      ],
+      [
+       499,
+       0.8432798981666565
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 38912,
+      "code": 633088,
+      "indic": 187136,
+      "reasoning": 182784,
+      "stem": 267776,
+      "web": 738304
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s1",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 1
+     },
+     "train": {
+      "arm": "D-s1",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 1,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 23.08396969921887,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 87832.38006366853,
+      "tflops": 3.0487082875066083
+     },
+     "final_loss": 5.840007905960083,
+     "loss_curve": [
+      [
+       0,
+       9.228212356567383
+      ],
+      [
+       62,
+       7.296546459197998
+      ],
+      [
+       124,
+       6.641485214233398
+      ],
+      [
+       186,
+       5.980930328369141
+      ],
+      [
+       248,
+       6.6097822189331055
+      ],
+      [
+       310,
+       5.857574462890625
+      ],
+      [
+       372,
+       6.178991794586182
+      ],
+      [
+       434,
+       6.190196990966797
+      ],
+      [
+       496,
+       5.917769908905029
+      ],
+      [
+       499,
+       5.912188529968262
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.361736297607422
+      ],
+      [
+       62,
+       0.508004903793335
+      ],
+      [
+       124,
+       0.5245510339736938
+      ],
+      [
+       186,
+       1.1797517538070679
+      ],
+      [
+       248,
+       0.5790053009986877
+      ],
+      [
+       310,
+       1.1997119188308716
+      ],
+      [
+       372,
+       0.7476919889450073
+      ],
+      [
+       434,
+       0.7759628295898438
+      ],
+      [
+       496,
+       0.7859247326850891
+      ],
+      [
+       499,
+       0.7893463373184204
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 36096,
+      "code": 640512,
+      "indic": 174848,
+      "reasoning": 188416,
+      "stem": 277248,
+      "web": 730880
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s2",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 2
+     },
+     "train": {
+      "arm": "D-s2",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 2,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 24.411038414633367,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 83057.5072457626,
+      "tflops": 2.882969930864246
+     },
+     "final_loss": 5.8157049083709715,
+     "loss_curve": [
+      [
+       0,
+       9.199762344360352
+      ],
+      [
+       62,
+       7.163082122802734
+      ],
+      [
+       124,
+       6.683909893035889
+      ],
+      [
+       186,
+       7.158455848693848
+      ],
+      [
+       248,
+       6.453072547912598
+      ],
+      [
+       310,
+       5.81903076171875
+      ],
+      [
+       372,
+       6.1548309326171875
+      ],
+      [
+       434,
+       5.930206298828125
+      ],
+      [
+       496,
+       5.601471900939941
+      ],
+      [
+       499,
+       5.990055084228516
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       4.966362953186035
+      ],
+      [
+       62,
+       0.4886239171028137
+      ],
+      [
+       124,
+       0.5202592015266418
+      ],
+      [
+       186,
+       0.519630491733551
+      ],
+      [
+       248,
+       0.6859310865402222
+      ],
+      [
+       310,
+       0.6643558144569397
+      ],
+      [
+       372,
+       0.7020410895347595
+      ],
+      [
+       434,
+       0.723493754863739
+      ],
+      [
+       496,
+       0.7555994391441345
+      ],
+      [
+       499,
+       0.7253627777099609
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 47872,
+      "code": 651264,
+      "indic": 174848,
+      "reasoning": 178432,
+      "stem": 266240,
+      "web": 729344
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s3",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 3
+     },
+     "train": {
+      "arm": "D-s3",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 3,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 24.115816085453844,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 84074.28522491336,
+      "tflops": 2.9182628313793413
+     },
+     "final_loss": 5.751305112838745,
+     "loss_curve": [
+      [
+       0,
+       9.261960983276367
+      ],
+      [
+       62,
+       7.311453819274902
+      ],
+      [
+       124,
+       6.742260932922363
+      ],
+      [
+       186,
+       6.603158950805664
+      ],
+      [
+       248,
+       5.943456649780273
+      ],
+      [
+       310,
+       6.255281448364258
+      ],
+      [
+       372,
+       5.690166473388672
+      ],
+      [
+       434,
+       5.799445629119873
+      ],
+      [
+       496,
+       5.544105529785156
+      ],
+      [
+       499,
+       5.097475051879883
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       3.8751213550567627
+      ],
+      [
+       62,
+       0.5722255110740662
+      ],
+      [
+       124,
+       0.6485553979873657
+      ],
+      [
+       186,
+       0.6409691572189331
+      ],
+      [
+       248,
+       0.9182313084602356
+      ],
+      [
+       310,
+       0.7305992245674133
+      ],
+      [
+       372,
+       0.7276841998100281
+      ],
+      [
+       434,
+       0.830234706401825
+      ],
+      [
+       496,
+       0.7549175024032593
+      ],
+      [
+       499,
+       0.7841888070106506
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 44288,
+      "code": 638720,
+      "indic": 182272,
+      "reasoning": 185856,
+      "stem": 262656,
+      "web": 734208
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    },
+    {
+     "arm": "D-s4",
+     "model": {
+      "vocab_size": 10000,
+      "context": 256,
+      "layers": 4,
+      "heads": 4,
+      "width": 256,
+      "seed": 4
+     },
+     "train": {
+      "arm": "D-s4",
+      "shares": {
+       "indic": 0.09,
+       "web": 0.356,
+       "code": 0.3115,
+       "stem": 0.1335,
+       "reasoning": 0.089,
+       "agentic": 0.02,
+       "long_context": 0.0
+      },
+      "steps": 500,
+      "batch": 16,
+      "learning_rate": 0.0003,
+      "warmup": 20,
+      "floor_ratio": 0.1,
+      "weight_decay": 0.1,
+      "grad_clip": 1.0,
+      "seed": 4,
+      "checkpoint_every": 0,
+      "log_every": 62,
+      "timing_warmup": 5,
+      "unique_fraction": 1.0,
+      "shares_after": null,
+      "seam_at": 0,
+      "band_steps": 0
+     },
+     "effective_shares": {
+      "indic": 0.09,
+      "web": 0.356,
+      "code": 0.3115,
+      "stem": 0.1335,
+      "reasoning": 0.089,
+      "agentic": 0.02
+     },
+     "dropped_lanes": [],
+     "throughput": {
+      "device": "mps:apple-silicon",
+      "seconds": 23.338232911773957,
+      "tokens": 2027520,
+      "params": 5785088,
+      "steps": 495,
+      "warmup_excluded": 5,
+      "tokens_per_second": 86875.4720061574,
+      "tflops": 3.0154935035829427
+     },
+     "final_loss": 5.8070204544067385,
+     "loss_curve": [
+      [
+       0,
+       9.26495361328125
+      ],
+      [
+       62,
+       7.150544166564941
+      ],
+      [
+       124,
+       6.658083915710449
+      ],
+      [
+       186,
+       6.657740116119385
+      ],
+      [
+       248,
+       5.758925437927246
+      ],
+      [
+       310,
+       6.200418472290039
+      ],
+      [
+       372,
+       6.18919038772583
+      ],
+      [
+       434,
+       5.743444442749023
+      ],
+      [
+       496,
+       5.740976333618164
+      ],
+      [
+       499,
+       6.165544509887695
+      ]
+     ],
+     "grad_norms": [
+      [
+       0,
+       1.9101533889770508
+      ],
+      [
+       62,
+       0.597922146320343
+      ],
+      [
+       124,
+       0.5960320830345154
+      ],
+      [
+       186,
+       0.6687613725662231
+      ],
+      [
+       248,
+       0.8995137214660645
+      ],
+      [
+       310,
+       0.7851337194442749
+      ],
+      [
+       372,
+       0.829036295413971
+      ],
+      [
+       434,
+       0.7709795236587524
+      ],
+      [
+       496,
+       0.9256004691123962
+      ],
+      [
+       499,
+       0.8555082678794861
+      ]
+     ],
+     "tokens_per_lane": {
+      "agentic": 43520,
+      "code": 622592,
+      "indic": 196096,
+      "reasoning": 182528,
+      "stem": 275712,
+      "web": 727552
+     },
+     "platform": "macOS-27.0.1-arm64-arm-64bit"
+    }
+   ]
+  }
+ },
+ "comparisons": [
+  {
+   "key": "H1",
+   "claim": "arm A beats arm B on run-weighted held-out bits-per-byte",
+   "lane": "weighted",
+   "baseline": 2.5392371932337223,
+   "challenger": 2.649696270882041,
+   "effect": 0.04350088992972284,
+   "threshold": 0.02,
+   "noise": 0.012641496115598509,
+   "verdict": "supported",
+   "note": "the challenger is 4.35% worse, past the declared 2%",
+   "secondary": null
+  },
+  {
+   "key": "H2",
+   "claim": "removing the protected floor makes Indic materially worse",
+   "lane": "indic",
+   "baseline": 1.3377200188631182,
+   "challenger": 1.4283205845281426,
+   "effect": 0.06772759948828655,
+   "threshold": 0.05,
+   "noise": 0.015608492795994059,
+   "verdict": "supported",
+   "note": "the challenger is 6.77% worse, past the declared 5%",
+   "secondary": null
+  },
+  {
+   "key": "H3",
+   "claim": "halving Indic costs Indic more than it gains the other lanes",
+   "lane": "indic",
+   "baseline": 1.3377200188631182,
+   "challenger": 1.3850622702891677,
+   "effect": 0.03539025413276245,
+   "threshold": 0.03,
+   "noise": 0.017740462709770977,
+   "verdict": "supported",
+   "note": "the challenger is 3.54% worse, past the declared 3%",
+   "secondary": {
+    "lane": "stem",
+    "gain": 0.009262954096978486,
+    "noise": 0.02406734338348497,
+    "threshold": 0.01,
+    "triggered": false,
+    "clears_noise": false
+   }
+  }
+ ],
+ "provenance": {
+  "config_fingerprint": "fcb905fe9e64",
+  "settings": {
+   "config": {
+    "run_tokens": 2000000000000.0,
+    "model_params": 40000000000.0,
+    "indic_floor": 0.12,
+    "agentic_floor": 0.02,
+    "protected_ceiling": 0.2,
+    "anneal_share": 0.02,
+    "max_synthetic_share_of_indic": 0.5,
+    "warmup_band_tokens": 3000000000.0,
+    "opus_keep_fraction": 0.4,
+    "tokenizer_id": "s02-bpe-10000",
+    "proxy_params": 1000000000.0,
+    "proxy_tokens": 2000000000.0
+   },
+   "model": {
+    "vocab_size": 10000,
+    "context": 256,
+    "layers": 4,
+    "heads": 4,
+    "width": 256,
+    "seed": 0
+   },
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "steps": 500,
+   "batch": 16,
+   "arms": {
+    "A": {
+     "web": 0.32,
+     "code": 0.28,
+     "indic": 0.18,
+     "stem": 0.12,
+     "reasoning": 0.08,
+     "agentic": 0.02,
+     "long_context": 0.0
+    },
+    "B": {
+     "web": 0.7,
+     "code": 0.2,
+     "stem": 0.05,
+     "indic": 0.03,
+     "reasoning": 0.02,
+     "agentic": 0.0,
+     "long_context": 0.0
+    },
+    "C": {
+     "indic": 0.04,
+     "agentic": 0.0,
+     "web": 0.384,
+     "code": 0.336,
+     "stem": 0.144,
+     "reasoning": 0.096,
+     "long_context": 0.0
+    },
+    "D": {
+     "indic": 0.09,
+     "web": 0.356,
+     "code": 0.3115,
+     "stem": 0.1335,
+     "reasoning": 0.089,
+     "agentic": 0.02,
+     "long_context": 0.0
+    }
+   },
+   "stem": "default"
+  },
+  "git_sha": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+  "code_digest": "sha256:77e842088d70831716d7f9a5683809e643aefa05075fcd7fea7184366829a826",
+  "corpus_digest": "sha256:a5601e11486843c75bdd38949e75c9513db4bd3dd650cd3510d296cd801273e9",
+  "corpus_lane_digests": {
+   "web": "sha256:775d8d6797d84dbc212035371024ce23543eb95aea53a7ea0045564967349e1b",
+   "indic": "sha256:b1aad99f2f4c39bebcc086bd38b68195e2a970db61df4c52b86dbecff32ee016",
+   "code": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e",
+   "stem": "sha256:3c2cfabe62eb92ea92dc300cfac69483b39996d1ba6bdf5780ce21c9829cf5ed",
+   "reasoning": "sha256:a79cd6788a64cbe94406f975ea0a9f3498118e89e02e7671f8353c2bbce00003",
+   "agentic": "sha256:e8435791019615a62f5ad3f275d26025317fc034701552799c810fd8936471f3"
+  },
+  "code_lane": {
+   "commit": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+   "digest": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e"
+  },
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "numpy": "2.5.2",
+   "platform": "macOS-27.0.1-arm64-arm-64bit",
+   "machine": "arm64",
+   "omp_num_threads": "unset",
+   "device": "mps:apple-silicon",
+   "torch": "2.13.0",
+   "torch_threads": 12
+  }
+ }
+}

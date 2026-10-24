@@ -24,8 +24,9 @@ import json
 import logging
 import statistics
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
-from mixture import corpus, curriculum, lanes
+from mixture import corpus, curriculum, lanes, provenance
 
 # `evaluate`, `model` and `train` import torch at module scope, and torch is an optional extra this
 # repository deliberately keeps out of CI. Importing them here would make the whole module
@@ -35,7 +36,9 @@ from mixture import corpus, curriculum, lanes
 
 logger = logging.getLogger(__name__)
 
-RESULTS = corpus.EXERCISE_ROOT / "results" / "seam.json"
+RESULTS: Path | None = None
+"""An explicit destination, or None for `results/reruns/<today>/seam.json`. Never the published
+`results/seam.json`, which `provenance.destination` refuses."""
 
 SEEDS = (0, 1, 2, 3, 4)
 STEPS = 400
@@ -114,13 +117,16 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         The result bundle.
     """
     from mixture import evaluate
+    from mixture.config import Config
     from mixture.model import ModelConfig
-    from mixture.train import TrainConfig, pick_device, train
+    from mixture.train import TrainConfig, describe_device, pick_device, train
 
     device = pick_device(None)
     model_config = ModelConfig()
     stages = {stage.name: dict(stage.shares) for stage in curriculum.STAGES}
     before, after = stages[BEFORE], stages[AFTER]
+    corpus.build()
+    inputs_before = provenance.inputs()
 
     arms: list[SeamArm] = []
     for key, band in (("hard", 0), ("banded", BAND_STEPS)):
@@ -177,6 +183,21 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         "between": {"before": BEFORE, "after": AFTER},
         "arms": [asdict(arm) for arm in arms],
         "reading": _read(arms),
+        "provenance": provenance.block(
+            {
+                "config": asdict(Config()),
+                "model": asdict(model_config),
+                "seeds": list(seeds),
+                "steps": steps,
+                "batch": batch,
+                "seam_at": SEAM_AT,
+                "band_steps": BAND_STEPS,
+                "before": {"stage": BEFORE, "shares": before},
+                "after": {"stage": AFTER, "shares": after},
+            },
+            describe_device(device),
+            inputs_before,
+        ),
     }
 
 
@@ -246,10 +267,17 @@ def save(bundle: dict) -> object:
 
     Returns:
         The path written.
+
+    Raises:
+        ValueError: If the bundle carries no complete provenance block, or the destination is a
+            published run. Nothing is written.
+        FileExistsError: If that day's set already holds this run.
     """
-    RESULTS.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
-    return RESULTS
+    provenance.require(bundle)
+    path = provenance.destination("seam", path=RESULTS)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
+    return path
 
 
 def main() -> None:

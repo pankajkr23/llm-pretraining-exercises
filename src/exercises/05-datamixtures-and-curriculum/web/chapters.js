@@ -893,7 +893,7 @@ function blindSpots(data) {
     list.append(li);
   });
   const head = richP('**What these runs could not see.**', 'blind-head');
-  return [head, list];
+  return [head, list, ...(data.reruns?.e3 ? [richP(data.reruns.e3, 'warn')] : [])];
 }
 
 function corrections(data) {
@@ -954,6 +954,7 @@ function corrections(data) {
     widget,
     lesson,
     after2,
+    ...(data.reruns?.e4 ? [richP(data.reruns.e4, 'warn')] : []),
   ];
 }
 
@@ -1544,6 +1545,10 @@ function chapterConclusion(data) {
     richP(
       'It was also re-tested against a second, deliberately different stand-in for the same lane, and came back refuted again — so the finding is not an artefact of one substitution. Two runs agreeing is still not two pieces of evidence when they share a corpus and a tokenizer, which is the next section\'s problem.',
     ),
+    /* A re-run is added beside the published one, never swapped in: the conclusion above is the
+     * published run's and stays as drawn, and a later run that disagrees gets a dated note here,
+     * rendered from the same bundles as the documents. */
+    ...[data.reruns?.h3, data.reruns?.decision].filter(Boolean).map((note) => richP(note, 'warn')),
   ]);
 }
 

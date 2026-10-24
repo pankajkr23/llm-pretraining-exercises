@@ -17,13 +17,6 @@
     />
     <link rel="stylesheet" href="/_shared/tokens.css" />
     <link rel="stylesheet" href="./_shared/components.css" />
-    <!-- `_shared/explainer.css` is vendored (tests/test_vendored_shared_layer.py requires every
-         file most exercises vendor) and deliberately NOT linked. While it was linked,
-         tests/test_shared_css_is_used_where_it_is_linked.py reported this page matching none of its
-         selectors at rest; that test only looks at pages that link the file, so it says nothing
-         about this page now. This comment naming the file is also what lets
-         tests/test_shared_layer.py count it as referenced — a mention, not a use. PROGRESS.md
-         records that as an open item. -->
     <link rel="stylesheet" href="./_shared/page.css" />
     <link rel="stylesheet" href="./page-extra.css" />
     <!--

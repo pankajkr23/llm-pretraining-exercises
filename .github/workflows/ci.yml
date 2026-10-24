@@ -213,9 +213,14 @@ jobs:
   train:
     name: torch-gated tests (CPU-only wheels)
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
+      # Full history: exercise 05's code lane is read from a pinned commit (`mixture.corpus.
+      # CODE_LANE_COMMIT`), and a shallow clone does not have it. It now also executes every
+      # tracked notebook, so the time limit is raised with it.
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7

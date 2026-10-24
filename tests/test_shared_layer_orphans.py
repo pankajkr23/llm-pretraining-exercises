@@ -47,18 +47,12 @@ SHARED = sorted(REPO_ROOT.glob("src/exercises/*/web/_shared/page.css"))
 # `data.json` written inside comments, back when the extractor read raw text. Removed with the
 # extractor fix — an entry that describes nothing is slack the guard can never spend on a real
 # orphan.
+# Nine more left on 2026-10-24 with their rules: `appendix-h`, `catsearch-hits`, `gapmark` and the
+# six-name `.band-*` family. No page source set any of them — checked by grepping every `web/` page
+# for the names and for a prefix built at runtime — and full-page screenshots of every page that
+# links `page.css`, at 1440 and 390px, were pixel-identical before and after. `unit` went with them:
+# its only rule was `.unit.gapmark`, which could not match once `gapmark` had no setter.
 KNOWN_ORPHANS: dict[str, str] = {
-    # No source file mentions these at all. The likeliest explanation is a component that was
-    # renamed or removed while its rules stayed behind — but "likeliest" is not "verified".
-    "appendix-h": "no source mentions it",
-    "band-head": "no source mentions it; the .band-* family looks like one removed component",
-    "band-label": "no source mentions it",
-    "band-n": "no source mentions it",
-    "band-none": "no source mentions it",
-    "band-sub": "no source mentions it",
-    "band-swatch": "no source mentions it",
-    "catsearch-hits": "no source mentions it",
-    "gapmark": "no source mentions it",
     # Exercise 03 builds these, in states an unattended pass does not reach — an empty gate card,
     # a filtered catalogue row. Live, and listed only because nothing automated has seen them.
     "bands": "exercise 03 and others mention it; not reached unattended",
@@ -78,7 +72,6 @@ KNOWN_ORPHANS: dict[str, str] = {
     # Ordinary words that also happen to be class names. Kept for completeness, since the
     # measurement cannot tell a class from a word without rendering.
     "sel": "short name; also appears inside identifiers",
-    "unit": "also an ordinary word in prose",
 }
 
 
@@ -151,7 +144,10 @@ def test_the_orphan_budget_has_not_grown() -> None:
     # Measured alongside KNOWN_ORPHANS, in the same pass.
     # 98, not 101: the earlier figure counted class-like strings inside comments. See
     # `_without_comments` — the three phantoms were `.back`, `.readmore` and the `e` in "i.e.".
-    measured_total = 98
+    # 85, not 98, since 2026-10-24: the dead `.band-*` block, `appendix-h`, `catsearch-hits` and
+    # `.unit.gapmark` were deleted, taking 13 classes (with `ok`, `mid` and `out`, which were only
+    # ever selected as `.band-swatch.ok` and its siblings). Lowered rather than left as slack.
+    measured_total = 85
     assert len(declared) <= measured_total, (
         f"`_shared/page.css` now styles {len(declared)} classes, up from {measured_total} when the "
         f"orphan set was last measured in a browser. {len(declared) - measured_total} rule(s) were "

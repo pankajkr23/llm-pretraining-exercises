@@ -837,7 +837,9 @@ numbers = row["numbers"]
 print(f"\\nthe producer's own mixture row: status={row['status']}")
 print(f"  short run, so judged as a sample: {numbers['is_a_sample']}")
 print(f"  floors held in this run's ledger: {numbers['run_floors_held']}")
-print(f"  corpus compliant, per results/corpus_build.json: {numbers['corpus_compliant']}")"""
+print(f"  corpus compliant: {numbers['corpus_compliant']}, "
+      f"floors held: {numbers['corpus_floors_held']}")
+print(f"  corpus figure source: {row['evidence'].split('; the ')[-1]}")"""
         ),
         md(
             """**Reading the verdict.** The checks that carry this exercise's claim are all there:
@@ -847,14 +849,18 @@ re-derives from its log.
 
 On the tracked corpus one check fails, and it is the right one to fail. The run read only `web` and
 `indic`, so the `agentic` floor (2% of every batch) cannot hold, and the auditor says so from the
-ledger. The producer's own `mixture_compliance` row says `met`, because for a run this short it
-falls back to the corpus-level figure in the tracked `results/corpus_build.json`, which describes
-the fetched six-lane corpus and not the shards built here. The producer read a report about a
-different corpus; the auditor counted what was actually fed. With `LITE = False` the shards come
-from that fetched corpus and the two describe the same data.
+ledger. The producer's own `mixture_compliance` row agrees and reads `unmet`. For a run this short
+the row judges the corpus rather than the sample, and the corpus it judges is the shards this run
+opened: the tracked `results/corpus_build.json` is used only when the shard ids it lists are
+exactly the ones opened. Here they are not (it describes the fetched six-lane corpus), so
+`run.log` carries a note saying so and the figure is recomputed from the opened shards, which
+hold no `agentic` text. With `LITE = False` the shards come from the fetched corpus, but this
+notebook cuts them at its own shard size, so the ids still differ from the tracked build and the
+figure is again recomputed, this time over all six lanes.
 
-So the auditor is not a formality: given an input the producer's report does not describe, it is the
-one that notices."""
+That agreement is a fix, not a given. Until it landed the producer read the tracked report whatever
+`--shards` named, marked the mixture `met` here, and only the auditor noticed. The auditor still
+re-derives every figure on its own arithmetic, which is why it caught that."""
         ),
         md(
             """## What this notebook cannot tell you

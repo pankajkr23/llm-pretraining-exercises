@@ -56,7 +56,12 @@ import sys
 import numpy as np
 from embeddings import codec, decode
 from embeddings.config import KroneckerConfig
-from embeddings.experiment import EXERCISE, code_digest, environment, git_sha, load_vocabulary
+from embeddings.experiment import (
+    EXERCISE,
+    load_vocabulary,
+    measurement_provenance,
+    require_measurement_provenance,
+)
 
 BANDS = ((1, 32), (33, 64), (65, 128))
 """Byte-length bands, cut at `d_p` and `2*d_p` because that is where the mechanisms change: at or
@@ -238,6 +243,15 @@ def main(argv: list[str] | None = None) -> int:
         print(line, flush=True)
 
     longest = max(len(t) for t in vocab)
+    # Every knob this run turned, and the exact dict the fingerprint is taken over -- so a reader
+    # can recompute `config_fingerprint` from the bundle's own `config` block.
+    settings = {
+        "d_p": args.d_p,
+        "d_model": args.d_model,
+        "reach": args.reach,
+        "seed": args.seed,
+        "sample": args.sample,
+    }
     payload = {
         "what": (
             "Round-trip byte recovery for onehot, wrap and spc positions on the frozen vocabulary, "
@@ -261,13 +275,7 @@ def main(argv: list[str] | None = None) -> int:
             "spc's reach is a declared constant, so its cost is paid whether or not any token is "
             "that long: the decoder's dictionary is reach x 256 x d_model.",
         ],
-        "config": {
-            "d_p": args.d_p,
-            "d_model": args.d_model,
-            "reach": args.reach,
-            "seed": args.seed,
-            "sample": args.sample,
-        },
+        "config": settings,
         "frame": frame_facts,
         "vocabulary": {
             "tokens": len(vocab),
@@ -275,12 +283,9 @@ def main(argv: list[str] | None = None) -> int:
             "digest": "sha256:" + hashlib.sha256(b"\x00".join(vocab)).hexdigest(),
         },
         "rows": rows,
-        "provenance": {
-            "code_digest": code_digest(),
-            "git_sha": git_sha(),
-            "environment": environment(),
-        },
+        "provenance": measurement_provenance(settings),
     }
+    require_measurement_provenance(payload)
     out = EXERCISE / "artifacts" / "position_schemes.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")

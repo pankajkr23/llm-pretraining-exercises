@@ -47,6 +47,11 @@ CLASS_SETTERS = (
 #: Files a page references by name rather than by class — scripts and stylesheets.
 _BY_NAME = re.compile(r"""_shared/([A-Za-z0-9_.-]+\.(?:js|css))""")
 
+#: An HTML comment. **A comment naming a file is a mention, not a reference**, and this check used
+#: to count it as one: exercises 07 and 12 each vendored `explainer.css` without linking it and
+#: passed here only because a comment in `index.html` named the file. Stripped before matching.
+_HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+
 
 def vendored_shared_dirs() -> list[Path]:
     """Every `web/_shared/` an exercise carries its own copy of."""
@@ -69,7 +74,10 @@ def referenced_shared_files(exercise: Path) -> set[str]:
     """Shared filenames this exercise's pages actually link or import."""
     names: set[str] = set()
     for path in _page_files(exercise):
-        names |= set(_BY_NAME.findall(path.read_text(encoding="utf-8", errors="ignore")))
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if path.suffix == ".html":
+            text = _HTML_COMMENT.sub("", text)
+        names |= set(_BY_NAME.findall(text))
     return names
 
 
@@ -112,6 +120,28 @@ def test_the_guard_would_have_caught_the_module_that_prompted_it(tmp_path) -> No
     referenced = referenced_shared_files(tmp_path)
     assert referenced == {"used.js"}, referenced
     assert "dead.js" not in referenced, "the orphan must not be seen as referenced"
+
+
+def test_a_comment_naming_a_vendored_file_does_not_count_as_referencing_it(tmp_path) -> None:
+    """Its second twin, built as the shape exercises 07 and 12 had: vendored, named in a comment.
+
+    Both pages explained in an HTML comment why `explainer.css` was not linked, and the comment's
+    mention of the file was what cleared this gate. The link beside it must still count.
+    """
+    web = tmp_path / "web"
+    (web / "_shared").mkdir(parents=True)
+    (web / "_shared" / "used.css").write_text("a { color: red; }\n", encoding="utf-8")
+    (web / "_shared" / "named.css").write_text("b { color: red; }\n", encoding="utf-8")
+    (web / "index.html").write_text(
+        '<link rel="stylesheet" href="./_shared/used.css" />\n'
+        "<!-- `_shared/named.css` is deliberately not linked here,\n"
+        "     and this comment names it across two lines. -->\n",
+        encoding="utf-8",
+    )
+
+    referenced = referenced_shared_files(tmp_path)
+    assert referenced == {"used.css"}, referenced
+    assert "named.css" not in referenced, "a comment-only mention must not count as a reference"
 
 
 def test_the_class_setter_list_covers_the_helper_this_repo_actually_uses() -> None:

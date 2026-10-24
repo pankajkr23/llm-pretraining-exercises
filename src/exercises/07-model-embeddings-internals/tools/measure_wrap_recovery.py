@@ -37,7 +37,12 @@ import sys
 import numpy as np
 from embeddings import codec, decode
 from embeddings.config import KroneckerConfig
-from embeddings.experiment import EXERCISE, code_digest, environment, git_sha, load_vocabulary
+from embeddings.experiment import (
+    EXERCISE,
+    load_vocabulary,
+    measurement_provenance,
+    require_measurement_provenance,
+)
 
 BANDS = ((1, 32), (33, 64), (65, 128))
 """Byte-length bands. The boundaries are `d_p` and `2*d_p`, because that is where the mechanism
@@ -106,6 +111,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{low:>6}-{high:<7} {len(band):>8,} {signed:>20.2%}")
 
     beyond = [t for t in vocab if len(t) > BANDS[-1][1]]
+    # Every knob this run turned, and the exact dict the fingerprint is taken over. `sample` was
+    # missing from the published `config` before the fingerprint existed, so a sampled probe and a
+    # full run would have carried the same settings.
+    settings = {
+        "d_p": cfg.d_p,
+        "d_model": cfg.d_model,
+        "positions": "wrap",
+        "seed": args.seed,
+        "sample": args.sample,
+    }
     payload = {
         "what": (
             "Round-trip byte recovery under WRAPPED positions, by token byte-length band, for the "
@@ -125,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
             "Bands are cut at d_p and 2*d_p, which is where the folding mechanism changes. Any "
             "other cut would give different percentages for the same underlying behaviour.",
         ],
-        "config": {"d_p": cfg.d_p, "d_model": cfg.d_model, "positions": "wrap", "seed": args.seed},
+        "config": settings,
         "vocabulary": {
             "tokens": len(vocab),
             "beyond_last_band": len(beyond),
@@ -133,12 +148,9 @@ def main(argv: list[str] | None = None) -> int:
             "digest": "sha256:" + hashlib.sha256(b"\x00".join(vocab)).hexdigest(),
         },
         "rows": rows,
-        "provenance": {
-            "code_digest": code_digest(),
-            "git_sha": git_sha(),
-            "environment": environment(),
-        },
+        "provenance": measurement_provenance(settings),
     }
+    require_measurement_provenance(payload)
     out = EXERCISE / "artifacts" / "wrap_recovery.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")

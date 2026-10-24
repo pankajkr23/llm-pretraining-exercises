@@ -123,7 +123,7 @@ MEMBERS = (
 )
 if IN_COLAB:
     if not pathlib.Path("llm-pretraining-exercises").exists():
-        subprocess.run(["git", "clone", "--depth", "1", "__REPO__"], check=True)
+        subprocess.run(["git", "clone", "__REPO__"], check=True)  # full: the code lane reads a pinned commit
     root = pathlib.Path("llm-pretraining-exercises").resolve()
     for member in MEMBERS:
         # The `proxy` extra is torch. Colab already has it, so pip only checks the version.

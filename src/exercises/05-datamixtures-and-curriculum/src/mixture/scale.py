@@ -19,8 +19,9 @@ Run it with `uv run python -m mixture.scale`.
 import json
 import logging
 import statistics
+from pathlib import Path
 
-from mixture import corpus, proxy
+from mixture import corpus, provenance, proxy
 
 # `evaluate`, `model` and `train` import torch at module scope, and torch is an optional extra this
 # repository deliberately keeps out of CI. Importing them here would make the whole module
@@ -30,7 +31,9 @@ from mixture import corpus, proxy
 
 logger = logging.getLogger(__name__)
 
-RESULTS = corpus.EXERCISE_ROOT / "results" / "scale.json"
+RESULTS: Path | None = None
+"""An explicit destination, or None for `results/reruns/<today>/scale.json`. Never the published
+`results/scale.json`, which `provenance.destination` refuses."""
 
 # From `bench.py`'s measured sweep, stopping where a run still takes seconds rather than minutes.
 # Plain shapes rather than `ModelConfig` instances, because building one at module scope would
@@ -72,11 +75,16 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
     Returns:
         The result bundle.
     """
+    from dataclasses import asdict
+
     from mixture import experiment
+    from mixture.config import Config
     from mixture.model import ModelConfig
-    from mixture.train import pick_device
+    from mixture.train import describe_device, pick_device
 
     device = pick_device(None)
+    corpus.build()
+    before = provenance.inputs()
     rungs = []
     for shape in SIZES:
         params = _params(shape)
@@ -118,6 +126,18 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         "seeds": list(seeds),
         "rungs": rungs,
         "reading": _read(rungs),
+        "provenance": provenance.block(
+            {
+                "config": asdict(Config()),
+                "sizes": [dict(shape) for shape in SIZES],
+                "seeds": list(seeds),
+                "steps": steps,
+                "batch": batch,
+                "arms": {arm.key: dict(arm.shares) for arm in proxy.arms()},
+            },
+            describe_device(device),
+            before,
+        ),
     }
 
 
@@ -225,10 +245,17 @@ def save(bundle: dict) -> object:
 
     Returns:
         The path written.
+
+    Raises:
+        ValueError: If the bundle carries no complete provenance block, or the destination is a
+            published run. Nothing is written.
+        FileExistsError: If that day's set already holds this run.
     """
-    RESULTS.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
-    return RESULTS
+    provenance.require(bundle)
+    path = provenance.destination("scale", path=RESULTS)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
+    return path
 
 
 def main() -> None:

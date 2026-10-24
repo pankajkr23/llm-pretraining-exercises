@@ -22,7 +22,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import ledger, metrics, spec
+from . import ledger, manifest, metrics, mixture, spec
+from .config import Config
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,6 +70,72 @@ def _unmet(requirement: str, why: str) -> Row:
         The row.
     """
     return Row(requirement=requirement, status="not_built", claim=why, evidence="—")
+
+
+def corpus_report_for(opened: list, path: Path) -> tuple[dict, str | None]:
+    """The corpus-level mixture figure for the shards a run actually opened.
+
+    **The tracked build report describes one build, and `run_demo.py --shards` can name another.**
+    The demo used to load `results/corpus_build.json` whatever directory it read, so a run over a
+    two-lane stand-in corpus published the fetched six-lane corpus's `compliant` and `floors_held`
+    as its own and marked the mixture met, while `verify.py`, counting what was fed, found the
+    agentic floor breached. The producer was describing a corpus it never opened.
+
+    So the report is used only when the shard ids it lists — every lane's training shards and its
+    held-out shards — are exactly the ids opened. Otherwise the figure is recomputed from the
+    opened manifests the way `tools/build_corpus.py` computes it: tokens per lane over the admitted
+    shards, through `mixture.compliance`, tolerance judged on funded lanes only and floors on
+    every lane.
+
+    Args:
+        opened: Every manifest read from the shard directory — not the firewall demo's eval shard,
+            which belongs to the run rather than to the corpus.
+        path: The tracked build report.
+
+    Returns:
+        `(report, why it was not used)`. The report carries `run_needs_tokens` and `mixture`, which
+        is all `build_rows` reads, plus `recomputed_from_opened_shards` when it was recomputed so
+        the row names its real source; the reason is `None` when the tracked report was used.
+    """
+    opened_ids = {entry.shard_id for entry in opened}
+    if path.is_file():
+        report = json.loads(path.read_text(encoding="utf-8"))
+        listed = {
+            shard_id
+            for lane in report.get("lanes", {}).values()
+            for shard_id in (*lane.get("shard_ids", ()), *lane.get("heldout_shard_ids", ()))
+        }
+        if listed == opened_ids:
+            return report, None
+        why = (
+            f"{path.name} lists {len(listed)} shards and this run opened {len(opened_ids)}, "
+            f"{len(listed & opened_ids)} in common: it describes a different build, so the corpus "
+            f"mixture is recomputed from the shards opened"
+        )
+    else:
+        why = f"no {path.name}; the corpus mixture is computed from the shards opened"
+
+    consumed: dict[str, int] = {}
+    for entry in opened:
+        if manifest.admit(entry):
+            continue  # a refused shard is never read, so it is not part of the mixture
+        consumed[entry.lane] = consumed.get(entry.lane, 0) + entry.token_count
+    lanes = mixture.compliance(consumed)
+    recomputed = {
+        "recomputed_from_opened_shards": True,
+        "run_needs_tokens": Config().total_tokens,
+        "mixture": {
+            "consumed": consumed,
+            "compliant": all(
+                row["within_tolerance"]
+                for lane, row in lanes.items()
+                if mixture.LANE_SHARES[lane] > 0
+            ),
+            "floors_held": all(row["floor_held"] for row in lanes.values()),
+            "lanes": lanes,
+        },
+    }
+    return recomputed, why
 
 
 def build_rows(
@@ -202,7 +269,11 @@ def build_rows(
         claim=claim,
         evidence=(
             "the ledger's per-event `lane_mix` summed and compared with `spec.LANE_SHARES`; the "
-            "corpus figure from results/corpus_build.json"
+            + (
+                "corpus figure recomputed from the shards the run opened"
+                if corpus_report and corpus_report.get("recomputed_from_opened_shards")
+                else "corpus figure from results/corpus_build.json"
+            )
         ),
         numbers={
             "run_drift": drifts,

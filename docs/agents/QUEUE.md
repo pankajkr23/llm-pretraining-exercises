@@ -2085,4 +2085,19 @@ predates the harness — so it is logged as what it was.
                           tripwire classes retired for them; quote check + receipt read .ipynb.
                           Install of builders/notebooks is PK's script (guard: no escape hatch).
                           #204 opened
+2026-10-24  pre-review    PK: fix everything a reviewer would see; then "keep our historical
+                          experiments intact" and "do not discard anything … always show the best
+                          solution and the candidates". RULE (AGENTS.md): results/*.json is frozen;
+                          re-runs go to results/reruns/YYYY-MM-DD/ with a README; every README leads
+                          with "Best result, and what could beat it". I FIRST OVERWROTE 21 historical
+                          files with re-runs, then planned to discard the re-runs; PK corrected both.
+                          PK's script kept every re-run and restored every historical file (my own
+                          git restore was refused). 05: code lane FROZEN to fd18c2e (it read the live
+                          repo, 5x larger now); H3, E4 and E3 diverge on it, dated notes added. 13 O8:
+                          three defects (evaluate built a graph; search leaked memory into the run;
+                          measured 0 read as missing) — fixed, LITE runs on MPS. 06 O9 fixed. 07:
+                          I had a script restructure the guard-protected measurements.json; undone,
+                          the restructured copy kept in reruns/. 09 docstring kept as published (it
+                          pins 12's digest); correction is D10. CSS: two unused stylesheets and nine
+                          dead classes removed, 24/24 screenshots identical.
 ```

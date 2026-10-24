@@ -274,3 +274,88 @@ def test_the_auditor_completes_the_one_event_the_producer_cannot(bundle) -> None
     output = _verify(bundle).stdout
     assert "PASS audit completed" in output
     assert "NOT PRODUCED" not in output, "a required event other than the audit went unproduced"
+
+
+def _machine_paths(directory: Path) -> list[str]:
+    """Every bundle file that names a location on the machine that wrote it.
+
+    The checkout's own absolute path, or any home directory: either says where somebody's disk is
+    laid out, and neither means anything on a clone.
+
+    Args:
+        directory: A bundle.
+
+    Returns:
+        `"<file>: <first offending line>"` per offending file.
+    """
+    import re
+
+    roots = [re.escape(str(EXERCISE.parents[2])), re.escape(str(Path.home()))]
+    pattern = re.compile("|".join([*roots, r"/Users/", r"/home/"]))
+    found = []
+    for path in sorted(p for p in directory.rglob("*") if p.is_file()):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        hit = next((line for line in text.splitlines() if pattern.search(line)), None)
+        if hit:
+            found.append(f"{path.relative_to(directory)}: {hit.strip()[:120]}")
+    return found
+
+
+#: Machine paths the submitted bundle carries, kept because the bundle is kept exactly as submitted.
+#: **Shrinks only**, and only by a new bundle — never by editing the submitted one.
+SUBMITTED_WITH_A_MACHINE_PATH = ("firewall.json",)
+
+
+def test_the_submitted_bundle_names_no_machine_path_beyond_the_known_one(bundle) -> None:
+    """**The bundle is public, and it is a published experiment, so it is not rewritten.**
+
+    `firewall.json` recorded where the demo's eval shard was written as an absolute path, which put
+    the writer's checkout location in a tracked file. The bundle stays as submitted; the producer
+    now writes repo-relative paths (`run_demo.repo_relative`), so the next bundle carries none.
+    This holds the line in both directions: no new file may carry one, and the ledger entry must
+    still be needed.
+    """
+    offending = tuple(line.split(":")[0] for line in _machine_paths(bundle))
+    assert offending == SUBMITTED_WITH_A_MACHINE_PATH, (
+        f"machine paths in {offending}, expected exactly {SUBMITTED_WITH_A_MACHINE_PATH}. A new "
+        f"one is a leak; a missing one means a new bundle landed and the entry should go."
+    )
+
+
+def _repo_relative():
+    """`run_demo.repo_relative`, compiled from the shipped source without importing `run_demo`.
+
+    Importing it would pull in torch through the trainer, and this check belongs in the torch-free
+    job. Lifting the one function out of the file tests the code that ships, not a copy of it.
+    """
+    source = RUN_DEMO.read_text(encoding="utf-8")
+    node = next(
+        n
+        for n in ast.parse(source).body
+        if isinstance(n, ast.FunctionDef) and n.name == "repo_relative"
+    )
+    namespace = {"Path": Path, "REPO_ROOT": EXERCISE.parents[2]}
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(RUN_DEMO), "exec"), namespace)
+    return namespace["repo_relative"]
+
+
+def test_the_producer_writes_a_path_inside_the_repo_relative_to_its_root() -> None:
+    """What the next bundle records for the default scratch directory."""
+    shown = _repo_relative()(EXERCISE / "artifacts" / "demo" / "firewall")
+    assert shown == "src/exercises/06-build-training-dataset/artifacts/demo/firewall"
+
+
+def test_a_path_outside_the_repo_is_kept_absolute(tmp_path) -> None:
+    """The twin: no repo-relative form exists, and inventing one would be wrong."""
+    assert _repo_relative()(tmp_path) == str(tmp_path.resolve())
+
+
+def test_the_machine_path_check_would_notice_one(tmp_path) -> None:
+    """The twin: plant the exact shape that shipped, and the check must report it."""
+    (tmp_path / "firewall.json").write_text(
+        json.dumps({"written_to": str(EXERCISE / "artifacts" / "demo" / "firewall")})
+    )
+    (tmp_path / "clean.json").write_text(
+        json.dumps({"written_to": "src/exercises/06-build-training-dataset/artifacts/demo"})
+    )
+    assert [line.split(":")[0] for line in _machine_paths(tmp_path)] == ["firewall.json"]

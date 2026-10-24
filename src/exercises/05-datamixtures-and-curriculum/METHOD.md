@@ -178,6 +178,8 @@ mixture would let an arm win by caring only about what it chose to train on.
 
 **H3 — refuted.** the primary effect holds (+3.52%), but stem gains 1.12%, past the 1% the refutation condition names, and that gain clears its own seed spread. The condition was declared before the run as: arm D's Indic bits-per-byte is within 3% of arm A's, or the other lanes gain more than 1%. Then 18% is over-provisioned and the share should fall toward the 12% floor.
 
+**Dated note, 2026-10-24 — a re-run diverges; the conclusion above is kept as published.** The run above read its code lane from the live repository, which then grew from 87 files and 352,415 training tokens to 378 files and 1,970,257 (5.6x), so the corpus it measured can no longer be rebuilt. The re-run freezes that lane at commit `fd18c2e` and changes nothing else. On it, H3 reads **supported** (effect +3.54%; stem gain 0.93% against a 2.41% seed spread) where it read **refuted** (effect +3.52%; stem gain 1.12% against a 0.71% seed spread). E4, the same test on the second STEM stand-in, reads **qualified** (effect +3.77%; stem gain 1.51% against a 2.57% seed spread) where it read **refuted** (effect +3.75%; stem gain 1.72% against a 1.52% seed spread). [Why they differ, with every number side by side](results/reruns/2026-10-24/README.md).
+
 ---
 
 # 7 · The four follow-up experiments — E1 to E4

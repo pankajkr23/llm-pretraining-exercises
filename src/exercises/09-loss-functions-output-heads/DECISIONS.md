@@ -178,3 +178,21 @@ person takes after seeing a result, not a side effect of producing one.
 naming: a reader following the README's reproduce steps now gets a file in `artifacts/` and must
 compare it themselves rather than seeing `git diff` do it. That is the correct trade while the
 notebook exists, and it would be worth revisiting if the notebook ever stopped training.
+
+## D10 · The chunked-projection saving is a no-gradient figure, and the docstring stays as published
+
+**Decision (2026-10-24).** `lossheads.losses.chunked_projection_cross_entropy` says only a
+`[chunk, vocab]` tensor ever exists. That is true for a forward pass **without autograd**, which is
+the regime this exercise's memory measurement (`memory.py`) runs in, and which its ~9x figure
+describes. Under autograd every chunk's softmax is saved for the backward pass, so the full set of
+logits is held after all: exercise 13 measured this function at the same peak as the plain loss
+(13's `DECISIONS.md`). To keep the saving while training, recompute each chunk in the backward pass,
+as exercise 13's `reversible.memory.chunked_loss` does under `torch.utils.checkpoint`.
+
+**Why the correction is recorded here and not in the docstring.** Any byte changed in `lossheads`
+moves the code digest that exercise 12's published results are pinned to, and the published
+experiments stay exactly as they were run. The claim is corrected where a reader of this exercise
+looks for its reasoning, and the code is unchanged.
+
+**What would overturn it.** A re-run of 12 for another reason, at which point the docstring can carry
+this sentence too.

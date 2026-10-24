@@ -77,6 +77,10 @@ NOT_YET_COVERED = {
         "05 records config, model, seeds, device and corpus in its own vocabulary but no "
         "fingerprint, code digest or commit — the closest of the five to being fixable cheaply"
     ),
+    "07-model-embeddings-internals/results/reruns/2026-10-24/measurements.restructured.json": (
+        "a key-for-key restructuring of the historical measurements.json, kept for the record; not "
+        "a run, so there is no producer to give it a block"
+    ),
     "06-build-training-dataset/results/corpus_build.json": (
         "has config_fingerprint and plan_digest; needs code_digest, git_sha and environment"
     ),

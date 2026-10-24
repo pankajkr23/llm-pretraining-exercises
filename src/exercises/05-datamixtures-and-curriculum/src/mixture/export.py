@@ -456,7 +456,7 @@ Every effect is reported against **the spread the same arm shows against itself*
 refutation condition with more than one clause is checked on every clause. Both rules can only \
 cost this specification marks; neither can earn it any.
 
-{consequence}
+{consequence}{_then(_h3_rerun_note())}{_then(_decision_rerun_note())}
 
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three \
 orders of magnitude too small, {coverage}, and an arm that looks better here would still be an arm \
@@ -471,6 +471,488 @@ REPETITION_RESULTS = EXERCISE_ROOT / "results" / "repetition.json"
 SEAM_RESULTS = EXERCISE_ROOT / "results" / "seam.json"
 SCALE_RESULTS = EXERCISE_ROOT / "results" / "scale.json"
 SENSITIVITY_RESULTS = EXERCISE_ROOT / "results" / "stem_sensitivity.json"
+
+RERUNS = EXERCISE_ROOT / "results" / "reruns"
+"""Re-runs, one dated directory each. The published runs in `results/` are never rewritten; a
+re-run is added here, and every document that a re-run disagrees with keeps its conclusion and
+gains a dated note pointing at the set's `README.md`."""
+
+RERUN_NAMES = ("step0", "stem_sensitivity", "repetition", "seam", "scale")
+
+LIVE_LANE = "step0.live-lane"
+"""Step 0 on the live, unfrozen code lane — the run that first showed H3 diverge, kept because
+every run is kept, and labelled because its code lane had no commit and cannot be rebuilt."""
+
+
+def _read_json(path: Path) -> dict | None:
+    """A bundle, or None when the file does not exist."""
+    import json
+
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def rerun_days() -> list[str]:
+    """Every dated re-run set that holds at least one bundle, oldest first."""
+    if not RERUNS.exists():
+        return []
+    return sorted(d.name for d in RERUNS.iterdir() if d.is_dir() and any(d.glob("*.json")))
+
+
+def _published(name: str) -> dict | None:
+    return _read_json(EXERCISE_ROOT / "results" / f"{name}.json")
+
+
+def _rerun(day: str, name: str) -> dict | None:
+    return _read_json(RERUNS / day / f"{name}.json")
+
+
+def _h3(bundle: dict | None) -> dict | None:
+    if not bundle:
+        return None
+    return next((c for c in bundle["comparisons"] if c["key"] == "H3"), None)
+
+
+def _clause(comparison: dict) -> str:
+    """A verdict with the second-clause numbers that decided it."""
+    second = comparison.get("secondary") or {}
+    tail = (
+        f"; {second['lane']} gain {second['gain']:.2%} against a {second['noise']:.2%} seed spread"
+        if second
+        else ""
+    )
+    return f"**{comparison['verdict']}** (effect {comparison['effect']:+.2%}{tail})"
+
+
+def _code_lane(bundle: dict) -> tuple[int, int]:
+    """Files and training tokens in a Step 0 bundle's code lane."""
+    code = bundle["corpus"]["code"]
+    return len(code["sources"]), code["train_tokens"]
+
+
+def _h3_rerun_note(prefix: str = "") -> str:
+    """The dated note beside the published H3 conclusion, or nothing when no re-run disagrees.
+
+    The published conclusion is kept exactly as it was drawn. This says what a later run found,
+    why the two differ, and where both sets of numbers are — and disappears on its own when no
+    re-run's verdict differs from the published one.
+
+    Args:
+        prefix: Path from the document to the exercise root.
+
+    Returns:
+        A Markdown paragraph, or an empty string.
+    """
+    for day in reversed(rerun_days()):
+        old, new = _published("step0"), _rerun(day, "step0")
+        old_h3, new_h3 = _h3(old), _h3(new)
+        if not (old_h3 and new_h3) or old_h3["verdict"] == new_h3["verdict"]:
+            continue
+        old_files, old_tokens = _code_lane(old)
+        files, tokens = _code_lane(new)
+        commit = new["provenance"]["code_lane"]["commit"]
+        e4 = _h3(_rerun(day, "stem_sensitivity"))
+        e4_old = _h3(_published("stem_sensitivity"))
+        e4_text = (
+            f" E4, the same test on the second STEM stand-in, reads {_clause(e4)} where it read "
+            f"{_clause(e4_old)}."
+            if e4 and e4_old
+            else ""
+        )
+        return (
+            f"**Dated note, {day} — a re-run diverges; the conclusion above is kept as "
+            "published.** "
+            "The run above read its code lane from the live repository, which then grew from "
+            f"{old_files} files and {old_tokens:,} training tokens to {files} files and "
+            f"{tokens:,} ({tokens / old_tokens:.1f}x), so the corpus it measured can no longer be "
+            f"rebuilt. The re-run freezes that lane at commit `{commit[:7]}` and changes nothing "
+            f"else. On it, H3 reads {_clause(new_h3)} where it read {_clause(old_h3)}.{e4_text} "
+            f"[Why they differ, with every number side by side]({prefix}results/reruns/{day}/"
+            "README.md)."
+        )
+    return ""
+
+
+def _decision_rerun_note(prefix: str = "") -> str:
+    """The dated note beside the decision that rests on H3's refutation."""
+    for day in reversed(rerun_days()):
+        old_h3, new_h3 = _h3(_published("step0")), _h3(_rerun(day, "step0"))
+        if not (old_h3 and new_h3) or old_h3["verdict"] == new_h3["verdict"]:
+            continue
+        e4 = _h3(_rerun(day, "stem_sensitivity"))
+        e4_text = f", and E4 on the second stand-in reads `{e4['verdict']}`" if e4 else ""
+        return (
+            f"**Dated note, {day}:** this decision was made on the published run and is kept as "
+            f"made. On the frozen-lane re-run the refutation it rests on does not reproduce — H3 "
+            f"reads `{new_h3['verdict']}`{e4_text} — so the evidence behind it now depends on "
+            "which "
+            "text the code lane held, rather than agreeing across two stand-ins. "
+            f"[The re-run]({prefix}results/reruns/{day}/README.md) has the numbers."
+        )
+    return ""
+
+
+def _e4_rerun_note(prefix: str = "") -> str:
+    """The dated note beside the published E4 conclusion, when a re-run of E4 exists."""
+    for day in reversed(rerun_days()):
+        old, new = _h3(_published("stem_sensitivity")), _h3(_rerun(day, "stem_sensitivity"))
+        first = _h3(_rerun(day, "step0"))
+        if not (old and new):
+            continue
+        status = (
+            "the conclusion above is kept as published"
+            if old["verdict"] == new["verdict"]
+            else "a re-run diverges; the conclusion above is kept as published"
+        )
+        tail = (
+            f" H3 on the first stand-in reads {_clause(first)} on the same lane." if first else ""
+        )
+        return (
+            f"**Dated note, {day} — {status}.** On the frozen code lane, E4 reads {_clause(new)} "
+            f"where it read {_clause(old)}.{tail} [The re-run]({prefix}results/reruns/{day}/"
+            "README.md) has the numbers side by side."
+        )
+    return ""
+
+
+def _e3_rerun_note(prefix: str = "") -> str:
+    """The dated note beside the published scale-transfer conclusion, when a re-run diverges."""
+    for day in reversed(rerun_days()):
+        old, new = _published("scale"), _rerun(day, "scale")
+        if not (old and new):
+            continue
+        same_verdict = old["reading"]["verdict"] == new["reading"]["verdict"]
+        winners = [rung["ranking"][0] for rung in new["rungs"]]
+        if same_verdict and len(set(winners)) == 1:
+            continue
+        return (
+            f"**Dated note, {day} — a re-run diverges; the conclusion above is kept as "
+            f"published.** On the frozen code lane the sweep reads "
+            f"**{new['reading']['verdict']}** where it read **{old['reading']['verdict']}**, and "
+            "the leading arm by size is "
+            + ", ".join(
+                f"{winner} at {rung['params']:,}"
+                for winner, rung in zip(winners, new["rungs"], strict=True)
+            )
+            + f". [The re-run]({prefix}results/reruns/{day}/README.md) has both sweeps side by "
+            "side."
+        )
+    return ""
+
+
+def _then(note: str) -> str:
+    """A note as its own paragraph, or nothing."""
+    return f"\n\n{note}" if note else ""
+
+
+def _arm_scores(bundle: dict) -> dict[str, tuple[str, float, float]]:
+    """Arm key to (name, mean run-weighted bits per byte, seed spread as max minus min)."""
+    out = {}
+    for key, arm in bundle["arms"].items():
+        values = list(arm["weighted"].values())
+        out[key] = (arm.get("name", key), sum(values) / len(values), max(values) - min(values))
+    return out
+
+
+def _best_result(config: Config) -> str:
+    """`## Best result, and what could beat it` — across every run, published and re-run.
+
+    "Best" is this exercise's own criterion: lowest run-weighted held-out bits per byte, and a
+    difference counts only when it clears the seed spread both arms show against themselves.
+    """
+    published = _published("step0")
+    if not published:
+        return ""
+    runs = [("the published Step 0", "results/step0.json", published)]
+    for day in rerun_days():
+        bundle = _rerun(day, "step0")
+        if bundle:
+            runs.append((f"the {day} re-run", f"results/reruns/{day}/step0.json", bundle))
+
+    beaten = []
+    leaders = []
+    for label, path, bundle in runs:
+        scores = _arm_scores(bundle)
+        _, base, base_spread = scores["A"]
+        key = min(scores, key=lambda k: scores[k][1])
+        name, mean, spread = scores[key]
+        if key == "A":
+            continue
+        gap = base - mean
+        clears = gap > max(base_spread, spread)
+        (beaten if clears else leaders).append(
+            f"arm {key} ({name}) in [{label}]({path}): {mean:.4f} against the candidate's "
+            f"{base:.4f}, a {gap:.4f} gap {'outside' if clears else 'inside'} the "
+            f"{max(base_spread, spread):.4f} seed spread"
+        )
+
+    name, base, spread = _arm_scores(published)["A"]
+    seeds = len(published["seeds"])
+    if beaten:
+        best = (
+            f"**An arm beats the candidate beyond its seed spread**: {beaten[0]}. By this "
+            "exercise's own rule that is a result, and the candidate should be read against it."
+        )
+    else:
+        best = (
+            f"**Arm A, the {name} — the mixture this specification declares.** Run-weighted "
+            f"held-out **{base:.4f} bits per byte** (lower is better), seed spread {spread:.4f} "
+            f"over {seeds} seeds, in [the published Step 0](results/step0.json). By this "
+            "exercise's own rule — a difference counts only when it clears the seed spread — no "
+            "arm beats it in any run so far."
+        )
+
+    candidates = [f"- **Lowest point estimate, inside the noise:** {item}." for item in leaders]
+    for label, path, bundle in [("published", "results/scale.json", _published("scale"))] + [
+        (f"{day} re-run", f"results/reruns/{day}/scale.json", _rerun(day, "scale"))
+        for day in rerun_days()
+    ]:
+        if bundle:
+            top = bundle["rungs"][-1]
+            winner = top["ranking"][0]
+            arm = top["arms"][winner]
+            candidates.append(
+                f"- **At the largest model ({top['params']:,} parameters), {label} E3:** arm "
+                f"{winner} ({arm['name']}) leads at {arm['weighted_mean']:.4f} "
+                f"(±{arm['weighted_sd']:.4f} sd) — [{path}]({path})."
+            )
+    old_h3 = _h3(published)
+    for day in rerun_days():
+        new_h3 = _h3(_rerun(day, "step0"))
+        if not (old_h3 and new_h3) or new_h3["verdict"] == old_h3["verdict"]:
+            continue
+        e4_old = _h3(_published("stem_sensitivity"))
+        e4_new = _h3(_rerun(day, "stem_sensitivity"))
+        e4 = (
+            f" E4, the same test on the second STEM stand-in, went from {_clause(e4_old)} to "
+            f"{_clause(e4_new)}."
+            if e4_old and e4_new
+            else ""
+        )
+        candidates.append(
+            "- **A published conclusion a re-run diverges from.** H3 was published "
+            f"{_clause(old_h3)} in [the published Step 0](results/step0.json), and that conclusion "
+            f"stands as drawn. On the frozen code lane of [the {day} re-run](results/reruns/{day}/"
+            f"README.md) it reads {_clause(new_h3)}.{e4} The re-run's README says why they differ."
+        )
+    candidates.append(
+        "- **Untested, and the one that would decide it:** the arms at a real rung. Everything "
+        "above is a 4-layer proxy; the 1B rung is priced in `SPEC.md` and not scheduled."
+    )
+
+    indic = lanes.shares()["indic"]
+    hypothesis = (
+        f"Run arms A and D at the 1B rung on the frozen corpus, {seeds} seeds each. If D's "
+        "run-weighted "
+        "bits per byte beats A's by more than the seed spread **and** another lane gains more than "
+        f"1%, H3's refutation holds at scale and the Indic share should move from {indic:.0%} "
+        f"toward its {config.indic_floor:.0%} floor; if neither clears its spread, {indic:.0%} "
+        "stands as declared."
+    )
+    return (
+        "## Best result, and what could beat it\n\n"
+        f"**Best result.** {best}\n\n"
+        "**Candidates that did or could do better.**\n\n" + "\n".join(candidates) + "\n\n"
+        f"**The next hypothesis.** {hypothesis}\n\n"
+    )
+
+
+def _side_by_side(day: str) -> list[str]:
+    """Table rows: what the published run and this re-run said, and whether it holds."""
+
+    def verdict_row(label: str, old: dict | None, new: dict | None, key: str) -> str | None:
+        if not (old and new):
+            return None
+        a, b = old["reading"][key], new["reading"][key]
+        return f"| {label} | {a} | {b} | {'holds' if a == b else '**diverges**'} |"
+
+    rows = ["| measured | published | this re-run | conclusion |", "| --- | --- | --- | --- |"]
+    old, new = _published("step0"), _rerun(day, "step0")
+    if old and new:
+        for old_c, new_c in zip(old["comparisons"], new["comparisons"], strict=True):
+            same = old_c["verdict"] == new_c["verdict"]
+            rows.append(
+                f"| Step 0 · {old_c['key']} on `{old_c['lane']}` | {_clause(old_c)} | "
+                f"{_clause(new_c)} | {'holds' if same else '**diverges**'} |"
+            )
+        old_files, old_tokens = _code_lane(old)
+        files, tokens = _code_lane(new)
+        rows.append(
+            f"| code lane | {old_files} files, {old_tokens:,} tokens, live tree | {files} files, "
+            f"{tokens:,} tokens, frozen | the input that changed |"
+        )
+        live = _rerun(day, LIVE_LANE)
+        if live:
+            live_files, live_tokens = _code_lane(live)
+            for old_c, live_c in zip(old["comparisons"], live["comparisons"], strict=True):
+                same = old_c["verdict"] == live_c["verdict"]
+                rows.append(
+                    f"| Step 0 · {old_c['key']}, live tree before the freeze ({live_files} files, "
+                    f"{live_tokens:,} tokens) | {_clause(old_c)} | {_clause(live_c)} | "
+                    f"{'holds' if same else '**diverges**'} |"
+                )
+        rows.append(
+            f"| throughput | {old['throughput']['tflops_median']:.2f} TFLOP/s | "
+            f"{new['throughput']['tflops_median']:.2f} TFLOP/s | not comparable — the machine was "
+            "shared with other jobs during the re-run |"
+        )
+    e4_old, e4_new = _h3(_published("stem_sensitivity")), _h3(_rerun(day, "stem_sensitivity"))
+    if e4_old and e4_new:
+        same = e4_old["verdict"] == e4_new["verdict"]
+        rows.append(
+            f"| E4 · H3 on the second STEM stand-in | {_clause(e4_old)} | {_clause(e4_new)} | "
+            f"{'holds' if same else '**diverges**'} |"
+        )
+    for label, name in (("E1 · repetition", "repetition"), ("E2 · seam band", "seam")):
+        row = verdict_row(label, _published(name), _rerun(day, name), "verdict")
+        if row:
+            rows.append(row)
+    rep_old, rep_new = _published("repetition"), _rerun(day, "repetition")
+    if rep_old and rep_new:
+        rows.append(
+            f"| E1 · curve shape | {rep_old['reading']['shape']} | {rep_new['reading']['shape']} "
+            "| not comparable — the larger corpus means the same fractions are fewer passes "
+            f"({rep_old['reading']['rungs'][0]['epochs']} epochs at most, now "
+            f"{rep_new['reading']['rungs'][0]['epochs']}) |"
+        )
+    sc_old, sc_new = _published("scale"), _rerun(day, "scale")
+    if sc_old and sc_new:
+        row = verdict_row("E3 · scale transfer", sc_old, sc_new, "verdict")
+        same_order = sc_old["rungs"][-1]["ranking"] == sc_new["rungs"][-1]["ranking"]
+        rows.append(row)
+        rows.append(
+            f"| E3 · ranking at the largest model | {' < '.join(sc_old['rungs'][-1]['ranking'])} "
+            f"| {' < '.join(sc_new['rungs'][-1]['ranking'])} | "
+            f"{'holds' if same_order else '**diverges**'} |"
+        )
+    return rows
+
+
+def render_rerun_readme(day: str) -> str:
+    """The README for one dated re-run set: why, how, the numbers side by side, and what holds."""
+    bundles = {name: _rerun(day, name) for name in RERUN_NAMES}
+    present = {name: bundle for name, bundle in bundles.items() if bundle}
+    missing = [name for name in RERUN_NAMES if name not in present]
+    first = next(iter(present.values()))
+    prov = first["provenance"]
+    step0, old = present.get("step0"), _published("step0")
+
+    why = ""
+    if step0 and old:
+        old_files, old_tokens = _code_lane(old)
+        files, tokens = _code_lane(step0)
+        why = (
+            "The published runs read the code lane — this repository's own Python — from the "
+            f"working tree. It grew from {old_files} files and {old_tokens:,} training tokens to "
+            f"{files} files and {tokens:,} ({tokens / old_tokens:.1f}x), so the corpus they "
+            "measured could no longer be rebuilt from anything, and a re-run on the live tree "
+            "would "
+            "have been a different experiment under the same name. **These are the first runs on "
+            f"a frozen lane**, read from git at commit `{prov['code_lane']['commit'][:7]}` and "
+            "never from disk. Arms, seeds, steps, model shapes and thresholds are unchanged."
+        )
+
+    digests = sorted({b["provenance"]["code_digest"] for b in present.values()})
+    run_rows = ["| file | code_digest | corpus_digest |", "| --- | --- | --- |"]
+    live = _rerun(day, LIVE_LANE)
+    for name, bundle in {**present, **({LIVE_LANE: live} if live else {})}.items():
+        p = bundle["provenance"]
+        run_rows.append(
+            f"| [`{name}.json`]({name}.json) | `{p['code_digest'][:23]}…` | "
+            f"`{p['corpus_digest'][:23]}…` |"
+        )
+    shas = sorted({b["provenance"]["git_sha"][:7] for b in present.values()})
+    how = (
+        f"Run from commit `{', '.join(shas)}` **with uncommitted edits in the tree** — the "
+        "provenance module and the frozen lane itself were not yet committed — so the commit alone "
+        "does not reproduce them; each bundle's `code_digest` identifies exactly the code that "
+        f"ran. {len(digests)} distinct code digest(s) across these files: "
+        + (
+            "the producers were edited between runs (where they write, nothing they compute)."
+            if len(digests) > 1
+            else "every file here ran the same code."
+        )
+        + f" Device `{first['device']}`."
+    )
+    if live:
+        how += (
+            f"\n\n`{LIVE_LANE}.json` is Step 0 run on the **live** code lane, before it was "
+            "frozen — the run that first showed the divergence. It came from `experiment.run` "
+            "through a wrapper that was never committed: the wrapper skipped the per-seed run "
+            "records and, instead of refusing on a mid-run input change, recorded whether one "
+            f"happened (`preview_inputs_moved_during_run: "
+            f"{str(live.get('preview_inputs_moved_during_run')).lower()}`). Its code lane was the "
+            "working tree, which no commit holds, so it carries no `code_lane` field and cannot be "
+            "rebuilt. It is kept as the first sighting, not as evidence on its own."
+        )
+
+    conclusions = []
+    if step0 and old:
+        moved = [
+            f"{o['key']} ({o['verdict']} → {n['verdict']})"
+            for o, n in zip(old["comparisons"], step0["comparisons"], strict=True)
+            if o["verdict"] != n["verdict"]
+        ]
+        held = [
+            o["key"]
+            for o, n in zip(old["comparisons"], step0["comparisons"], strict=True)
+            if o["verdict"] == n["verdict"]
+        ]
+        drift = max(
+            abs(n["effect"] - o["effect"])
+            for o, n in zip(old["comparisons"], step0["comparisons"], strict=True)
+        )
+        conclusions.append(
+            f"- **Holds:** {', '.join(held)}. No effect size moved by more than "
+            f"{drift * 100:.2f} percentage points."
+        )
+        if moved:
+            h3 = _h3(step0)["secondary"]
+            conclusions.append(
+                f"- **Diverges:** {', '.join(moved)}. H3's second clause is decided by whether "
+                f"another lane gains more than {h3['threshold']:.0%}, and the deciding gain sits "
+                f"near that bar in both runs — {_h3(old)['secondary']['gain']:.2%} published, "
+                f"{h3['gain']:.2%} now, inside a {h3['noise']:.2%} seed spread. Only the code "
+                "lane's text changed, so a verdict that moves with it was a verdict about that "
+                "text rather than about the mixture. The published conclusion stays as drawn; the "
+                "documents carry a dated note beside it."
+            )
+            if live and _h3(live)["verdict"] == _h3(step0)["verdict"]:
+                conclusions.append(
+                    "- **The divergence predates the freeze.** The live-lane run reached the same "
+                    "H3 verdict before the lane was pinned, so freezing did not cause it."
+                )
+    e4_old, e4_new = _h3(_published("stem_sensitivity")), _h3(present.get("stem_sensitivity"))
+    if e4_old and e4_new and e4_old["verdict"] != e4_new["verdict"]:
+        second = e4_new["secondary"]
+        conclusions.append(
+            f"- **Diverges:** E4 ({e4_old['verdict']} → {e4_new['verdict']}). On the second STEM "
+            f"stand-in the gain is {second['gain']:.2%}, past the {second['threshold']:.0%} bar, "
+            f"but inside its own {second['noise']:.2%} seed spread, so the clause fires on the "
+            "point estimate and settles nothing."
+        )
+    sc_old, sc_new = _published("scale"), present.get("scale")
+    if sc_old and sc_new and sc_old["reading"]["verdict"] != sc_new["reading"]["verdict"]:
+        conclusions.append(
+            f"- **Diverges:** E3 ({sc_old['reading']['verdict']} → "
+            f"{sc_new['reading']['verdict']}). {_sentence_case(sc_new['reading']['note'])}."
+        )
+    conclusions.append(
+        "- **Not comparable:** throughput (the machine was shared with other jobs), and the "
+        "repetition curve's epoch counts (a larger corpus makes the same fractions fewer passes)."
+    )
+    if missing:
+        conclusions.append(f"- **Not re-run in this set:** {', '.join(missing)}.")
+
+    return (
+        f"# Re-run, {day}\n\n"
+        "Generated by `uv run python -m mixture` from the bundles in this directory and the "
+        "published runs in [`results/`](../../). **The published files are not modified**: a "
+        "published experiment is never rewritten, and a re-run is added beside it.\n\n"
+        f"## Why it was run\n\n{why}\n\n"
+        f"## How\n\n{how}\n\n" + "\n".join(run_rows) + "\n\n"
+        "## Side by side\n\n" + "\n".join(_side_by_side(day)) + "\n\n"
+        "## Conclusions\n\n" + "\n".join(conclusions) + "\n"
+    )
 
 
 def _followups() -> str:
@@ -565,7 +1047,7 @@ def _followups() -> str:
             + "\n".join(rows)
             + f"\n\n**{_sentence_case(reading['verdict'])}** — {reading['note'].rstrip('.')}."
             f"\n\n{_scale_convergence(data)}"
-            f"\n\n*{reading['caveat']}*"
+            f"\n\n*{reading['caveat']}*" + _then(_e3_rerun_note())
         )
 
     if SENSITIVITY_RESULTS.exists() and RESULTS.exists():
@@ -602,6 +1084,7 @@ def _followups() -> str:
             "about it without spending money.\n\n"
             "*What it still cannot do: both runs are 4-layer models over ~2M tokens, and both "
             "STEM lanes are stand-ins. Agreeing with each other is not the same as being right.*"
+            + _then(_e4_rerun_note())
         )
 
     if not sections:
@@ -1115,6 +1598,12 @@ def _followup_outcomes() -> dict[str, str]:
         out["e3"] = (
             f"**{data['reading']['verdict']}** across {span:.0f}x — arm {winner} wins at every "
             "size, the same direction H3 points"
+            + (
+                f" (dated note: the {rerun_days()[-1]} re-run diverges — see "
+                f"[its README](results/reruns/{rerun_days()[-1]}/README.md))"
+                if _e3_rerun_note()
+                else ""
+            )
         )
 
     return out
@@ -1168,7 +1657,7 @@ def _proxy_limits(corpus_tokens: str) -> str:
                 "is deprioritised, so the finding was instead re-tested against a second, "
                 "deliberately different STEM stand-in and came back refuted again. 18% therefore "
                 "stands as an **upper bound rather than a target**, to be instrumented against "
-                "its 12% floor at real scale."
+                "its 12% floor at real scale." + _then(_decision_rerun_note()).replace("\n\n", " ")
             )
 
     if SCALE_RESULTS.exists():
@@ -1418,7 +1907,7 @@ Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, wi
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
 
-{_READING_PATH}{pipeline_summary}## Where each required answer lives
+{_READING_PATH}{_best_result(config)}{pipeline_summary}## Where each required answer lives
 
 | # | the requirements asks for | where |
 | --- | --- | --- |
@@ -1613,7 +2102,18 @@ uv sync --all-packages --extra proxy
 uv run python -m mixture.repetition   # what a re-read token is actually worth
 uv run python -m mixture.seam         # does a warmup band calm a stage seam?
 uv run python -m mixture.scale        # does the ranking survive a change of scale?
+uv run python -m mixture.experiment --alt-stem   # E4: H3's arms on the second STEM stand-in
 ```
+
+Every run writes its bundle to `results/reruns/<today>/` with a `provenance` block — settings
+fingerprint, code digest, commit, machine, and full digests of the corpus and the vocabulary — and
+refuses to write without one. **The published runs in `results/` are never written over**: a
+re-run is added beside them, and each dated set's `README.md` compares the two.
+
+**The code lane is read from git at a pinned commit** (`corpus.CODE_LANE_COMMIT`), never from the
+working tree, so a clone needs that commit: a shallow clone is refused with the command that
+fetches it. E4 also needs the second stand-in, fetched with
+`tools/fetch_proxy_corpus.py --alt-stem`.
 
 **The three follow-on experiments used to be listed on the deployed page and nowhere else.** They
 moved here when the page's command blocks came out — a page is read far more often than it is
@@ -1708,8 +2208,10 @@ def _method_verdicts(run: dict | None) -> str:
         "condition with more than one clause is checked on every clause, not just the convenient "
         "one."
     )
-    return f"## What they returned\n\n{table}\n\n{body}" + (
-        "\n\n" + "\n\n".join(notes) if notes else ""
+    return (
+        f"## What they returned\n\n{table}\n\n{body}"
+        + ("\n\n" + "\n\n".join(notes) if notes else "")
+        + _then(_h3_rerun_note())
     )
 
 
@@ -2263,6 +2765,11 @@ def write(config: Config | None = None) -> dict[str, Path]:
             ("EXPERIMENTS.md", render_experiments(json.loads(RESULTS.read_text(encoding="utf-8"))))
         )
 
+    # Each dated re-run set gets its README, generated like every other document so its numbers are
+    # read from the bundles beside it rather than typed.
+    for day in rerun_days():
+        documents.append((f"results/reruns/{day}/README.md", render_rerun_readme(day)))
+
     written: dict[str, Path] = {}
     for name, body in documents:
         path = EXERCISE_ROOT / name
@@ -2498,7 +3005,7 @@ Generated by `uv run python -m mixture` from `results/step0.json`. Reproduce the
 `uv run python -m mixture.experiment`.
 
 `SPEC.md` committed to an experiment and fixed its thresholds in advance. This is what happened
-when it ran: **{tally}**.
+when it ran: **{tally}**.{_then(_h3_rerun_note())}
 
 Two rules decide those verdicts, and both can only cost the specification marks rather than earn
 them. An effect smaller than the spread an arm shows against itself is reported as
@@ -2755,7 +3262,36 @@ def web_bundle(config: Config | None = None) -> dict:
             "comparisons": alternative["comparisons"],
         }
 
+    # The page has no Markdown links (`rich()` renders bold, italic, code and glossary terms), so
+    # each note's link becomes the repository path it points at.
+    notes = {
+        "h3": _h3_rerun_note(_PAGE_PREFIX),
+        "e4": _e4_rerun_note(_PAGE_PREFIX),
+        "decision": _decision_rerun_note(_PAGE_PREFIX),
+        "e3": _e3_rerun_note(_PAGE_PREFIX),
+    }
+    if any(notes.values()):
+        bundle["reruns"] = {key: _unlink(text) for key, text in notes.items()}
+
     return bundle
+
+
+_PAGE_PREFIX = ""
+
+
+def _unlink(markdown: str) -> str:
+    """`[text](dir/README.md)` → text, then where to find it, for a renderer that has no links.
+
+    The folder and the file are named separately because a full repository path is one unbroken
+    token wider than a phone: set in code type, it pushed the page 43px sideways at 320px.
+    """
+    import re
+
+    def where(match: re.Match) -> str:
+        folder, _, name = match.group(2).rpartition("/")
+        return f"{match.group(1)} (`{folder}/` in this exercise, its `{name}`)"
+
+    return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", where, markdown)
 
 
 def write_web(config: Config | None = None) -> Path:

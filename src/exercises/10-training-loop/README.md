@@ -25,6 +25,32 @@ ratio was actually counting.
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** The one figure here with a target is utilisation, and the best honest one measured
+is the published **27.34%** MFU against a 40% rule of thumb, on this machine's CPU in fp32, with the
+peak measured on the same device ([`RESULTS.md` §5](RESULTS.md), from
+[`results/run.json`](results/run.json)). Its run time and its peak are both wall-clock
+measurements, so it moves between runs. Beside it, the gradient check agrees with autograd to 8.8 matching decimal digits at its
+best nudge size.
+
+**Candidates that did or could do better.**
+
+- **The [2026-10-24 re-run](results/reruns/2026-10-24/README.md) measured 20.62%**, lower, while
+  other jobs shared the CPU. Every count, loss and gradient reproduced exactly; only timing moved.
+  It is evidence about the machine's load, not the code, and the published 27.34% stands.
+- **The 39.13% that was first published was higher, and wrong**: a GPU's peak as the denominator and
+  embedding gathers in the numerator ([`DECISIONS.md` D4 and D5](DECISIONS.md)). It is not a
+  candidate; it is the reason the two halves of the ratio are stated.
+- **An accelerator, or bf16,** would give a different and possibly higher MFU. Neither was run, and
+  neither number would be comparable to this fp32 CPU figure.
+
+**The next hypothesis.** Re-run the harness on an otherwise idle machine, several times: if MFU lands
+within a few tenths of 27.34%, the re-run's drop was load; if it stays near 20.6%, something in the
+code or the machine changed and the published figure needs a dated note. Then double the model width
+at the same tokens per step: if MFU does not rise, the shortfall from 40% is not small-matrix
+overhead.
+
 ## What this is
 
 **First, three words this page cannot do without.** A model reads text and guesses what comes next.

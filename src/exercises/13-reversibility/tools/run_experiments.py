@@ -9,15 +9,18 @@
 its life, so it must not share a process with the uncapped runs before it. `--stage all` runs the
 first stage, then starts the second in a fresh process.
 
-`FULL` writes to the tracked `results/`; `lite` and `smoke` write to the gitignored
-`artifacts/<preset>/`. The baseline's trained weights go to `artifacts/checkpoints/` — exercise 14
-converts that dense model into a mixture of experts.
+`FULL` writes a new dated set to `results/reruns/YYYY-MM-DD/`, beside the published
+`results/*.json`, which is never rewritten; `lite` and `smoke` write to the gitignored
+`artifacts/<preset>/`. The baseline's trained weights go to `artifacts/checkpoints/` (a re-run's to
+`checkpoints/reruns/<date>/`, so the checkpoint exercise 14's published run converted is kept) —
+exercise 14 converts that dense model into a mixture of experts.
 
 Every bundle carries the provenance `AGENTS.md` requires, and records how much of the corpus its
 longest run read: above one epoch a run measures repetition rather than learning.
 """
 
 import argparse
+import datetime
 import json
 import subprocess
 import sys
@@ -36,8 +39,15 @@ from reversible.runs import RESULTS, provenance, save  # noqa: E402
 CHECKPOINTS = EXERCISE / "artifacts" / "checkpoints"
 
 
-def checkpoint_path(preset: Preset) -> Path:
-    """Where the baseline's trained weights are written, per preset."""
+def checkpoint_path(preset: Preset, out: Path | None = None) -> Path:
+    """Where the baseline's trained weights are written, per preset.
+
+    A re-run (an `out` under `results/reruns/<date>/`) writes its weights beside the published
+    checkpoint, under `checkpoints/reruns/<date>/`: exercise 14's published run converted
+    `baseline-full.pt` and records its digest, so overwriting it would lose that history.
+    """
+    if out is not None and out.parent.name == "reruns":
+        return CHECKPOINTS / "reruns" / out.name / f"baseline-{preset.name}.pt"
     return CHECKPOINTS / f"baseline-{preset.name}.pt"
 
 
@@ -87,7 +97,7 @@ def main_stage(preset: Preset, device: str, out: Path, corpus_root: Path) -> Non
     choice = {**trials["choice"], "lr": trials["best_lr"]}
     began = time.perf_counter()
     fixed = experiments.fixed_batch(
-        preset, corpus, device, choice, checkpoint=checkpoint_path(preset)
+        preset, corpus, device, choice, checkpoint=checkpoint_path(preset, out)
     )
     save(
         _bundle(
@@ -110,7 +120,7 @@ def max_stage(preset: Preset, device: str, out: Path, corpus_root: Path) -> None
         out / "max_batch.json",
     )
     rev = found["reversible"]
-    largest = rev["measured_max_batch"] or rev["derived_max_batch"]
+    largest = experiments.largest_found(found)
     batch = max(1, int(largest * preset.max_batch_run_fraction))
     print(
         f"max_batch: baseline {found['baseline']}, reversible {rev} -> run at {batch} "
@@ -140,7 +150,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     preset = PRESETS[args.preset]
     device = select_device(args.device)
-    out = args.out or (RESULTS if preset.name == "full" else EXERCISE / "artifacts" / preset.name)
+    # FULL writes a NEW dated set beside the published one, never over it: `results/*.json` is the
+    # historical experiment and stays as published (AGENTS.md, "A published experiment is never
+    # rewritten"). The stage-two child gets this same directory through `--out`.
+    rerun = RESULTS / "reruns" / datetime.date.today().isoformat()
+    out = args.out or (rerun if preset.name == "full" else EXERCISE / "artifacts" / preset.name)
     if args.stage in ("main", "all"):
         main_stage(preset, device, out, args.corpus)
     if args.stage == "max":

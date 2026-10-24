@@ -3,8 +3,8 @@
 A running log of what was built, what was verified, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
 
-**Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
-— `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
+**Where the work lives:** merged to `main`. This file does not name branch or PR numbers — `git log`
+answers that correctly and a markdown file goes stale.
 
 **Deliverable shape — read this before calling the source material done.** The platform asks for a **live
 app link** and the **GitHub repo**, and the README must say which sources the dates came from.

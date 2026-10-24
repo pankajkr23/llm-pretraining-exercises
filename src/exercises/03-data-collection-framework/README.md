@@ -55,6 +55,34 @@ uv run pytest -m "not integration"      # the invariants, and the proofs they ca
 The deep material is in [`docs/`](./docs/) — `ATLAS.md` is the source research, `FRAMEWORK.md` the
 method, `DECISIONS.md` the resolved answers, `OPEN.md` what was deliberately left open.
 
+## Best result, and what could beat it
+
+**Best result.** This exercise produces a decision rather than a score, and its strongest outcome is
+the one it was built to reach honestly: **4 of 145 datasets are committable today, carrying 6.56T of
+a 16.8T seen-token budget** (15.372T of it unique), with grades of 14 B · 116 C · 15 X and nothing at
+A because of coverage rather than quality ([what it produces](#what-it-produces); the counts are in
+[`web/data.json`](web/data.json) under `sourcing` and `grades`). Its one head-to-head
+measurement is the Indic tokenizer tax on all 22 scheduled languages, where the best of the three
+tokenizers measured has a mean tax of ×1.66 against ×2.49 for the one the inherited-model path
+would lock in ([`docs/DECISIONS.md`](docs/DECISIONS.md#what-the-fork-now-costs-measured)).
+
+**Candidates that did or could do better.**
+
+- **The fork is priced, not chosen.** Training from scratch, extending an existing model's
+  vocabulary and continuing its training, or upcycling to a mixture of experts are all still open;
+  the stated way to decide is a head-to-head at ~2B scale on identical data
+  ([`docs/OPEN.md`](docs/OPEN.md#open--needs-a-decision)).
+- **The deduplicated Indic web has never been measured** — the pages carry 1.31T–2.62T from an
+  assumed 20–40% survival, and every budget that uses it inherits the assumption
+  ([what it cannot tell you](#what-it-cannot-tell-you)).
+- **Four domains have no supply.** Agriculture and health have no catalogued dataset at all, and
+  two more exist only inside an unseparated web slice ([`docs/OPEN.md`](docs/OPEN.md#open--needs-a-decision)).
+
+**The next hypothesis.** Deduplicating the catalogued Indic web corpora against each other will
+leave a survival share inside the assumed 20–40%; a measured share outside that band moves the
+committable total and every tier budget downstream of it, which is why it is the measurement worth
+making first.
+
 ## What it produces
 
 One interactive page — **thirteen chapters plus an appendix**, one per reader question — built from a

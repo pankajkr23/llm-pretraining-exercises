@@ -1,0 +1,196 @@
+{
+ "device": "mps",
+ "steps": 500,
+ "batch": 16,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "model": {
+  "vocab_size": 10000,
+  "context": 256,
+  "layers": 4,
+  "heads": 4,
+  "width": 256,
+  "seed": 0
+ },
+ "ceiling_assumed": 16.4,
+ "rungs": [
+  {
+   "fraction": 0.0625,
+   "unique_tokens": 210479,
+   "tokens_seen": 2048000,
+   "epochs": 9.730186859496673,
+   "bpb_mean": 2.6341118824197367,
+   "bpb_sd": 0.005199252951060754,
+   "per_seed": {
+    "0": 2.6370446771068474,
+    "1": 2.637182143289179,
+    "2": 2.6281088268631843
+   }
+  },
+  {
+   "fraction": 0.125,
+   "unique_tokens": 420961,
+   "tokens_seen": 2048000,
+   "epochs": 4.8650587584122995,
+   "bpb_mean": 2.621657698895454,
+   "bpb_sd": 0.011547576553864106,
+   "per_seed": {
+    "0": 2.624579576603098,
+    "1": 2.6314636805287717,
+    "2": 2.608929839554492
+   }
+  },
+  {
+   "fraction": 0.25,
+   "unique_tokens": 841925,
+   "tokens_seen": 2048000,
+   "epochs": 2.432520711464798,
+   "bpb_mean": 2.6024759438496257,
+   "bpb_sd": 0.0032310359553889287,
+   "per_seed": {
+    "0": 2.601432152651357,
+    "1": 2.606099849812351,
+    "2": 2.599895829085168
+   }
+  },
+  {
+   "fraction": 0.5,
+   "unique_tokens": 1683851,
+   "tokens_seen": 2048000,
+   "epochs": 1.2162596334236224,
+   "bpb_mean": 2.595244821837247,
+   "bpb_sd": 0.009655630831157332,
+   "per_seed": {
+    "0": 2.58931594553787,
+    "1": 2.606386516624562,
+    "2": 2.5900320033493083
+   }
+  },
+  {
+   "fraction": 1.0,
+   "unique_tokens": 3367704,
+   "tokens_seen": 2048000,
+   "epochs": 0.6081294555578519,
+   "bpb_mean": 2.5456935791058046,
+   "bpb_sd": 0.01023714661170071,
+   "per_seed": {
+    "0": 2.5371438177806267,
+    "1": 2.557037784821843,
+    "2": 2.5428991347149448
+   }
+  }
+ ],
+ "reading": {
+  "noise_bpb": 0.01155,
+  "reference_epochs": 0.61,
+  "rungs": [
+   {
+    "epochs": 9.73,
+    "unique_tokens": 210479,
+    "excess_bpb_pct": 3.473,
+    "beyond_noise": true
+   },
+   {
+    "epochs": 4.87,
+    "unique_tokens": 420961,
+    "excess_bpb_pct": 2.984,
+    "beyond_noise": true
+   },
+   {
+    "epochs": 2.43,
+    "unique_tokens": 841925,
+    "excess_bpb_pct": 2.231,
+    "beyond_noise": true
+   },
+   {
+    "epochs": 1.22,
+    "unique_tokens": 1683851,
+    "excess_bpb_pct": 1.946,
+    "beyond_noise": true
+   }
+  ],
+  "inversions": [],
+  "shape": "monotone across every rung: less re-reading, lower loss, no exceptions",
+  "verdict": "repetition measurably costs held-out loss at this scale",
+  "caveat": "Fixed compute, shrinking unique pool. This measures the price of re-reading in this regime; it cannot refute a constant fitted far above it."
+ },
+ "provenance": {
+  "config_fingerprint": "93541de406ac",
+  "settings": {
+   "config": {
+    "run_tokens": 2000000000000.0,
+    "model_params": 40000000000.0,
+    "indic_floor": 0.12,
+    "agentic_floor": 0.02,
+    "protected_ceiling": 0.2,
+    "anneal_share": 0.02,
+    "max_synthetic_share_of_indic": 0.5,
+    "warmup_band_tokens": 3000000000.0,
+    "opus_keep_fraction": 0.4,
+    "tokenizer_id": "s02-bpe-10000",
+    "proxy_params": 1000000000.0,
+    "proxy_tokens": 2000000000.0
+   },
+   "model": {
+    "vocab_size": 10000,
+    "context": 256,
+    "layers": 4,
+    "heads": 4,
+    "width": 256,
+    "seed": 0
+   },
+   "fractions": [
+    0.0625,
+    0.125,
+    0.25,
+    0.5,
+    1.0
+   ],
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "steps": 500,
+   "batch": 16,
+   "shares": {
+    "web": 0.32,
+    "code": 0.28,
+    "indic": 0.18,
+    "stem": 0.12,
+    "reasoning": 0.08,
+    "agentic": 0.02,
+    "long_context": 0.0
+   }
+  },
+  "git_sha": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+  "code_digest": "sha256:77e842088d70831716d7f9a5683809e643aefa05075fcd7fea7184366829a826",
+  "corpus_digest": "sha256:a5601e11486843c75bdd38949e75c9513db4bd3dd650cd3510d296cd801273e9",
+  "corpus_lane_digests": {
+   "web": "sha256:775d8d6797d84dbc212035371024ce23543eb95aea53a7ea0045564967349e1b",
+   "indic": "sha256:b1aad99f2f4c39bebcc086bd38b68195e2a970db61df4c52b86dbecff32ee016",
+   "code": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e",
+   "stem": "sha256:3c2cfabe62eb92ea92dc300cfac69483b39996d1ba6bdf5780ce21c9829cf5ed",
+   "reasoning": "sha256:a79cd6788a64cbe94406f975ea0a9f3498118e89e02e7671f8353c2bbce00003",
+   "agentic": "sha256:e8435791019615a62f5ad3f275d26025317fc034701552799c810fd8936471f3"
+  },
+  "code_lane": {
+   "commit": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+   "digest": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e"
+  },
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "numpy": "2.5.2",
+   "platform": "macOS-27.0.1-arm64-arm-64bit",
+   "machine": "arm64",
+   "omp_num_threads": "unset",
+   "device": "mps:apple-silicon",
+   "torch": "2.13.0",
+   "torch_threads": 12
+  }
+ }
+}

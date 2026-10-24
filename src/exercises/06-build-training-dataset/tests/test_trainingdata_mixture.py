@@ -171,3 +171,149 @@ def test_realised_shares_of_nothing_is_empty_rather_than_a_divide_by_zero() -> N
     """A run that consumed nothing has no shares, which is different from having equal ones."""
     assert mixture.realised_shares({}) == {}
     assert mixture.realised_shares({"web": 0}) == {}
+
+
+# --- which corpus the demo's mixture row describes -----------------------------------------------
+
+
+def _shard(shard_id: str, lane: str, tokens: int, split: str = "train"):
+    """An admitted manifest with only what `corpus_report_for` reads mattering."""
+    from trainingdata import manifest
+
+    return manifest.ShardManifest(
+        shard_id=shard_id,
+        content_hash="0" * 16,
+        token_count=tokens,
+        dtype="uint16",
+        source="test",
+        lane=lane,
+        language="en",
+        licence="cc-by-4.0",
+        provenance_tier="test",
+        tokenizer_id="test",
+        tokenizer_sha256="sha256:" + "0" * 64,
+        cleaning_hash="c",
+        dedup_hash="d",
+        pii_hash="p",
+        eval_overlap_hash="e",
+        split=split,
+    )
+
+
+def _report(tmp_path, lanes: dict[str, tuple[list[str], list[str]]]):
+    """A build report listing these shard ids, marked so a test can tell it was the one used."""
+    import json
+
+    path = tmp_path / "corpus_build.json"
+    path.write_text(
+        json.dumps(
+            {
+                "run_needs_tokens": 10,
+                "mixture": {"compliant": True, "floors_held": True, "marker": "tracked"},
+                "lanes": {
+                    lane: {"shard_ids": train, "heldout_shard_ids": heldout}
+                    for lane, (train, heldout) in lanes.items()
+                },
+            }
+        )
+    )
+    return path
+
+
+def test_the_build_report_is_used_when_it_lists_exactly_the_shards_opened(tmp_path) -> None:
+    """The control: the default demo reads the build the report describes, and must use it."""
+    from trainingdata import evidence
+
+    path = _report(tmp_path, {"web": (["a", "b"], ["h"]), "indic": (["c"], [])})
+    opened = [_shard("a", "web", 5), _shard("b", "web", 5), _shard("c", "indic", 5)]
+    opened.append(_shard("h", "heldout", 5, split="heldout"))
+
+    report, why = evidence.corpus_report_for(opened, path)
+    assert why is None
+    assert report["mixture"]["marker"] == "tracked"
+
+
+def test_a_report_about_a_different_build_is_not_borrowed(tmp_path) -> None:
+    """**O9.** A two-lane stand-in corpus must not inherit the six-lane corpus's verdict.
+
+    Before the fix the demo loaded the tracked report whatever `--shards` said and published its
+    `compliant` and `floors_held` as the run's own. Here the report claims both; the shards opened
+    hold only web and indic, so the agentic floor cannot hold and the recomputed figure says so.
+    """
+    from trainingdata import evidence
+
+    path = _report(tmp_path, {"web": (["a", "b"], []), "agentic": (["z"], [])})
+    opened = [_shard("a", "web", 600), _shard("b", "indic", 400)]
+
+    report, why = evidence.corpus_report_for(opened, path)
+    assert why and "different build" in why
+    assert "marker" not in report["mixture"], "the tracked report was used for other shards"
+    assert report["recomputed_from_opened_shards"] is True
+    assert report["mixture"]["consumed"] == {"web": 600, "indic": 400}
+    assert report["mixture"]["floors_held"] is False
+    assert report["mixture"]["lanes"]["agentic"]["floor_held"] is False
+    assert report["mixture"]["compliant"] is False
+
+
+def test_a_subset_of_the_reported_shards_is_still_a_different_build(tmp_path) -> None:
+    """Equality, not containment: a run over half the corpus is not the corpus."""
+    from trainingdata import evidence
+
+    path = _report(tmp_path, {"web": (["a", "b"], [])})
+    report, why = evidence.corpus_report_for([_shard("a", "web", 5)], path)
+    assert why is not None
+    assert "marker" not in report["mixture"]
+
+
+def test_refused_shards_are_not_counted_in_the_recomputed_mixture(tmp_path) -> None:
+    """A shard the gate refuses is never read, so it is no part of the mixture."""
+    from trainingdata import evidence
+
+    opened = [_shard("a", "web", 5), _shard("h", "heldout", 1000, split="heldout")]
+    report, why = evidence.corpus_report_for(opened, tmp_path / "absent.json")
+    assert why and "no absent.json" in why
+    assert report["mixture"]["consumed"] == {"web": 5}
+
+
+def _mixture_row(corpus_report: dict):
+    """The mixture row `build_rows` writes over the tracked bundle's own ledger.
+
+    Returns:
+        The row, or skips when this checkout has no bundle.
+    """
+    from pathlib import Path
+
+    from trainingdata import evidence, ledger
+
+    bundle = Path(__file__).resolve().parents[1] / "submission_artifacts" / "ledger"
+    if not bundle.is_dir():
+        pytest.skip("no bundle on this checkout; run run_demo.py")
+    events = ledger.read_branch(bundle, "main")
+    rows = evidence.build_rows(events, [], [], corpus_report=corpus_report)
+    return next(row for row in rows if row.requirement == "mixture_compliance")
+
+
+def test_a_recomputed_corpus_figure_is_named_as_such_and_can_fail_the_row() -> None:
+    """The row must name the source it used, and a breached floor there must turn it unmet."""
+    row = _mixture_row(
+        {
+            "recomputed_from_opened_shards": True,
+            "run_needs_tokens": Config().total_tokens,
+            "mixture": {"compliant": False, "floors_held": False},
+        }
+    )
+    assert "recomputed from the shards the run opened" in row.evidence
+    assert "results/corpus_build.json" not in row.evidence
+    assert row.status == "unmet"
+
+
+def test_the_tracked_report_is_still_cited_when_it_was_the_one_used() -> None:
+    """The twin: the default run reads the build the report describes, and says so."""
+    row = _mixture_row(
+        {
+            "run_needs_tokens": Config().total_tokens,
+            "mixture": {"compliant": True, "floors_held": True},
+        }
+    )
+    assert "results/corpus_build.json" in row.evidence
+    assert row.status == "met"
