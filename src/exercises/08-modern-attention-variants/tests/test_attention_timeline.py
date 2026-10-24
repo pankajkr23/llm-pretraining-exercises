@@ -1,8 +1,8 @@
 """What the order shows, and whether it shows what the requirements say it shows.
 
-Question 2 asks what the timeline reveals that a list cannot. The requirements supplies an answer —
-exactness, then memory, then length, then memory again — and the temptation is to print that
-sentence over a chart and call it a finding.
+Question 2 asks what the timeline reveals that a list cannot. The requirements offer an answer —
+a move from exactness to memory, then length, then back to memory — and the temptation is to print
+that claim over a chart and call it a finding.
 
 These tests exist so the exercise cannot do that. `pressure_by_period` counts what each window
 actually contains, and `Period.dominant` returns `None` on a tie rather than picking a winner. If

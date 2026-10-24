@@ -182,7 +182,7 @@
         "url": "https://arxiv.org/abs/1706.03762",
         "quoted_date": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verified_on": "2026-09-01",
-        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course material dates this to 2018. It is June 2017."
       },
       "what_existed": "Attention worked, but it was bolted onto a recurrent network that still had to process tokens one at a time.",
       "problem": "Recurrence made training sequential, so it could not use the parallelism the hardware had.",

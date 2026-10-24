@@ -38,6 +38,17 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   "the notebook is not tracked" prose, and 06's notebook now asserting its producer's exit code.
   Notebook 14's full mode starts from the same exercise-13 run as the runner, rather than a
   hard-coded path. Published numbers and verdicts are unchanged.
+- **No tracked file quotes the course material any more.** `AGENTS.md` has always said to state what
+  we decided in our own words and never to quote the source, but short attributed quotes — too
+  short for the automated quoting check to catch — sat in 04, 05, 06, 07 and 08: in READMEs,
+  `SPEC.md`, decision records, docstrings, three test docstrings, 07's page table and a comment on
+  06's page. Each is restated in our own words with its meaning kept: the corrections 08 makes to
+  the course material (the Transformer's date, the two DroPE papers, the 1 TB figure) all stand, and
+  05 still states the course's warning that a small model is a poor proxy. 05's tokenizer section no
+  longer names a file from the reference solution. Descriptions of class discussion and personal
+  references to the instructor are gone too; the root README's Credits section is unchanged. The
+  graded phrases 08's coverage list must match stay verbatim, as `FUNCTIONAL_OVERLAP` records.
+  Earlier commits still contain the old wording.
 
 ## [0.18.0] — 2026-10-24
 

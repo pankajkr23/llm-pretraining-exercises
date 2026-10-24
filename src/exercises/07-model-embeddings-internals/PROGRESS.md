@@ -14,7 +14,7 @@ records *"I tested this link in an incognito window — it's publicly accessible
 sits on **one public URL that resolves for a logged-out stranger**. A correct file on a local branch
 scores zero. Unlike Exercise 06 there is no second scoring surface.
 
-**The requirements say the five problems are separate:** *"each are separate, don't try and mix them."*
+**The requirements treat the five problems as separate, to be answered one at a time.**
 Every result below is therefore labelled with the problem it answers, and anything spanning two is
 labelled as spanning two.
 

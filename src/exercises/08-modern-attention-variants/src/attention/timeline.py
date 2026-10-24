@@ -1,15 +1,9 @@
 """What falls out of the order, computed rather than asserted.
 
 Question 2 of the requirements asks what the timeline actually shows — what becomes visible once the
-mechanisms are in date order that a list cannot show. The requirements supplies its own answer, a
-claimed
-arc:
-
-    exactness, then memory, then length, then memory again
-
-and, spelled out at more length in the reference material, as a longer chain running from exact
-global attention through cheaper decoding memory, better position handling and longer contexts, to
-recurrent state and sparsity returning and compression growing more aggressive.
+mechanisms are in date order that a list cannot show. The requirements offer their own answer, a
+claimed arc: the field moved from exactness to memory, then to length, and back to memory again —
+`compute → cache → position → cache` in this module's labels.
 
 **That claim is testable, so this module tests it rather than repeating it.** `pressure_by_period`
 groups the catalogue into windows and reports which bill each window is dominated by. If the arc is
@@ -122,7 +116,7 @@ def bills_addressed(mechanisms: list[Mechanism]) -> dict[str, int]:
     return dict(Counter(m.bill for m in mechanisms))
 
 
-#: The instructor's arc, in this module's own labels. "Exactness" is the compute bill (exact global
+#: The claimed arc, in this module's own labels. "Exactness" is the compute bill (exact global
 #: attention), "memory" is the cache bill, "length" is position. Written down so the comparison is
 #: against a stated claim rather than a remembered one.
 CLAIMED_ARC: tuple[str, ...] = ("compute", "cache", "position", "cache")

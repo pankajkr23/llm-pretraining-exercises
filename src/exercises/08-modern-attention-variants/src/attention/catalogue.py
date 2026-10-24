@@ -4,8 +4,8 @@
 future page renders comes from there, so the page cannot disagree with the catalogue and the
 catalogue cannot disagree with the sources it cites.
 
-**The shape is the instructor's, not ours.** The requirements specifies the narrative each entry
-must carry:
+**The shape is the requirements', not ours.** They specify the narrative each entry must
+carry:
 
     what came before -> the problem it ran into -> the mechanism introduced
     -> what that fixed -> what it cost in exchange
@@ -14,10 +14,10 @@ and three questions each entry has to answer: what it buys, what it gives up, an
 actually the right choice. Those are fields below, not prose conventions, because a field can be
 checked for emptiness and a paragraph cannot.
 
-**`MANDATED` is the requirements' own list, quoted.** The instructor said he will score zero for a
-missing mechanism, so "did we cover everything" is a test rather than a memory. Keep the wording as
-he wrote it; the mapping from his phrase to our key lives beside it and is the part allowed to
-change.
+**`MANDATED` is the requirements' own list, quoted.** These phrases are graded identifiers and
+are recorded in `FUNCTIONAL_OVERLAP`. A missing mechanism scores zero, so "did we cover everything"
+is a test rather than a memory. Keep each phrase exactly as the list gives it; the mapping from a
+phrase to our key lives beside it and is the part allowed to change.
 """
 
 import json
@@ -32,8 +32,8 @@ CATALOGUE = EXERCISE / "results" / "mechanisms.json"
 
 #: The coverage list, verbatim from the requirements text, mapped to catalogue keys.
 #:
-#: Left side is the instructor's phrase exactly as written; right side is every key that phrase
-#: requires. Splitting them means a rename on our side can never quietly drop one of his items:
+#: Left side is the list's phrase exactly as written; right side is every key that phrase
+#: requires. Splitting them means a rename on our side can never quietly drop a required item:
 #: the test reads the left.
 #:
 #: **The right side is a tuple because two of his phrases name two mechanisms each**, and that is
@@ -228,7 +228,7 @@ class Mechanism:
         gives_up: One clause: what you pay.
         when_to_choose: The workload it is right for.
         taught_in_source: Whether Exercise 08 covered it, or whether we sourced it from outside.
-        bonus: True for a mechanism the instructor did not list at all.
+        bonus: True for a mechanism the required list does not name at all.
         shipped_in: Models that use it, each with the sentence from its own paper.
             Empty where no paper we read claims it, which is itself a finding.
     """
@@ -351,7 +351,7 @@ def _quote_evidences(value: object, quote: str) -> bool:
 
 
 def missing_mandated(mechanisms: list[Mechanism]) -> list[str]:
-    """Which of the instructor's required mechanisms are absent.
+    """Which of the required mechanisms are absent.
 
     Returns:
         His phrases, not our keys -- so a failure reads in the words he graded against.
