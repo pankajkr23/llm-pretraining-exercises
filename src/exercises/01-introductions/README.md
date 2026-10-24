@@ -19,6 +19,7 @@ is one you have to take on trust.
 | **Meeting this for the first time** | [The four proofs](#the-four-proofs) — one row each, plain language | [What each proof actually runs](#what-each-proof-actually-runs) for the model and data behind it |
 | **Changing the code** | [Layout](#layout) and [Preview locally](#preview-locally) | [Tests](#tests) — what is guarded, and what is not |
 | **Deciding whether to believe it** | [What each proof actually runs](#what-each-proof-actually-runs) — every architecture and dataset stated | [What these demos cannot show](#what-these-demos-cannot-show) |
+| **Running it yourself** | [`notebooks/01-introductions.ipynb`](../../../notebooks/01-introductions.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/01-introductions.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
 ## The four proofs
 
@@ -91,13 +92,19 @@ and what you should actually watch for. Read this before deciding whether a demo
 web/
   index.html          # landing page (hero + four cards)
   s1.html … s4.html   # one self-contained proof each (inline CSS + JS, no deps)
-tests/                # bundle-integrity smoke test (run via repo-root pytest)
+src/foundations/      # the four ideas as small, seeded torch experiments the notebook imports
+  config.py           #   one frozen dataclass per experiment
+  data.py             #   rings, blobs and the toy grammar
+  models.py · train.py · experiments.py
+tests/                # bundle-integrity, browser render, and the `foundations` claims
+tools/build_notebook.py  # writes notebooks/01-introductions.ipynb (tracked; rebuild, never hand-edit)
 package.json          # deactivated Netlify scripts, retained pending decommission
-pyproject.toml        # workspace member; no Python dependencies
+pyproject.toml        # workspace member; torch is the `train` extra
 ```
 
-There is no build step and no Python code. `pyproject.toml` exists so the folder is a workspace
-member and its tests are collected from the repository root.
+The pages have no build step and no Python in them. The `foundations` package is separate: it
+holds the same four ideas as runnable experiments for the notebook, so the notebook imports tested
+code instead of carrying its own. It does not feed the pages, and the pages do not cite it.
 
 ## Preview locally
 

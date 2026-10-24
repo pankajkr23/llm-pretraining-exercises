@@ -27,7 +27,7 @@ removed and why, so the pipeline can be audited rather than trusted.
 | **7 · Robustness** | rendering no longer crashes on a checkout without FLORES | **done** — `1f63521`, 2026-08-18 |
 | **8 · Narrow screens** | the page stopped scrolling sideways at 320px | **done** — `1969e41`, `c1cd6a8`, 2026-08-19/20 |
 | **9 · Documents** | the README becomes the end-to-end guide the root routes to | **done** — `4b9625c`, `be9b24b`, 2026-08-24 |
-| **10 · Notebook** | a builder for the notebook, then untracked with the rest | **done** — `e36f162`, `76bb0cb`, `db9b288`, 2026-08-24. Both **local only** |
+| **10 · Notebook** | a builder for the notebook, then untracked with the rest | **done** — `e36f162`, `76bb0cb`, `db9b288`, 2026-08-24. Both **tracked** since 2026-10-24, rebuilt as a learning notebook that runs the package |
 | **11 · Confidentiality** | quoted passages paraphrased; source vocabulary removed; identifiers renamed | **done** — `f5a93b0`, `0fd6556`, `09c9619`, `535ab95`, 2026-09-02 |
 | **12 · Retro-fix** | orphan tokens, the shared layer, white-on-bright text, the rail, prose measure, permalinks | **done** — `40e01cd` (#99), `6207fea` (#101), `92104b5` (#120), `a6b8a5e` (#109), `0ccb016` (#117), `997d277` (#127), 2026-09-03/04 |
 | **13 · Submit** | PK's action | **no record** — see *Submission* below |

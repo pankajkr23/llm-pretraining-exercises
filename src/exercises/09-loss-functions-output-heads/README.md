@@ -16,6 +16,9 @@ correct one is still at **4.14**. Nothing raises. The curve looks like a triumph
 - **Deciding whether to believe it** — the numbers are in **[RESULTS.md](RESULTS.md)**, generated
   from `results/*.json` and never typed by hand. Then read
   [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/09-loss-functions-output-heads.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 

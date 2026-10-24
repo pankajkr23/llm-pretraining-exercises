@@ -35,6 +35,9 @@ construct.
   [The attention lab](#the-attention-lab). Every mechanism on the timeline is implemented there in
   PyTorch, and [`docs/ATTENTION_LAB.md`](docs/ATTENTION_LAB.md) shows, per variant, the code it
   changes, every number it is built with and where each number came from.
+- **Running it yourself** — [`notebooks/08-modern-attention-variants.ipynb`](../../../notebooks/08-modern-attention-variants.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/08-modern-attention-variants.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What the two bills are
 

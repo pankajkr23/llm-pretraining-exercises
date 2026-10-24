@@ -30,6 +30,11 @@ Component-specific notes for this exercise. Repo-wide conventions: root `AGENTS.
   whether the maths is right, `test_introductions_render.py` for whether the reader sees it.
 - **`web/` is served at `/01-introductions/`** by the repo-wide Vercel project (`deploy/vercel/build.sh` → `public/`). Local preview: `python3 -m http.server` inside `web/`.
 - Deploy: PR previews auto (Vercel Git integration); production is on-demand via the `Deploy to production` workflow (`.github/workflows/deploy.yml`). Netlify config is deactivated in `deploy/netlify/` — deploy scripts renamed `deploy:netlify*`, pending decommission.
+- **`src/foundations/` is for the notebook, never the pages.** Four seeded torch experiments
+  (`experiments.nonlinearity`, `depth`, `embeddings`, `data_size`) that
+  `notebooks/01-introductions.ipynb` imports. Torch is the `train` extra, so
+  `tests/test_foundations_*.py` gate on it with a module-level `importorskip` and run in CI's
+  `train` job; both are in `OPTIONAL_DEPENDENCY_GATES`.
 - **`tests/` holds two suites, not one.** `test_web_bundle.py` (4 tests) is the bundle-integrity
   smoke test — index links every proof, each proof is self-contained. `test_introductions_render.py`
   (109 tests, integration-marked) drives the real pages in Chromium and asserts what a reader sees;

@@ -27,7 +27,7 @@ something the reader watches happen, not a figure quoted at them.
 | **4 · Landing page rework** | the site root rewritten and the project copy refined — the page already existed | **done** — `7f7b821`, 2026-07-10 |
 | **5 · Design system** | every page onto one Apple-style system, then shared tokens site-wide | **done** — `2a5605e` 2026-07-10, `6969f92` 2026-08-05 |
 | **6 · Documents** | README as the guide rather than the map; two stale claims fixed | **done** — `4b9625c`, `7e1a6b0`, 2026-08-24 |
-| **7 · Notebook** | a Colab notebook and a builder for it | **done** — `7f3e352`, 2026-08-24. Both **local only**; see below |
+| **7 · Notebook** | a Colab notebook and a builder for it | **done** — `7f3e352`, 2026-08-24; rebuilt 2026-10-24 on the new `foundations` package. Both **tracked**; see below |
 | **8 · Confidentiality** | source vocabulary removed from tracked prose | **done** — `09c9619`, `535ab95`, 2026-09-02 |
 | **9 · Retro-fix** | dark themes, a page that threw before its first statement, the tab contract | **done** — `40e01cd` (#99), `5232586` (#121), `5835f31` (#114), 2026-09-03/04 |
 | **10 · Submit** | PK's action | **no record** — see *Submission* below |
@@ -38,16 +38,19 @@ anonymously at `https://llm-pretraining-demos.vercel.app/01-introductions/`.
 
 ## What is here, and what is deliberately not
 
-Five pages — `web/index.html` plus `s1.html` through `s4.html`, one per proof. **There is no Python
-package.** The proofs are hand-written browser JavaScript, and rebuilding them in numpy would be a
-second implementation that drifts from the site and then teaches what the site does not do. The
-tests are Python, and they check the shipped pages rather than a parallel model.
+Five pages — `web/index.html` plus `s1.html` through `s4.html`, one per proof. The proofs are
+hand-written browser JavaScript, and the tests check the shipped pages rather than a parallel model.
 
-`notebooks/S01-introductions.ipynb` and `tools/build_notebook.py` both exist on a working checkout
-and **neither has ever been tracked on any ref** — verified with `git log --all`. That is the
-convention, not an omission: a notebook is course material, and a builder is the same material in
-another form. The notebook embeds the shipped pages and runs this exercise's own test suite rather
-than re-implementing the proofs.
+**Since 2026-10-24 there is also a Python package, `foundations`**, and it exists for the notebook,
+not the pages. The first notebook embedded the pages and ran this exercise's tests — a tour of the
+site, with nothing to run or vary. PK asked for notebooks that run each exercise's own code, and
+code in notebook cells is invisible to every test, so the four ideas are small seeded torch
+experiments in the package, with tests (`tests/test_foundations_*.py`), and
+[`notebooks/01-introductions.ipynb`](../../../notebooks/01-introductions.ipynb) imports them. Both
+the notebook and `tools/build_notebook.py` are tracked. One result in it went against the
+expectation written before it ran: at a fixed budget of about 300 parameters the deeper network
+did **not** beat the shallow one — the verdict is inside the seed spread — and the notebook prints
+that verdict from the data rather than the expectation.
 
 ## What this exercise cannot establish
 

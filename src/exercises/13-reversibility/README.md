@@ -17,6 +17,9 @@ The same results, drawn and argued for a general reader, are
   The whole technique is one autograd function in `reversible/stack.py`.
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence) for how each number was
   measured, then [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/13-reversibility.ipynb`](../../../notebooks/13-reversibility.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/13-reversibility.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 
@@ -95,7 +98,7 @@ uv run python src/exercises/13-reversibility/tools/run_experiments.py --preset l
 
 ### Or run it as a notebook
 
-`notebooks/S13-reversibility.ipynb` builds the three rules, checks on a small model that rebuilding in
+[`notebooks/13-reversibility.ipynb`](../../../notebooks/13-reversibility.ipynb) builds the three rules, checks on a small model that rebuilding in
 backward gives exactly the gradients that storing does, measures the memory against depth, runs the
 three experiments at the `LITE` scale, and reads the published results.
 

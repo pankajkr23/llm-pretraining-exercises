@@ -100,6 +100,9 @@ language, each marked with where its evidence came from and what would refute it
   [What this cannot establish](#what-this-cannot-establish). Several claims here contradict things
   I wrote earlier in this exercise; each correction is stated where the claim was made, and
   `CLAUDE.md` keeps the full list so it is not re-derived.
+- **Running it yourself** — [`notebooks/07-model-embeddings-internals.ipynb`](../../../notebooks/07-model-embeddings-internals.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/07-model-embeddings-internals.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ---
 

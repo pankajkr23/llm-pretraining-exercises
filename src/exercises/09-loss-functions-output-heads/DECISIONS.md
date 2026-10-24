@@ -6,6 +6,12 @@ Why this exercise is shaped the way it is, and what would overturn each choice.
 
 ## D1 · The notebook stays local; `results/` is tracked
 
+**Superseded 2026-10-24.** Every topic notebook is now tracked, this one included, at
+[`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb),
+after each was rebuilt with our own prose and the confidentiality gates learned to read notebook
+cells. The reasoning below is kept as it was decided; `results/` remains the tracked evidence the
+documents render, and the notebook is now in addition to it rather than instead of it.
+
 **Decision.** This exercise does not track its Colab notebook. It tracks `results/harness.json`,
 `results/training.json` and `results/sensitivity.json`, and a `RESULTS.md` generated from them.
 

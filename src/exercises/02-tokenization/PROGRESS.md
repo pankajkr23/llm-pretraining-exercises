@@ -31,7 +31,7 @@ beat it.** A harness that cannot re-derive the number it is measured against is 
 | **9 · The explainer** | its own page, linked from the tool | **done** — `70f66d4`, 2026-08-07 |
 | **10 · Browser tests** | the widget loaded in a browser, not merely parsed | **done** — `14d5d78`, 2026-08-06 |
 | **11 · Paths and documents** | re-fetch writes where the loader reads; diagrams; module lists | **done** — `432e613`, `377b5a2`, `64c9967`, 2026-08-09 |
-| **12 · Notebook** | a Colab notebook and a builder | **done** — `7f3e352`, 2026-08-24. Both **local only** |
+| **12 · Notebook** | a Colab notebook and a builder | **done** — `7f3e352`, 2026-08-24. Both **tracked** since 2026-10-24, rebuilt as a learning notebook that runs the package |
 | **13 · Confidentiality** | quoted passages paraphrased; source vocabulary removed | **done** — `0fd6556`, `09c9619`, `535ab95`, 2026-09-02 |
 | **14 · Retro-fix** | link colours, the tab contract, unreadable segmented options | **done** — `dbf9783` (#131), `608dfdf` (#115), `1d80e9c` (#130), 2026-09-04 |
 | **15 · Attribution** | a `NOTICE` for the CC BY-SA corpus this exercise redistributes | **in review** — #150, and it should have existed from stage 1 |

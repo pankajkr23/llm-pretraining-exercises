@@ -16,6 +16,9 @@ conversion, the router's balance and the cost drawn from the same files.
   The conversion is one class, `moe.layer.MoE`.
 - **Deciding whether to believe it** — go to [The evidence](#the-evidence), then
   [What this cannot establish](#what-this-cannot-establish).
+- **Running it yourself** — [`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) ([open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/14-moe.ipynb)) runs this exercise's own pipeline step by step,
+  with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
+  among the fourteen.
 
 ## What this is
 
@@ -78,7 +81,7 @@ uv run python src/exercises/14-moe/tools/run_experiments.py --preset lite    # s
 
 ### Or run it as a notebook
 
-`notebooks/S14-moe.ipynb` trains a small dense model, converts it, checks the conversion changes
+[`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) trains a small dense model, converts it, checks the conversion changes
 nothing, watches the router balance itself, and continues the MoE against the dense model, plotting
 both curves — then reads the published results.
 

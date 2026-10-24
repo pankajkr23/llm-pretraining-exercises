@@ -2066,4 +2066,22 @@ predates the harness — so it is logged as what it was.
                           standards snapshotted at v0.17.0 (8/8). This PR corrects #202's comment
                           and changelog entry, which blamed the CLI. The pin stays.
                           #203 opened
+
+2026-10-24  notebooks     PK: track every notebook, clean, renamed NN-<exercise>, linked from each
+                          README and into one path, every one executed. MEASURED BEFORE TRACKING:
+                          the old 01-07 notebooks carried banned words, two named confidential
+                          sources, three held verbatim runs (3/11/1) — and the quoting check could
+                          not read .ipynb at all. 01-07 rewritten by seven parallel agents from
+                          scratch (01 gained a tested `foundations` package); 08-14 renamed and
+                          linked; every notebook re-executed. RUNNING THEM FOUND REAL DEFECTS no
+                          test had: 09 and the generator baked an absolute path; 13 trained at the
+                          exact edge of its memory search and capped its own kernel — and 13's OWN
+                          lite pipeline fails on MPS in train.evaluate under the 1 GiB cap (package
+                          defect, NOT fixed here: the results pin the code digest; the notebook runs
+                          that stage on CPU under MPS and says so); 08 and 12 offered knobs nothing
+                          read; 07 defaulted to a gitignored corpus; 06's producer reports the
+                          mixture met from the fetched corpus's bundle even on the tracked one
+                          (verify.py catches it). Builders and notebooks tracked; guard, backup and
+                          tripwire classes retired for them; quote check + receipt read .ipynb.
+                          Install of builders/notebooks is PK's script (guard: no escape hatch).
 ```

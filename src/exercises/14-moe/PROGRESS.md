@@ -19,7 +19,7 @@ against this yet; that is PK's, before submitting.
 | O2 | **Upcycling** | **done** | Every expert a copy of the trained feed-forward layer, top-k weights renormalised in the model's dtype; the converted model matches the dense one to 1e-12 in float64 (`test_moe_layer.py`). |
 | O3 | **Routing and balancing** | **done** | Float32 router at a tenth of the usual scale; softmax or sigmoid chosen by a short trial; selection bias balancing with no auxiliary loss. |
 | O4 | **Published run** | **done** | Commit `6b222e4`, Apple M4 GPU, 19:28–19:54 with no watchdog pause, from exercise 13's published baseline. A test ties the bundle to 13's committed results by digest; `RESULTS.md` is its render; the training log is `submission_artifacts/run.log`. |
-| O5 | **Notebook** | **staged — PK installs** | `artifacts/staged/build_notebook.py`; the guard forbids agents writing `tools/build_notebook.py`. Executed at `LITE` after the published run; the executed copy sits beside the builder. |
+| O5 | **Notebook** | **done** | Installed into `tools/build_notebook.py` and tracked, with the notebook, since 2026-10-24; `tests/test_notebooks_run.py` executes it at `LITE`. |
 | O6 | **Submission** | **PK's** | The README link, once merged and public. |
 
 ---
