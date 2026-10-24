@@ -152,3 +152,69 @@ def test_the_dense_token_count_is_read_from_exercise_13(tmp_path: Path) -> None:
     assert dense_tokens_trained(LITE, None) == LITE.dense_tokens
     with pytest.raises(FileNotFoundError):
         dense_tokens_trained(FULL, tmp_path / "absent.json")
+
+
+def _two_runs_of_13(tmp_path: Path, tool, *, published: bool, rerun: bool) -> Path:
+    """Exercise 13's layout in miniature: a published run and one dated re-run, each optional."""
+    results = tmp_path / "13" / "results"
+    checkpoints = tmp_path / "13" / "checkpoints"
+    (results / "reruns" / "2026-10-24").mkdir(parents=True)
+    if published:
+        checkpoints.mkdir(parents=True, exist_ok=True)
+        (checkpoints / "baseline-full.pt").write_bytes(b"published")
+    if rerun:
+        (checkpoints / "reruns" / "2026-10-24").mkdir(parents=True)
+        (checkpoints / "reruns" / "2026-10-24" / "baseline-full.pt").write_bytes(b"rerun")
+    tool.DENSE_RESULTS = results
+    tool.DENSE_CHECKPOINTS = checkpoints
+    return results
+
+
+def test_full_finds_exercise_13s_rerun_checkpoint_on_a_clone_that_only_ran_the_rerun(
+    tmp_path,
+) -> None:
+    """Following the documented order on a fresh clone leaves only a re-run checkpoint. 14 looked
+    only for the published one, so the documented order could never succeed."""
+    from moe.config import FULL
+
+    tool = _load("run_experiments")
+    results = _two_runs_of_13(tmp_path, tool, published=False, rerun=True)
+    checkpoint, dense_results = tool.dense_run(FULL)
+    assert checkpoint.read_bytes() == b"rerun"
+    assert dense_results == results / "reruns" / "2026-10-24", (
+        "the rate and token count must come from the same 13 run as the weights"
+    )
+
+
+def test_the_published_checkpoint_wins_when_it_is_present(tmp_path) -> None:
+    from moe.config import FULL
+
+    tool = _load("run_experiments")
+    results = _two_runs_of_13(tmp_path, tool, published=True, rerun=True)
+    checkpoint, dense_results = tool.dense_run(FULL)
+    assert checkpoint.read_bytes() == b"published"
+    assert dense_results == results
+    chosen, chosen_results = tool.dense_run(FULL, results / "reruns" / "2026-10-24")
+    assert chosen.read_bytes() == b"rerun" and chosen_results.name == "2026-10-24"
+
+
+def test_a_missing_checkpoint_is_refused_before_the_log_is_touched(tmp_path) -> None:
+    """14 used to delete the tracked log first and only then find it could not start."""
+    tool = _load("run_experiments")
+    _two_runs_of_13(tmp_path, tool, published=False, rerun=False)
+    log = tmp_path / "run.log"
+    log.write_text("the previous run's log\n", encoding="utf-8")
+    with pytest.raises(SystemExit, match="refused: exercise 13's baseline"):
+        tool.main(
+            [
+                "--preset",
+                "full",
+                "--device",
+                "cpu",
+                "--out",
+                str(tmp_path / "out"),
+                "--log",
+                str(log),
+            ]
+        )
+    assert log.read_text(encoding="utf-8") == "the previous run's log\n"

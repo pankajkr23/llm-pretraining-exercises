@@ -36,7 +36,15 @@ a clone by the same rule that put the arm comparison here.
 
     uv run python .../tools/publish_rerun.py --bundle artifacts/rerun-cpu.json
     uv run python .../tools/publish_rerun.py --measurement artifacts/unk_confound.json
-    uv run python .../tools/publish_rerun.py --manifest-only     # rebuild today's set's index
+    uv run python .../tools/publish_rerun.py --manifest-only     # rebuild results/MANIFEST.md
+    uv run python .../tools/publish_rerun.py --manifest-only --date 2026-10-24   # one dated set's
+
+**`--manifest-only` rebuilds an index; it never creates a set.** It used to resolve today's dated
+directory first and create it, so on any day without a publish the documented command left an empty
+`results/reruns/<today>/` holding a manifest of nothing, and the historical `results/MANIFEST.md`
+it claimed to rebuild was never touched. Without `--date` it now rebuilds the historical index,
+which the bundles beside it reproduce byte for byte; with `--date` it rebuilds that set's index and
+refuses a date with no set.
 """
 
 import argparse
@@ -47,7 +55,10 @@ from pathlib import Path
 
 from embeddings.experiment import EXERCISE
 
-RERUNS = EXERCISE / "results" / "reruns"
+RESULTS = EXERCISE / "results"
+"""The historical record. This tool writes only its index, and only when asked to rebuild it."""
+
+RERUNS = RESULTS / "reruns"
 """Where every publish lands, one directory per date. Never the historical `results/` itself."""
 
 
@@ -376,8 +387,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--name", default="rerun.json", help="what to call it in the dated set")
     parser.add_argument(
         "--date",
-        default=datetime.date.today().isoformat(),
-        help="the dated set under results/reruns/ to publish into (YYYY-MM-DD, default today)",
+        default=None,
+        help="the dated set under results/reruns/ (YYYY-MM-DD). A publish defaults to today; "
+        "--manifest-only without it rebuilds the historical results/MANIFEST.md",
     )
     parser.add_argument("--manifest-only", action="store_true")
     parser.add_argument(
@@ -385,7 +397,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    results = destination(args.date)
+    if args.manifest_only and not (args.bundle or args.measurement):
+        return rebuild_manifest(args.date)
+    results = destination(args.date or datetime.date.today().isoformat())
     if args.measurement:
         source = Path(args.measurement)
         if not source.is_absolute():
@@ -416,7 +430,26 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     manifest = results / "MANIFEST.md"
-    manifest.write_text(render_manifest(results, args.date), encoding="utf-8")
+    manifest.write_text(render_manifest(results, results.name), encoding="utf-8")
+    print(f"-> {manifest}")
+    return 0
+
+
+def rebuild_manifest(date: str | None) -> int:
+    """Rebuild one existing index: the historical one, or the dated set `date` names.
+
+    Never creates a directory. A date with no set is refused rather than given an empty one.
+    """
+    if date is None:
+        target, label = RESULTS, None
+    else:
+        datetime.date.fromisoformat(date)
+        target, label = RERUNS / date, date
+        if not target.is_dir():
+            print(f"refused: there is no dated set at {target}", file=sys.stderr)
+            return 2
+    manifest = target / "MANIFEST.md"
+    manifest.write_text(render_manifest(target, label), encoding="utf-8")
     print(f"-> {manifest}")
     return 0
 

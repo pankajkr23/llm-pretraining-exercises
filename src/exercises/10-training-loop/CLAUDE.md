@@ -39,8 +39,8 @@ production.
 ```bash
 uv sync --all-packages --extra train
 
-uv run python -m trainloop.harness      # all six items -> results/run.json
-uv run python tools/render_results.py   # RESULTS.md, from that file
+uv run python -m trainloop.harness      # all six items -> results/reruns/<today>/run.json
+uv run python src/exercises/10-training-loop/tools/render_results.py --results results/reruns/<today>
 
 uv run pytest src/exercises/10-training-loop
 uv run pytest                           # and the repo-wide guards, which the line above misses

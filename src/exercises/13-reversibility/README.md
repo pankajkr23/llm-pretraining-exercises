@@ -114,7 +114,8 @@ the embeddings and the untied output head — on exercise 11's FineWeb-Edu corpu
 GPU memory for the rest of its life, so it runs separately — and `tools/render_results.py` writes
 `RESULTS.md` and the page's `web/data.js` from the same functions, so the two cannot quote
 different arithmetic. The baseline's trained weights are saved to `artifacts/checkpoints/` for exercise 14,
-which turns that dense model into a mixture of experts.
+which turns that dense model into a mixture of experts; a re-run's go to
+`artifacts/checkpoints/reruns/<date>/`, which exercise 14 finds on its own.
 
 ## Run it
 
@@ -123,8 +124,8 @@ uv sync --all-packages --extra train
 uv run pytest src/exercises/13-reversibility
 
 # needs exercise 11's corpus first (uv run python src/exercises/11-optimizers-lr-schedules/tools/fetch_corpus.py)
-uv run python src/exercises/13-reversibility/tools/run_experiments.py           # FULL, both stages
-uv run python src/exercises/13-reversibility/tools/render_results.py
+uv run python src/exercises/13-reversibility/tools/run_experiments.py     # FULL -> results/reruns/<today>/
+uv run python src/exercises/13-reversibility/tools/render_results.py --results results/reruns/<today>
 
 uv run python src/exercises/13-reversibility/tools/run_experiments.py --preset lite   # minutes
 ```

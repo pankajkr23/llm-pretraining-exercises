@@ -53,10 +53,16 @@ engineering: the page reaches readers only once production is promoted, which is
 ```bash
 uv sync --all-packages --extra train
 
+# a re-run: all three producers into results/reruns/<today>/, then that set's own documents
+uv run python src/exercises/09-loss-functions-output-heads/tools/run_experiments.py
+uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py \
+    --results results/reruns/<today>
+
+# the published record itself — these WRITE OVER results/*.json, so only on purpose
 uv run python -m lossheads.harness              # the seven numbers -> results/harness.json
 uv run python -m lossheads.training             # the two findings  -> results/training.json
 uv run python -m lossheads.training --sensitivity   # the noise floors -> results/sensitivity.json
-uv run python tools/render_results.py           # RESULTS.md and web/data.js, from all three
+uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py
 
 uv run pytest src/exercises/09-loss-functions-output-heads
 uv run pytest                          # and the repo-wide guards, which the line above misses

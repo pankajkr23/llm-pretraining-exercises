@@ -10,6 +10,22 @@ section to the new version with a date and open a fresh `[Unreleased]`.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Exercise 14's full run can find exercise 13's checkpoint again, and no producer writes over a
+  published result.** v0.18.0 moved 13's re-run checkpoint to a dated folder, and 14 kept looking
+  in the old place, so following the documented order on a fresh clone could never succeed — after
+  14 had already deleted its tracked training log. 14 now finds 13's published or newest re-run
+  checkpoint (or takes `--dense-run`), reads the learning rate and token count from that same run,
+  and refuses before touching anything. The producers in 09, 10, 11, 12 and 14 wrote straight over
+  `results/*.json`, contradicting the rule v0.18.0 adopted; every one now writes
+  `results/reruns/<today>/`, refuses a second run into the same set, and (11, 13, 14) refuses a
+  corpus its longest run would read more than once — a notebook's small fetch shares the folder.
+  Every `render_results.py` takes `--results <dated set>`, and a new guard requires each committed
+  re-run's documents to be exactly what that command writes. 07's `--manifest-only` created an
+  empty dated folder instead of rebuilding the index it named; it rebuilds an existing index now,
+  and the 2026-10-24 set's index, which listed files from another folder, was regenerated.
+
 ## [0.18.0] — 2026-10-24
 
 ### Added

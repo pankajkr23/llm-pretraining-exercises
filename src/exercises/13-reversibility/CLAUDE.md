@@ -58,8 +58,8 @@ reference, rebuild error) · `model.py` (`ChainedGPT`, exercise 11's model chain
 ```bash
 uv sync --all-packages --extra train
 uv run pytest src/exercises/13-reversibility
-uv run python src/exercises/13-reversibility/tools/run_experiments.py     # needs exercise 11's corpus
-uv run python src/exercises/13-reversibility/tools/render_results.py
+uv run python src/exercises/13-reversibility/tools/run_experiments.py     # needs exercise 11's corpus; -> results/reruns/<today>/
+uv run python src/exercises/13-reversibility/tools/render_results.py --results results/reruns/<today>
 ```
 
 Test modules are prefixed `test_reversible_*`. Files that need torch import it with a module-level

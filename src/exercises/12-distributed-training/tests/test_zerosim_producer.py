@@ -54,3 +54,20 @@ def test_the_producer_writes_a_complete_bundle_that_renders(tmp_path: Path) -> N
 
     text = _tool("render_results.py").render(bundle)
     assert "**DIFFERS**" not in text and "**NO**" not in text
+
+
+def test_the_default_destination_is_a_dated_set_and_a_second_run_is_refused(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """The default used to be the published `results/zero.json`; now it is a dated set, and a
+    file already there is refused before anything runs."""
+    tool = _tool("run_zero.py")
+    assert tool.RERUNS == EXERCISE / "results" / "reruns"
+    monkeypatch.setattr(tool, "RERUNS", tmp_path)
+    import datetime
+
+    existing = tmp_path / datetime.date.today().isoformat() / "zero.json"
+    existing.parent.mkdir()
+    existing.write_text("the first run\n", encoding="utf-8")
+    assert tool.main([]) == 2
+    assert existing.read_text(encoding="utf-8") == "the first run\n"

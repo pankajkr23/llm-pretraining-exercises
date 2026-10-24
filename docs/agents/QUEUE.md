@@ -2122,4 +2122,17 @@ predates the harness — so it is logged as what it was.
                           The `gh release view` check was refused by the permission layer; the
                           github-release job's success is the evidence the Release exists.
                           #207 opened
+2026-10-24  final-review  Six read-only reviewers (reader + engineer x 01-07 / 08-14; auditor held:
+                          its local definition is stale and the refresh is PK's). Code findings,
+                          each re-verified here before fixing: 14 could not find 13's re-run
+                          checkpoint (MY #205 regression) and deleted its tracked log before
+                          checking; 09/10/11/12/14 producers still wrote over results/*.json; 13's
+                          render could not show a re-run; 07 --manifest-only made empty dated dirs
+                          (also #205) and the 2026-10-24 index listed another folder's files; no
+                          FULL run refused a notebook-sized corpus. Fixed in tools/ only for
+                          11/13/14 and 09 (their published results pin package digests; 12 pins
+                          lossheads). 11/12/14 freshness tests now ask "published OR newest re-run
+                          matches today's code", as 13's do. Docs findings: two worktree agents.
+                          Source-quote finding (05/06/08): awaiting PK's decision.
+                          #208 opened
 ```

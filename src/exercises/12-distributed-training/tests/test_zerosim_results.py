@@ -149,8 +149,27 @@ def test_the_step_count_the_readme_states_is_the_published_runs() -> None:
     assert f"published run's {WORDS[steps]} steps" in _readme()
 
 
-def test_the_bundle_is_from_todays_config() -> None:
-    """A red here means: re-run `tools/run_zero.py` (and `tools/render_results.py`).
+def _stale(results: Path, field: str, today: str) -> str | None:
+    """Why no set's `field` is `today`, or `None` when the published run or the newest re-run's is.
+
+    `results/zero.json` is the historical experiment and is never rewritten (`AGENTS.md`), so once
+    the code or `config.py` moves away from it, the newest dated set under `results/reruns/` has to
+    carry today's value instead. Re-running used to overwrite the published file to clear this.
+    """
+    if json.loads((results / "zero.json").read_text(encoding="utf-8"))["provenance"][field] == (
+        today
+    ):
+        return None
+    dated = sorted((results / "reruns").glob("*/zero.json"))
+    if not dated:
+        return f"{field} changed since results/zero.json was produced and no re-run exists"
+    latest = json.loads(dated[-1].read_text(encoding="utf-8"))["provenance"][field]
+    return None if latest == today else f"the newest re-run, {dated[-1].parent.name}, differs"
+
+
+def test_the_published_run_or_the_newest_rerun_is_from_todays_config() -> None:
+    """A red here means: run `tools/run_zero.py` (it writes `results/reruns/<today>/zero.json`),
+    then `tools/render_results.py --results results/reruns/<today>`.
 
     The committed numbers must come from the configuration in `config.py` as it stands. Editing a
     knob without re-running leaves every document quoting a run of a different configuration.
@@ -158,13 +177,14 @@ def test_the_bundle_is_from_todays_config() -> None:
     from zerosim.config import Config
     from zerosim.provenance import config_fingerprint
 
-    assert _run()["provenance"]["config_fingerprint"] == config_fingerprint(Config()), (
-        "config.py changed since results/zero.json was produced — re-run tools/run_zero.py"
+    today = config_fingerprint(Config())
+    assert _stale(RESULTS.parent, "config_fingerprint", today) is None, _stale(
+        RESULTS.parent, "config_fingerprint", today
     )
 
 
-def test_the_bundle_is_from_todays_code() -> None:
-    """A red here means: re-run `tools/run_zero.py` (and `tools/render_results.py`).
+def test_the_published_run_or_the_newest_rerun_is_from_todays_code() -> None:
+    """A red here means: run `tools/run_zero.py`, then render the dated set it wrote.
 
     The digest covers `zerosim` **and** exercise 09's `lossheads`, on purpose: the model, the loss
     and the corpus cutting are 09's, so a change there is a change to the code these numbers came
@@ -172,10 +192,19 @@ def test_the_bundle_is_from_todays_code() -> None:
     """
     from zerosim.provenance import code_digest
 
-    assert _run()["provenance"]["code_digest"] == code_digest(), (
-        "zerosim or lossheads changed since results/zero.json was produced — re-run "
-        "tools/run_zero.py"
+    today = code_digest()
+    assert _stale(RESULTS.parent, "code_digest", today) is None, _stale(
+        RESULTS.parent, "code_digest", today
     )
+
+
+def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
+    """The twin: other code than the published run, and no dated set, is reported."""
+    from zerosim.provenance import code_digest
+
+    (tmp_path / "zero.json").write_bytes(RESULTS.read_bytes())
+    assert _stale(tmp_path, "code_digest", code_digest()) is None
+    assert "no re-run exists" in _stale(tmp_path, "code_digest", "sha256:" + "0" * 64)
 
 
 def test_every_step_of_the_published_run_sent_the_same_bytes() -> None:

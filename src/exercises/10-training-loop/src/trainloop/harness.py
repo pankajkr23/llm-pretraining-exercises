@@ -2,11 +2,18 @@
 
 Six items, in the order the requirements ask for them. **Nothing here computes anything new** —
 every function it calls lives in a module with its own tests. This runs them, prints what has to be
-*read* rather than merely computed, and writes `results/run.json`.
+*read* rather than merely computed, and writes a new dated set, `results/reruns/<today>/run.json`.
 
 ```bash
 uv run python -m trainloop.harness
+uv run python src/exercises/10-training-loop/tools/render_results.py \
+    --results results/reruns/<today>
 ```
+
+**It never writes the published `results/run.json`**, the historical experiment `RESULTS.md`
+renders (`AGENTS.md`, "A published experiment is never rewritten"). It used to, so running the
+documented command replaced the 27.34% MFU the README calls published with whatever this machine
+measured that afternoon. A second run on the same day is refused before any step trains.
 
 Items 1, 3 and 6 are graded on what is printed, so their output is the deliverable. Items 2, 4 and 5
 produce numbers, so the JSON is — and `RESULTS.md` is generated from it, never typed.
@@ -14,8 +21,11 @@ produce numbers, so the JSON is — and `RESULTS.md` is generated from it, never
 
 from __future__ import annotations
 
+import datetime
+import sys
 import textwrap
 import time
+from pathlib import Path
 from typing import Any
 
 from lossheads.losses import cross_entropy
@@ -343,8 +353,13 @@ def item_6_floats() -> dict[str, Any]:
     return {"regression": regression, **per_format}
 
 
-def run(config: Config | None = None, steps: int | None = None) -> dict[str, Any]:
-    """Run every item in order, print what must be read, and write `results/run.json`."""
+def run(
+    config: Config | None = None, steps: int | None = None, path: Path | None = None
+) -> dict[str, Any]:
+    """Run every item in order, print what must be read, and write the bundle to `path`.
+
+    `path` defaults to `telemetry.save`'s own default; `main` always names a dated one.
+    """
     config = config or Config()
 
     started = time.perf_counter()
@@ -360,10 +375,24 @@ def run(config: Config | None = None, steps: int | None = None) -> dict[str, Any
         "item_5_mfu": item_5_mfu(trace, facts, config),
         "item_6_floats": item_6_floats(),
     }
-    path = telemetry.save(trace, results, device=RUN_DEVICE)
-    print(f"\n\nWrote {path.name}")
+    path = telemetry.save(trace, results, path, device=RUN_DEVICE)
+    print(f"\n\nWrote {path}")
     return results
 
 
+def main() -> int:
+    """Run into `results/reruns/<today>/run.json`, refusing a file that is already there."""
+    path = telemetry.RESULTS / "reruns" / datetime.date.today().isoformat() / "run.json"
+    if path.exists():
+        print(
+            f"refused: {path} already exists — a second run the same day would replace the first",
+            file=sys.stderr,
+        )
+        return 2
+    path.parent.mkdir(parents=True, exist_ok=True)
+    run(path=path)
+    return 0
+
+
 if __name__ == "__main__":
-    run()
+    raise SystemExit(main())

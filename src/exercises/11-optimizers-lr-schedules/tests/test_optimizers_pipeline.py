@@ -177,3 +177,19 @@ def test_the_two_finished_models_see_exactly_the_stop_points_budget(
     assert result["branch_at"] + SMOKE.branch_decay == SMOKE.schedule_stop
     assert set(result["tuning"]) == {"cosine", "wsd", "cosine_planned"}
     assert result["best_peak"]["cosine_planned"] in SMOKE.schedule_peaks
+
+
+def test_a_full_run_refuses_a_clash_and_a_corpus_it_would_reread(
+    corpus_root: Path, tmp_path: Path
+) -> None:
+    """FULL used to write the published `results/` and only record its epoch count. Both checks now
+    run before a step trains: a dated set that already holds a bundle, and more than one epoch."""
+    tool = _load("run_experiments")
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "schedules.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(SystemExit, match="already holds schedules"):
+        tool.refuse_before_running(FULL, ["schedules"], out, corpus_root, chosen=False)
+    with pytest.raises(SystemExit, match="epochs"):
+        tool.refuse_before_running(FULL, ["schedules"], out, corpus_root, chosen=True)
+    tool.refuse_before_running(SMOKE, ["schedules"], out, corpus_root, chosen=True)

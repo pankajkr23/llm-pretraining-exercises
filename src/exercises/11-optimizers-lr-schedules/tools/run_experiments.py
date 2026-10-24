@@ -2,10 +2,14 @@
 
     uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py           # FULL
     uv run python .../run_experiments.py --preset lite --task schedules        # one, quickly
-    uv run python .../render_results.py                                       # then RESULTS.md
+    uv run python .../render_results.py --results results/reruns/<today>      # then its RESULTS.md
 
-`FULL` writes to the tracked `results/`, which `RESULTS.md` renders; `lite` and `smoke` write to the
-gitignored `artifacts/<preset>/`, so a quick run can never overwrite published evidence.
+`FULL` writes a new dated set, `results/reruns/<today>/`; `lite` and `smoke` write to the gitignored
+`artifacts/<preset>/`. **Neither ever writes the published `results/*.json`**, which are the
+historical experiment `RESULTS.md` renders (`AGENTS.md`, "A published experiment is never
+rewritten"). `FULL` used to write there directly, so re-running the documented command replaced the
+published evidence. Before training, `FULL` refuses a dated set that already holds a bundle it would
+write, and a corpus its longest run would read more than once.
 
 Every bundle carries the provenance `AGENTS.md` requires — settings, code, commit, machine, corpus
 and tokenizer — and `optimizers.runs.save` refuses to write one that does not. Each also records how
@@ -14,6 +18,7 @@ repetition rather than learning.
 """
 
 import argparse
+import datetime
 import sys
 import time
 from pathlib import Path
@@ -81,6 +86,37 @@ def run_task(
     return save(bundle, out_dir / f"{name}.json"), seconds
 
 
+MAX_EPOCHS = 1.0
+"""Above one pass over the corpus a run measures repetition, not learning (`AGENTS.md`)."""
+
+
+def refuse_before_running(
+    preset: Preset, names: list[str], out_dir: Path, corpus_root: Path, *, chosen: bool
+) -> None:
+    """Refuse, before any training, a FULL run that would replace a bundle or reread its corpus.
+
+    A same-day second run wrote over the first in silence, since `save` does not check; naming
+    `--out` is the decision to write elsewhere. And a notebook's small fetch lands in the same
+    corpus directory as the full one, where a FULL run would only have recorded its epoch count.
+    """
+    if not chosen:
+        clashes = [n for n in names if (out_dir / f"{n}.json").exists()]
+        if clashes:
+            raise SystemExit(
+                f"refused: {out_dir} already holds {', '.join(clashes)}. Pass --out for a "
+                "different directory, so both runs stay on the record."
+            )
+    corpus = open_corpus(corpus_root, verify=False)
+    for name in names:
+        longest, _ = tokens_per_run(preset, name)
+        if corpus.epochs(longest) > MAX_EPOCHS:
+            raise SystemExit(
+                f"refused: {name}'s longest run reads {corpus.epochs(longest):.2f} epochs of the "
+                f"{corpus.tokens('train'):,}-token corpus at {corpus_root}. A notebook's small "
+                "fetch may be there; fetch the full corpus first."
+            )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -92,10 +128,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     preset = PRESETS[args.preset]
     device = select_device(args.device)
-    out_dir = args.out or (
-        RESULTS if preset.name == "full" else EXERCISE / "artifacts" / preset.name
-    )
+    full = preset.name == "full"
+    rerun = RESULTS / "reruns" / datetime.date.today().isoformat()
+    out_dir = args.out or (rerun if full else EXERCISE / "artifacts" / preset.name)
     names = list(TASKS) if args.task == "all" else [args.task]
+    if full:
+        refuse_before_running(preset, names, out_dir, args.corpus, chosen=args.out is not None)
     for name in names:
         path, seconds = run_task(name, preset, args.corpus, device, out_dir)
         print(f"{name}: {seconds:,.0f}s on {device} -> {path}", flush=True)

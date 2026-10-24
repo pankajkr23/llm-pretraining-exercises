@@ -419,3 +419,17 @@ def test_the_measured_peak_is_the_denominator_for_the_runs_own_achieved_rate() -
     )
     # ...and the peak must actually be a ceiling, not merely a large number.
     assert peak > utilisation.achieved_flops_per_second
+
+
+def test_the_harness_writes_a_dated_set_and_refuses_a_second_run(tmp_path, monkeypatch) -> None:
+    """`python -m trainloop.harness` used to write the published `results/run.json`."""
+    import datetime
+
+    from trainloop import harness, telemetry
+
+    monkeypatch.setattr(telemetry, "RESULTS", tmp_path)
+    existing = tmp_path / "reruns" / datetime.date.today().isoformat() / "run.json"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("the first run\n", encoding="utf-8")
+    assert harness.main() == 2
+    assert existing.read_text(encoding="utf-8") == "the first run\n"
