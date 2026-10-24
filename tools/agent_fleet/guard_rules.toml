@@ -75,9 +75,12 @@ why = "a guard the agent could weaken to make its own work pass; name it in UNIT
 # The backup store is the recovery path, and it is a high-water mark rather than a mirror — it
 # never removes, so it cannot undo an overwrite that was itself backed up. Refusing the write is
 # the only point at which the content still exists.
+#
+# `notebooks/**` and `src/exercises/*/tools/build_notebook.py` led this list until 2026-10-24, when
+# both became tracked: git restores them now, so they left the class, and editing a builder is the
+# ordinary way a notebook changes. PK's rule that nothing there is deleted, moved or overwritten
+# without naming the file stands in `AGENTS.md`; this section enforces only "no second copy".
 patterns = [
-  "notebooks/**",
-  "src/exercises/*/tools/build_notebook.py",
   "src/exercises/*/REQUIREMENTS.md",
   "docs/REQUIREMENTS.md",
   "src/exercises/*/src/solution/**",

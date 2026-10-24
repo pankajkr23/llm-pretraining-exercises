@@ -15,13 +15,12 @@ with the broken one. A git store keeps every version, so `git log` and `git show
 mistake. It costs nothing: the whole set is about 12 MB of text.
 
 **What it covers, and why that is wider than the tripwire.** The tripwire
-(`tests/test_local_only_files_present.py`) watches notebooks, builders and requirement documents —
-the three
-classes `AGENTS.md` names. The confidential reference material lives **outside the repository**
-(see `EXTERNAL_SOURCES`) and is snapshotted here too, and `docs/EXPLAINER_*.md` are the two files
-any explainer is meant to be built from. All of it is gitignored, none of it is
-regenerable, and none of it was in the tripwire. A
-backup that only covered the documented cases would have missed the largest exposure.
+(`tests/test_local_only_files_present.py`) watches requirement documents and programme-level
+documents; notebooks and builders left both lists when they became tracked. The confidential
+reference material lives **outside the repository** (see `EXTERNAL_SOURCES`) and is snapshotted
+here too, and `docs/EXPLAINER_*.md` are the two files any explainer is meant to be built from. All
+of it is gitignored, none of it is regenerable, and none of it was in the tripwire. A backup that
+only covered the documented cases would have missed the largest exposure.
 
 **What it deliberately does NOT cover.** Anything regenerable (`artifacts/`, `data/`, `public/`,
 `.venv/`), and anything secret. `.env` files, keys and credentials are excluded by pattern and the
@@ -62,8 +61,9 @@ DEFAULT_DEST = REPO_ROOT.parent / f".{REPO_ROOT.name}-local-only"
 #: Each entry is here because losing it is **permanent**. Nothing regenerable belongs in this list:
 #: a backup of derived output teaches the reader that the backup is optional.
 PATTERNS: tuple[str, ...] = (
-    "notebooks/S[0-9][0-9]-*.ipynb",
-    "src/exercises/*/tools/build_notebook.py",
+    # The topic notebooks and their builders were the first two entries here until 2026-10-24, when
+    # both became tracked: git restores them now, so they are not permanent losses. The store keeps
+    # every version it took before that, under their old `notebooks/SNN-*` names.
     "src/exercises/*/REQUIREMENTS.md",
     "docs/REQUIREMENTS.md",
     "docs/EXPLAINER_*.md",
@@ -492,7 +492,7 @@ def snapshot(root: Path, dest: Path, files: list[Path], *, message: str) -> int:
         (dest / "README.md").write_text(
             "# local-only backup\n\n"
             "Versioned snapshots of the gitignored, non-regenerable files in "
-            f"`{root.name}` — notebooks, builders, requirement files — plus the reference material "
+            f"`{root.name}` — requirement files and working notes — plus the reference material "
             "that lives outside the repo entirely. Git cannot restore any of it from the repo "
             "itself, because git has never seen it.\n\n"
             "Written by `tools/backup_local_only.py`. Restore a file with:\n\n"

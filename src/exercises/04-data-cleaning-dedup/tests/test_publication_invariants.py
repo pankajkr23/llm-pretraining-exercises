@@ -28,7 +28,7 @@ from datacleaning.config import EXERCISE_ROOT, Config
 CFG = Config()
 WEB = CFG.web_dir
 DATA_JSON = WEB / "data.json"
-NOTEBOOK = EXERCISE_ROOT.parents[2] / "notebooks" / "S04-data-cleaning-dedup.ipynb"
+NOTEBOOK = EXERCISE_ROOT.parents[2] / "notebooks" / "04-data-cleaning-dedup.ipynb"
 
 # Text files a reader could actually receive. Binary assets are excluded because they are not a
 # route for a pasted email address, and reading them as UTF-8 would fail noisily for no benefit.
@@ -76,7 +76,6 @@ def test_the_bundle_scan_can_actually_fail():
     assert [s.kind for s in found] == ["email"], "a planted address was not detected"
 
 
-@pytest.mark.skipif(not NOTEBOOK.exists(), reason="notebook missing")
 def test_no_personal_information_in_the_notebook():
     """Executing a PII cell and committing the output would bake real addresses into git.
 

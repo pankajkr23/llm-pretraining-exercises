@@ -13,17 +13,17 @@ in prose gets skipped under momentum". This script is that convention as code.
 
 **The sequencing fact it exists to get right.** `tests/_exercises.py::exercises_in` only counts a
 directory that has a `pyproject.toml`. Until that file lands, a new exercise is invisible to every
-guard; the moment it lands, six test families apply at once — including three that check for
-**gitignored** files a fresh clone will never have. So everything is written in one pass, or the
-suite goes red locally with no obvious cause.
+guard; the moment it lands, six test families apply at once — including ones that require a
+builder and a notebook for every exercise. So everything is written in one pass, or the suite goes
+red with no obvious cause.
 
 **What it deliberately does NOT do.** The landing card in `deploy/vercel/index.html` and the
 `SPINE_ENFORCED` entry in `tests/test_page_spine.py` are *forbidden* until `web/` exists: both
 guards fail in **two** directions, so a premature entry is exactly as red as a missing one. The
 script prints them as deferred steps instead of guessing.
 
-This file is TRACKED, unlike `tools/build_notebook.py`. It is not course material in another form;
-it is repo infrastructure, and `tests/test_new_exercise.py` runs it for real.
+This file is tracked, as are the builder and notebook it writes; `tests/test_new_exercise.py`
+runs it for real.
 """
 
 import argparse
@@ -59,7 +59,7 @@ class Spec:
         title: Human title for headings.
         package: Bare import name for `src/<package>/`, e.g. `"lossheads"`.
         summary: One sentence for the root README row.
-        topic: Topic number for the notebook name; defaults to `number`.
+        topic: Topic number used to find the local requirement text; defaults to `number`.
     """
 
     number: str
@@ -81,8 +81,8 @@ class Spec:
 
     @property
     def notebook(self) -> str:
-        """`S09-loss-functions-output-heads` — the topic notebook's stem."""
-        return f"S{self.topic}-{self.slug}"
+        """`09-loss-functions-output-heads` — the notebook is named exactly like the folder."""
+        return self.dirname
 
 
 # --------------------------------------------------------------------------------- templates
@@ -322,19 +322,19 @@ def test_the_package_imports_and_its_config_names_its_source() -> None:
 
 
 def notebook_builder(spec: Spec) -> str:
-    """`tools/build_notebook.py` — **gitignored**, and required by two local-only guards.
+    """`tools/build_notebook.py` — tracked, and held to the guards every builder is.
 
-    `tests/test_notebook_builders.py` requires the source to contain the literal `'clone'` (the
-    clone is spawned as an argument list, so `"git clone"` never appears as one string) and
-    `IN_COLAB`, and requires `NOTEBOOK_OUT` to be treated as a full output **file** path.
+    `tests/test_notebook_builders.py` requires the literals `'clone'` and `IN_COLAB`, a file-path
+    `NOTEBOOK_OUT`, and a tracked notebook byte-identical to what this writes;
+    `tests/test_tracked_notebooks_are_portable.py` forbids an absolute path, which is why the setup
+    cell finds the repository root at run time; `tests/test_tracked_notebook_knobs_are_read.py`
+    requires every knob to be read by a later cell.
     """
     return f'''"""Build `notebooks/{spec.notebook}.ipynb`.
 
     uv run python src/exercises/{spec.dirname}/tools/build_notebook.py
 
-**Local only — this file is gitignored, and so is the notebook it writes.** A generator is the
-notebook in another form, so tracking it would keep the same course material in the repo as Python.
-Back both up outside the repo; nothing tracked can rebuild them.
+**Tracked, like the notebook it writes**; edit this file and rebuild, never the notebook.
 
 **The notebook imports the package. It never re-implements it.**
 """
@@ -343,15 +343,19 @@ import json
 import os
 from pathlib import Path
 
-EXERCISE = Path(__file__).resolve().parents[1]
+EXERCISE = next(p for p in Path(__file__).resolve().parents if (p / "pyproject.toml").is_file())
 REPO = EXERCISE.parents[2]
-SLUG = "{spec.notebook}"
+SLUG = EXERCISE.name
 
 #: `NOTEBOOK_OUT` is the full output path, not a directory — `tests/test_notebook_builders.py`
 #: passes a file. It redirects the build so a test never overwrites the copy a developer has open.
 OUT = Path(os.environ.get("NOTEBOOK_OUT") or (REPO / "notebooks" / f"{{SLUG}}.ipynb"))
 
 REPO_URL = "https://github.com/pankajkr23/llm-pretraining-exercises"
+BADGE = (
+    "https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/"
+    f"blob/main/notebooks/{{SLUG}}.ipynb"
+)
 _next_id = 0
 
 
@@ -387,26 +391,46 @@ def code(text: str) -> dict:
 def cells() -> list[dict]:
     """The notebook, in reading order."""
     return [
-        md("# Topic {spec.topic} — {spec.title}\\n\\nReplace this."),
+        md(
+            f"# {spec.number} · {spec.title}\\n\\n"
+            f"[![Open In Colab]({{BADGE}})]({{BADGE}})\\n\\nReplace this."
+        ),
+        md(
+            "## Where this sits\\n\\n"
+            "Replace this: the previous and next notebook, and what this one takes in."
+        ),
         code(
-            f"""# Colab: clone the repo and install this exercise. Locally this is a no-op.
-import sys, subprocess, pathlib
+            f"""# Colab: clone the repo and install this exercise. Elsewhere, find the repo root.
+import pathlib
+import subprocess
+import sys
 
 IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
     if not pathlib.Path("llm-pretraining-exercises").exists():
-        subprocess.run(['git', 'clone', '--depth', '1', '{{REPO_URL}}'], check=True)
-    root = pathlib.Path("llm-pretraining-exercises")
+        subprocess.run(["git", "clone", "--depth", "1", "{{REPO_URL}}"], check=True)
+    root = pathlib.Path("llm-pretraining-exercises").resolve()
     subprocess.run(
-        ['pip', '-q', 'install', '-e', str(root / 'src/exercises/{spec.dirname}')], check=True
+        ["pip", "-q", "install", "-e", str(root / "src/exercises/{spec.dirname}")], check=True
     )
 else:
-    root = pathlib.Path("{{REPO}}")
+    root = pathlib.Path.cwd().resolve()
+    while not (root / "src" / "exercises").is_dir() and root != root.parent:
+        root = root.parent
+    if not (root / "src" / "exercises").is_dir():
+        raise SystemExit("run this notebook from inside a clone of the repository, or on Colab")
     sys.path.insert(0, str(root / "src/exercises/{spec.dirname}/src"))
 
 print("repo root:", root)"""
         ),
-        code("from {spec.package}.config import Config\\n\\nprint(Config())"),
+        code("LITE = True  # the full run is one variable away\\nSTEPS = 10 if LITE else 1000"),
+        code(
+            "from {spec.package}.config import Config\\n\\nprint(Config(), 'steps', STEPS)"
+        ),
+        md(
+            "## Carry forward\\n\\n"
+            "Replace this: the setting this exercise chose, and what the next notebook uses."
+        ),
     ]
 
 
@@ -541,11 +565,9 @@ def register_readme_row(spec: Spec, apply: bool = True) -> str:
 def files(spec: Spec) -> dict[Path, str]:
     """Every file to write, mapped to its content.
 
-    The three gitignored ones are written **with** the rest, not afterwards: the moment
-    `pyproject.toml` exists, `tests/test_local_only_files_present.py` and
-    `tests/test_notebook_builders.py` start expecting a requirements doc, a builder and a notebook
-    for this
-    exercise, and fail locally until they are there.
+    Everything is written in one pass: the moment `pyproject.toml` exists,
+    `tests/test_notebook_builders.py` expects a builder and a notebook for this exercise, and
+    `tests/test_local_only_files_present.py` a requirements doc.
     """
     root = spec.root
     return {
@@ -558,7 +580,7 @@ def files(spec: Spec) -> dict[Path, str]:
         root / "src" / spec.package / "__init__.py": package_init(spec),
         root / "src" / spec.package / "config.py": config_module(spec),
         root / "tests" / f"test_{spec.package}_smoke.py": smoke_test(spec),
-        root / "tools" / "build_notebook.py": notebook_builder(spec),  # gitignored
+        root / "tools" / "build_notebook.py": notebook_builder(spec),
         root / "REQUIREMENTS.md": preamble(spec),  # gitignored
     }
 
@@ -573,7 +595,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--title", required=True, help="human title for headings")
     parser.add_argument("--package", required=True, help="bare import name for src/<package>/")
     parser.add_argument("--summary", default="Replace this summary.", help="root README row text")
-    parser.add_argument("--topic", help="topic number for the notebook; defaults to `number`")
+    parser.add_argument(
+        "--topic", help="topic number of the local requirement text; defaults to `number`"
+    )
     parser.add_argument("--shard", default=DEFAULT_SHARD, help="CI integration shard to join")
     parser.add_argument("--dry-run", action="store_true", help="print what would happen")
     args = parser.parse_args(argv)
@@ -620,8 +644,8 @@ Still yours to do:
   1. Fill the templates. Every one has a "Replace this" in it; `git grep -n "Replace this"
      src/exercises/{spec.dirname}` finds them all.
   2. `uv sync --all-packages` — the workspace glob picks the member up on its own.
-  3. Back up the three gitignored files: REQUIREMENTS.md, tools/build_notebook.py and the notebook.
-     `uv run python tools/backup_local_only.py`
+  3. Back up the gitignored REQUIREMENTS.md: `uv run python tools/backup_local_only.py`.
+     The builder and notebook are tracked — commit them with the rest.
 
 Deferred until `web/` exists, and FORBIDDEN before then — both guards fail in two directions,
 so a premature entry is exactly as red as a missing one:

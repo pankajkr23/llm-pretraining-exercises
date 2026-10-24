@@ -1,14 +1,15 @@
 """Warn loudly when a local-only file has gone missing from this checkout.
 
-`notebooks/S*.ipynb` and `src/exercises/*/tools/build_notebook.py` are gitignored, which makes them
-the only files in the repo with **no second copy**. Losing one is permanent in a way no other
-deletion here is.
+The requirement documents, the programme-level documents and the reference material are
+gitignored or live outside the repository, which makes them the files here with **no second copy**.
+Losing one is permanent in a way no other deletion here is.
 
-It has already happened once, and not because anyone deleted anything: after the builders were
-untracked, an ordinary `git checkout main && git pull` destroyed all five. `checkout` restored them
-as tracked files from the pre-merge `main`, then the fast-forward applied the commit that removed
-them from the index, so git deleted the working-tree copies. They were recovered from `db9b288^`
-only because that commit was still reachable.
+The topic notebooks and their builders were in this class until 2026-10-24, when both became
+tracked; git restores them now, so this file no longer watches them. The class was earned: after
+the builders were first untracked, an ordinary `git checkout main && git pull` destroyed all five.
+`checkout` restored them as tracked files from the pre-merge `main`, then the fast-forward applied
+the commit that removed them from the index, so git deleted the working-tree copies. They were
+recovered from `db9b288^` only because that commit was still reachable.
 
 So this is not a test of the code. It is a **tripwire on the working tree**, and it exists because
 the danger is routine git operations rather than carelessness.
@@ -96,12 +97,6 @@ def local_only(paths: list[Path]) -> list[Path]:
     return [p for p in paths if p not in TRACKED]
 
 
-#: One notebook and one builder per exercise, by convention.
-EXPECTED_NOTEBOOKS = local_only(
-    [REPO_ROOT / "notebooks" / f"S{p.name[:2]}-{p.name[3:]}.ipynb" for p in EXERCISES]
-)
-EXPECTED_BUILDERS = local_only([p / "tools" / "build_notebook.py" for p in EXERCISES])
-
 #: The requirements text for each exercise. Gitignored by name everywhere, so a clone has none and a
 #: healthy working checkout has one per exercise.
 EXPECTED_BRIEFS = local_only([p / "REQUIREMENTS.md" for p in EXERCISES])
@@ -135,7 +130,7 @@ EXPECTED_PROGRAMME = local_only(
 
 #: Every class this file watches, flattened. Used to answer "is this a working checkout?" **once**,
 #: rather than once per class.
-_ALL_WATCHED = EXPECTED_NOTEBOOKS + EXPECTED_BUILDERS + EXPECTED_BRIEFS + EXPECTED_PROGRAMME
+_ALL_WATCHED = EXPECTED_BRIEFS + EXPECTED_PROGRAMME
 
 
 def is_a_working_checkout() -> bool:
@@ -160,48 +155,6 @@ def _partial(paths: list[Path]) -> bool:
     """True when some but not all exist — a clone has none, a healthy checkout has all."""
     present = [p for p in paths if p.is_file()]
     return 0 < len(present) < len(paths)
-
-
-def test_no_topic_notebook_has_gone_missing() -> None:
-    """All of them or none of them. A gap means one was destroyed on this machine."""
-    present = [p for p in EXPECTED_NOTEBOOKS if p.is_file()]
-    if not present and not is_a_working_checkout():
-        pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
-    assert present, (
-        f"all {len(EXPECTED_NOTEBOOKS)} topic notebooks are gone, and this checkout still has "
-        f"other local-only files — so it is not a clone. Restore from the backup store: "
-        f"`uv run python tools/backup_local_only.py --verify` names what it holds."
-    )
-    missing = [p.name for p in EXPECTED_NOTEBOOKS if not p.is_file()]
-    assert not missing, (
-        f"{len(present)} topic notebooks are present but {missing} are gone. These are "
-        f"gitignored and have no second copy. Rebuild them from the exercise's "
-        f"tools/build_notebook.py before doing anything else, and do not delete anything under "
-        f"notebooks/ without PK's explicit permission (see AGENTS.md)."
-    )
-
-
-def test_no_notebook_builder_has_gone_missing() -> None:
-    """The builders rebuild a lost notebook, and nothing tracked can restore a lost builder."""
-    present = [p for p in EXPECTED_BUILDERS if p.is_file()]
-    if not present and not is_a_working_checkout():
-        pytest.skip("no local-only files anywhere — this is a fresh clone, not a loss")
-    assert present, (
-        f"all {len(EXPECTED_BUILDERS)} notebook builders are gone, and this checkout still has "
-        f"other local-only files — so it is not a clone. This is the exact incident that has "
-        f"happened twice. Restore from the backup store before doing anything else."
-    )
-    missing = [
-        f"{p.parents[1].name}/tools/build_notebook.py" for p in EXPECTED_BUILDERS if not p.is_file()
-    ]
-    assert not missing, (
-        f"{len(present)} notebook builders are present but {missing} are gone. Nothing tracked "
-        f"can restore them. If they were removed by a branch switch or pull, recover with:\n"
-        f' git checkout "$(git log --all --diff-filter=D --format=%H -1 -- '
-        f"'src/exercises/*/tools/build_notebook.py')^\" -- "
-        f"'src/exercises/*/tools/build_notebook.py'\n"
-        f"and keep a backup outside the repo (see AGENTS.md)."
-    )
 
 
 def test_no_programme_level_document_has_gone_missing() -> None:
@@ -288,29 +241,6 @@ def test_no_watched_file_has_been_emptied() -> None:
         f"these files exist but are empty or truncated: {thin}. A guard that only checks presence "
         f"would call them healthy. Restore from the backup store."
     )
-
-
-def test_every_topic_notebook_is_still_valid_json() -> None:
-    """A notebook that no longer parses is lost, whatever its size says.
-
-    The builder writes JSON; an interrupted write produces a file that opens, has a plausible
-    length, and cannot be read by Jupyter or by anything else.
-    """
-    import json
-
-    broken = []
-    for path in EXPECTED_NOTEBOOKS:
-        if not path.is_file():
-            continue
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-            broken.append(f"{path.name}: {exc}")
-            continue
-        if not payload.get("cells"):
-            broken.append(f"{path.name}: parses but has no cells")
-
-    assert not broken, f"topic notebooks that no longer read as notebooks: {broken}"
 
 
 def test_the_backup_store_is_named_somewhere_a_reader_will_find_it() -> None:

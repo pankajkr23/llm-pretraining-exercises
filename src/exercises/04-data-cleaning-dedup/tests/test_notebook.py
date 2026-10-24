@@ -1,12 +1,10 @@
 """The topic notebook, held to the repo's notebook rules.
 
-`AGENTS.md` requires every topic to ship `notebooks/SNN-slug.ipynb` that imports the exercise's
-package rather than re-implementing it, and that carries no committed outputs. Both rules are
-checkable, so they are checked here rather than remembered.
+`AGENTS.md` requires every exercise to ship `notebooks/NN-<exercise>.ipynb` that imports the
+exercise's package rather than re-implementing it, and that carries no committed outputs. Both rules
+are checkable, so they are checked here rather than remembered.
 
-Topic notebooks are **not tracked** — they are gitignored and built locally — so every test in
-this file skips on a fresh clone. That is honest rather than decorative only because the tracked
-`notebooks/hello.ipynb` is executed in CI in their place.
+The notebook is **tracked**, so these run everywhere, CI included; an absent notebook is a defect.
 
 The outputs rule is not cosmetic on this exercise. Later stages scrub PII from real Stack Exchange
 text; executing those cells and committing the result would bake real email addresses into a
@@ -22,20 +20,13 @@ from datacleaning.config import EXERCISE_ROOT
 
 # EXERCISE_ROOT is …/src/exercises/04-data-cleaning-dedup, so the repo root is three levels up.
 REPO_ROOT = EXERCISE_ROOT.parents[2]
-NOTEBOOK = REPO_ROOT / "notebooks" / "S04-data-cleaning-dedup.ipynb"
+NOTEBOOK = REPO_ROOT / "notebooks" / "04-data-cleaning-dedup.ipynb"
 
 
 @pytest.fixture(scope="module")
 def nb() -> dict:
-    """The topic notebook, when there is one.
-
-    Skips rather than fails when absent. Topic notebooks are gitignored, so a fresh clone and CI
-    genuinely do not have one, and a hard failure there would be reporting the design as a defect.
-    The rules below therefore protect the author's checkout, not the pipeline — which is why
-    `notebooks/hello.ipynb` is tracked and executed instead: see `test_the_sample_notebook_runs`.
-    """
-    if not NOTEBOOK.exists():
-        pytest.skip(f"no topic notebook at {NOTEBOOK}; they are local-only and gitignored")
+    """The topic notebook. Tracked, so its absence fails rather than skips."""
+    assert NOTEBOOK.is_file(), f"{NOTEBOOK} is tracked and must exist"
     return json.loads(NOTEBOOK.read_text(encoding="utf-8"))
 
 
@@ -125,7 +116,7 @@ def test_the_notebook_carries_a_colab_badge(nb):
 
 def test_the_notebook_is_named_with_its_topic_id():
     """`AGENTS.md`: zero-padded topic id first, so lexical sort equals topic order."""
-    assert NOTEBOOK.name.startswith("S04-")
+    assert NOTEBOOK.name.startswith("04-")
     assert NOTEBOOK.suffix == ".ipynb"
 
 
@@ -133,11 +124,11 @@ def test_every_topic_notebook_follows_the_naming_rule():
     """The rule is repo-wide, so it is checked repo-wide rather than for this topic alone.
 
     `hello.ipynb` is exempt by name: it is the tracked sample, not a topic notebook, and the
-    `SNN-` rule exists so lexical sort equals topic order — which a sample has no part in.
+    `NN-` rule exists so lexical sort equals exercise order — which a sample has no part in.
     """
     for path in NOTEBOOK.parent.glob("*.ipynb"):
         if path.name == "hello.ipynb":
             continue
-        assert path.name[0] == "S" and path.name[1:3].isdigit(), (
-            f"{path.name} does not start with a zero-padded topic id (SNN-)"
+        assert path.name[:2].isdigit() and path.name[2] == "-", (
+            f"{path.name} does not start with a zero-padded exercise id (NN-)"
         )

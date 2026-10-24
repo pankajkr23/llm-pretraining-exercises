@@ -253,6 +253,8 @@ jobs:
       - name: Torch-gated tests
         run: |
           uv run pytest -n auto --dist loadfile \
+            src/exercises/01-introductions/tests/test_foundations_claims.py \
+            src/exercises/01-introductions/tests/test_foundations_parts.py \
             src/exercises/05-datamixtures-and-curriculum/tests/test_mixture_proxy_run.py \
             src/exercises/06-build-training-dataset/tests/test_trainingdata_model.py \
             src/exercises/06-build-training-dataset/tests/test_trainingdata_train.py \
@@ -285,7 +287,8 @@ jobs:
             src/exercises/13-reversibility/tests/test_reversible_stack.py \
             src/exercises/13-reversibility/tests/test_reversible_pipeline.py \
             src/exercises/14-moe/tests/test_moe_layer.py \
-            src/exercises/14-moe/tests/test_moe_pipeline.py
+            src/exercises/14-moe/tests/test_moe_pipeline.py \
+            tests/test_notebooks_run.py
 
   security:
     runs-on: ubuntu-latest

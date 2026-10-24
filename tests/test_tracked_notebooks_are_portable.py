@@ -1,8 +1,7 @@
 """A tracked notebook must run on a machine that is not the one that built it.
 
-`notebooks/S10-training-loop.ipynb` is the one topic notebook that ships in the repository — a
-named exemption in `.gitignore`, because exercise 10's submission requires the ipynb and offers no
-alternative. It is therefore the one notebook a stranger opens, and it spent its whole life
+Exercise 10's notebook was the first topic notebook to ship in the repository — every one is
+tracked now — and so the first one a stranger could open. It spent its whole life until then
 containing:
 
     root = pathlib.Path("/Users/<the author>/git/tsai/era5/llm-pretraining-exercises")
@@ -77,8 +76,8 @@ def _machine_paths_in(notebook: Path) -> list[str]:
 def test_there_is_at_least_one_tracked_notebook_to_check() -> None:
     """Otherwise every assertion below is vacuously true and this file reads as coverage."""
     assert _tracked_notebooks(), (
-        "no tracked notebooks — this guard is inert. If the S10 exemption was removed, remove "
-        "this file too rather than leaving a check with nothing to check."
+        "no tracked notebooks — this guard is inert. Every exercise's notebook is meant to be "
+        "tracked, so an empty list means the glob or the repository is broken."
     )
 
 

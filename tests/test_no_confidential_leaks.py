@@ -25,6 +25,7 @@ has the notes, or not at all.
 """
 
 import hashlib
+import json
 import re
 import subprocess
 import sys
@@ -125,6 +126,21 @@ def _tracked_text_files() -> list[Path]:
     return keep
 
 
+def _prose_of(path: Path) -> str:
+    """The text a reader sees: a notebook's cell sources joined, any other file as it stands.
+
+    **A notebook read as raw JSON hides every quote it holds.** Each cell's source is a list of
+    lines, one JSON string apiece, so a sentence wrapped across two lines is split by `",\\n    "`
+    and no twelve-word window over the raw file survives it. Notebooks were outside this check
+    entirely until they were tracked, and reading the JSON would have looked like coverage.
+    """
+    text = path.read_text(encoding="utf-8")
+    if path.suffix != ".ipynb":
+        return text
+    notebook = json.loads(text)
+    return "\n".join("".join(cell.get("source", [])) for cell in notebook.get("cells", []))
+
+
 def _words(text: str) -> list[str]:
     """Lowercased word run, punctuation dropped, so formatting differences do not hide a quote."""
     return re.findall(r"[a-z0-9']+", text.lower())
@@ -197,6 +213,31 @@ def test_the_name_check_catches_a_planted_reference(tmp_path: Path) -> None:
     assert not _CONFIDENTIAL_NAME.search("see section s of the 5.md proposal, and README.md")
 
 
+def test_a_quote_wrapped_across_notebook_lines_is_still_seen(tmp_path: Path) -> None:
+    """The twin for notebooks: the quoting half must read cells, not the JSON that stores them.
+
+    Runs everywhere, because it needs no reference material — it plants its own sentence. Read as
+    raw JSON, the wrapped sentence is broken by the line separator and no window matches; read
+    through `_prose_of`, it is one run of words again.
+    """
+    sentence = "one two three four five six seven eight nine ten eleven twelve thirteen"
+    head, tail = sentence[:30], sentence[30:]
+    notebook = {
+        "cells": [{"cell_type": "markdown", "metadata": {}, "source": [head, tail]}],
+        "metadata": {},
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    planted = tmp_path / "planted.ipynb"
+    planted.write_text(json.dumps(notebook, indent=1), encoding="utf-8")
+
+    wanted = _shingles(sentence)
+    assert wanted <= _shingles(_prose_of(planted)), "a wrapped sentence in a cell was not seen"
+    assert not wanted <= _shingles(planted.read_text(encoding="utf-8")), (
+        "the raw JSON matched too, so this twin is not testing what _prose_of adds"
+    )
+
+
 def test_no_tracked_file_quotes_the_confidential_material() -> None:
     """The stronger half: a sentence lifted verbatim, with no filename anywhere near it.
 
@@ -213,11 +254,11 @@ def test_no_tracked_file_quotes_the_confidential_material() -> None:
 
     offenders: list[str] = []
     for path in _tracked_text_files():
-        if path.suffix not in {".md", ".py", ".txt"}:
+        if path.suffix not in {".md", ".py", ".txt", ".ipynb"}:
             continue
         try:
-            text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+            text = _prose_of(path)
+        except (UnicodeDecodeError, OSError, ValueError):
             continue
         rel = str(path.relative_to(REPO_ROOT))
         overlap = _shingles(text) & source
