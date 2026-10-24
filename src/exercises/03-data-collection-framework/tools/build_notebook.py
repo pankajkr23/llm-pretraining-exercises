@@ -489,15 +489,24 @@ def first_words(text, n):
 corpus = load_all(V1, TOKENIZATION_ROOT / "corpus")
 texts = {code: first_words(t, SAMPLE_WORDS) for code, t in corpus.items()}
 
-stored = json.loads((cfg.data_dir / "shingle_index.json").read_text(encoding="utf-8"))
-real_index = shingles.ShingleIndex(
-    grams=dict.fromkeys(stored["shingles"], "MILU"), widths=frozenset(stored["gram_widths"])
-)
-print(f"real index: {len(real_index.grams):,} fingerprints "
-      f"at window widths {sorted(real_index.widths)}")
-for code, text in texts.items():
-    hits = shingles.find_collisions(text, real_index)
-    print(f"  {code}: {len(text.split()):>6,} words · collisions {hits}")"""
+# The real index is built from benchmark text fetched with a logged-in Hugging Face account and
+# never committed, so a fresh clone (and Colab) does not have it. The planted check below needs no
+# index file, so it runs everywhere; this cell runs the real one only where it exists.
+index_path = cfg.data_dir / "shingle_index.json"
+real_index = None
+if index_path.is_file():
+    stored = json.loads(index_path.read_text(encoding="utf-8"))
+    real_index = shingles.ShingleIndex(
+        grams=dict.fromkeys(stored["shingles"], "MILU"), widths=frozenset(stored["gram_widths"])
+    )
+    print(f"real index: {len(real_index.grams):,} fingerprints "
+          f"at window widths {sorted(real_index.widths)}")
+    for code, text in texts.items():
+        hits = shingles.find_collisions(text, real_index)
+        print(f"  {code}: {len(text.split()):>6,} words · collisions {hits}")
+else:
+    print(f"no real benchmark index at {index_path.name} on this checkout -- it is built from")
+    print("benchmark text this repository never commits. The planted check below runs anyway.")"""
         ),
         md(
             """Now plant something it must catch. The registry below is **invented for this
@@ -743,11 +752,15 @@ def report(rule, holds, *broken):
 
 
 # INV-1 -- an eval item planted in training text; eval text carried into the benchmark register.
-real_hits = sum(len(shingles.find_collisions(t, real_index)) for t in texts.values())
+real_hits = (
+    "no real index on this checkout"
+    if real_index is None
+    else sum(len(shingles.find_collisions(t, real_index)) for t in texts.values())
+)
 planted = plant(texts["en"], registry["toy-arithmetic"][0], PLANT_AT)
 bench_errors = []
 catalog.validate_benchmark(dict(benchmarks[0], items=["a question"]), bench_errors)
-report("INV-1", f"exercise 02's corpus against the real index: {real_hits} collisions",
+report("INV-1", f"exercise 02's corpus against the real index: {real_hits}",
        f"planted item -> {shingles.find_collisions(planted, index)}",
        f"register row carrying items -> {bench_errors}")
 

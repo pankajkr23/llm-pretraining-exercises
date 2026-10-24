@@ -671,18 +671,29 @@ for i in range(MEM_REPEATS):
           f"softmax only {report.softmax_only_ratio:.2f}x   "
           f"losses agree {report.losses_agree}")
 
-fig, ax = plt.subplots(figsize=(7, 3))
-ax.plot(range(1, len(ratios) + 1), ratios, "o-", label="projection inside the loop")
-ax.plot(range(1, len(ratios) + 1), softmax_ratios, "s--", label="softmax chunked only")
-ax.set_xlabel("repeat"); ax.set_ylabel("times less peak memory")
-ax.set_ylim(0, max(ratios) * 1.15); ax.legend(frameon=False)
-ax.set_title(f"spread {max(ratios) - min(ratios):.2f} over {len(ratios)} repeats")
-fig.tight_layout(); plt.show()
+# A ratio is infinite when the chunked path's peak never rose above the baseline process at
+# all: at this many rows the saving is real but smaller than the interpreter's own footprint, so
+# it cannot be resolved here. That is a property of the size, not a result -- raise MEM_ROWS.
+resolved = np.isfinite(ratios) & np.isfinite(softmax_ratios)
+if not resolved.all():
+    print(f"\n{int((~resolved).sum())} of {len(ratios)} repeats could not resolve the chunked path: "
+          f"its peak never rose above the baseline at MEM_ROWS={MEM_ROWS:,} on this machine. "
+          f"Raise MEM_ROWS to make the saving measurable.")
+ratios = list(np.asarray(ratios)[resolved])
+softmax_ratios = list(np.asarray(softmax_ratios)[resolved])
+if ratios:
+    fig, ax = plt.subplots(figsize=(7, 3))
+    ax.plot(range(1, len(ratios) + 1), ratios, "o-", label="projection inside the loop")
+    ax.plot(range(1, len(ratios) + 1), softmax_ratios, "s--", label="softmax chunked only")
+    ax.set_xlabel("repeat"); ax.set_ylabel("times less peak memory")
+    ax.set_ylim(0, max(ratios) * 1.15); ax.legend(frameon=False)
+    ax.set_title(f"spread {max(ratios) - min(ratios):.2f} over {len(ratios)} repeats")
+    fig.tight_layout(); plt.show()
 
-print()
-print(f"Chunking the SOFTMAX saves {np.mean(softmax_ratios):.2f}x. Moving the PROJECTION inside")
-print(f"the loop saves {np.mean(ratios):.2f}x --"
-      f" {np.mean(ratios) / np.mean(softmax_ratios):.1f} times more.")
+    print()
+    print(f"Chunking the SOFTMAX saves {np.mean(softmax_ratios):.2f}x. Moving the PROJECTION inside")
+    print(f"the loop saves {np.mean(ratios):.2f}x --"
+          f" {np.mean(ratios) / np.mean(softmax_ratios):.1f} times more.")
 print("Both are called 'chunked cross-entropy'. Only one of them avoids building the tensor.")
 print()
 print("Peak RSS of a whole process, so it moves with whatever else the machine is doing. That")
