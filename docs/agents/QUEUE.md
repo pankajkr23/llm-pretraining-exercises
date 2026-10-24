@@ -2105,4 +2105,11 @@ predates the harness — so it is logged as what it was.
                           drift). Published verdict kept, dated note added. Local full run found a
                           race this branch made (05 mutation test vs producer digest check); locked.
                           #205 opened
+2026-10-24  release       v0.18.0 -- [Unreleased] -> [0.18.0] 2026-10-24, 9 entries in 2 blocks
+                          (Added, Fixed): #202-#205, all merged since v0.17.0. Production serves
+                          v0.17.0, so the tracked notebooks, the re-runs and the best-result sections
+                          are not live. CHECKED WITH release.yml's OWN awk EXTRACTOR: 69 lines, stops
+                          before [0.17.0], and v0.17.0's notes extract byte-identically to main.
+                          Root version stays pinned at 0.0.0.
+                          #206 opened
 ```
