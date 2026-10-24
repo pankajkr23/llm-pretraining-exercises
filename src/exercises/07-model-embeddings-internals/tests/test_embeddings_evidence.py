@@ -270,6 +270,46 @@ def test_the_manifest_is_generated_and_regenerates_byte_for_byte() -> None:
     )
 
 
+def test_every_dated_set_indexes_only_its_own_bundles() -> None:
+    """The same byte-identity, per dated set — the first one shipped indexing the historical files.
+
+    `results/reruns/2026-10-24/MANIFEST.md` was published listing `lane_sensitivity.json`,
+    `parallel_text.json` and `unk_confound.json`, none of which is in that set: an index of a
+    different directory under this one's name. Nothing compared it with what it indexes.
+    """
+    sets = sorted(p for p in (EXERCISE / "results" / "reruns").iterdir() if p.is_dir())
+    assert sets, "no dated sets to check"
+    for dated in sets:
+        manifest = dated / "MANIFEST.md"
+        assert manifest.is_file(), f"{dated.name} has no MANIFEST.md"
+        assert _publish().render_manifest(dated, dated.name) == manifest.read_text(
+            encoding="utf-8"
+        ), (
+            f"results/reruns/{dated.name}/MANIFEST.md is not the index of that set. Rebuild it:\n"
+            "  uv run python src/exercises/07-model-embeddings-internals/tools/"
+            f"publish_rerun.py --manifest-only --date {dated.name}"
+        )
+
+
+def test_rebuilding_an_index_never_creates_a_dated_set(tmp_path, monkeypatch) -> None:
+    """`--manifest-only` once created `results/reruns/<today>/` on every run, holding an index of
+    nothing, and never rebuilt the `results/MANIFEST.md` the documents said it did."""
+    publish = _publish()
+    results = tmp_path / "results"
+    (results / "reruns" / "2026-01-01").mkdir(parents=True)
+    monkeypatch.setattr(publish, "RESULTS", results)
+    monkeypatch.setattr(publish, "RERUNS", results / "reruns")
+
+    assert publish.main(["--manifest-only"]) == 0
+    assert (results / "MANIFEST.md").is_file(), "the historical index was not rebuilt"
+    assert publish.main(["--manifest-only", "--date", "2026-01-01"]) == 0
+    assert (results / "reruns" / "2026-01-01" / "MANIFEST.md").is_file()
+    assert publish.main(["--manifest-only", "--date", "2026-02-02"]) == 2
+    assert sorted(p.name for p in (results / "reruns").iterdir()) == ["2026-01-01"], (
+        "rebuilding an index created a dated set"
+    )
+
+
 def test_every_published_run_has_its_manifest_and_audit_tracked() -> None:
     """A published number whose run manifest a clone cannot open is not a reproducible one.
 
