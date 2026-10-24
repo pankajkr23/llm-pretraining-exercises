@@ -29,11 +29,27 @@ OUT = EXERCISE / "RESULTS.md"
 MEBIBYTE = 1024 * 1024
 
 
-def _load() -> tuple[dict, dict, dict]:
-    harness = json.loads((RESULTS / "harness.json").read_text())
-    training = json.loads((RESULTS / "training.json").read_text())
-    sensitivity = json.loads((RESULTS / "sensitivity.json").read_text())
+def _load(results: Path = RESULTS) -> tuple[dict, dict, dict]:
+    harness = json.loads((results / "harness.json").read_text())
+    training = json.loads((results / "training.json").read_text())
+    sensitivity = json.loads((results / "sensitivity.json").read_text())
     return harness, training, sensitivity
+
+
+def render_set(results: Path) -> int:
+    """Render one dated re-run set into its own `RESULTS.md` and `web-data.js`.
+
+    The published `RESULTS.md` and `web/data.js` describe the published run and are left alone.
+    """
+    try:
+        bundles = _load(results)
+    except FileNotFoundError as missing:
+        print(f"refused: {missing.filename} is missing", file=sys.stderr)
+        return 2
+    (results / "RESULTS.md").write_text(render(*bundles))
+    (results / "web-data.js").write_text(render_page_data(*bundles))
+    print(f"wrote RESULTS.md and web-data.js in {results}")
+    return 0
 
 
 def _decimals_for(spread: float) -> int:
@@ -367,8 +383,20 @@ are a run now.*
 """
 
 
-def main() -> int:
-    """Write `RESULTS.md`. Returns 0, or 1 when a results file is missing."""
+def main(argv: list[str] | None = None) -> int:
+    """Write `RESULTS.md`. Returns 0, or 1 when a results file is missing.
+
+    `--results <dated set>` renders a re-run set into itself instead.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Render exercise 09's RESULTS.md")
+    parser.add_argument("--results", type=Path, default=None, help="a dated set under reruns/")
+    args = parser.parse_args(argv)
+    if args.results is not None:
+        # Repo-relative or exercise-relative: `results/reruns/<date>` works from the repo root.
+        here = args.results if args.results.is_dir() else EXERCISE / args.results
+        return render_set(here.resolve())
     try:
         harness, training, sensitivity = _load()
     except FileNotFoundError as missing:

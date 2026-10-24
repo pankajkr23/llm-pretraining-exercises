@@ -325,8 +325,36 @@ the range is the whole space rather than a slice of it.
 """
 
 
-def main() -> int:
-    """Write `RESULTS.md`. Returns 0, or 1 when the run file is missing."""
+def render_set(results: Path) -> int:
+    """Render one dated re-run set's `run.json` into its own `RESULTS.md` and `web-data.js`.
+
+    The published `RESULTS.md` and `web/data.js` describe the published run and are left alone.
+    """
+    bundle = results / "run.json"
+    if not bundle.is_file():
+        print(f"refused: no run.json in {results}", file=sys.stderr)
+        return 2
+    run = json.loads(bundle.read_text())
+    (results / "RESULTS.md").write_text(render(run))
+    (results / "web-data.js").write_text(render_page_data(run))
+    print(f"wrote RESULTS.md and web-data.js in {results}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Write `RESULTS.md`. Returns 0, or 1 when the run file is missing.
+
+    `--results <dated set>` renders a re-run set into itself instead.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Render exercise 10's RESULTS.md")
+    parser.add_argument("--results", type=Path, default=None, help="a dated set under reruns/")
+    args = parser.parse_args(argv)
+    if args.results is not None:
+        # Repo-relative or exercise-relative: `results/reruns/<date>` works from the repo root.
+        here = args.results if args.results.is_dir() else EXERCISE / args.results
+        return render_set(here.resolve())
     path = RESULTS / "run.json"
     if not path.is_file():
         print(f"missing {path} — run `uv run python -m trainloop.harness` first", file=sys.stderr)

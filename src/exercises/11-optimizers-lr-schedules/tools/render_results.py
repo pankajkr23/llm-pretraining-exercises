@@ -971,11 +971,37 @@ def render_page_data(results: Path = RESULTS) -> str:
     )
 
 
+def render_set(results: Path) -> int:
+    """Render one dated re-run set into itself, beside its bundles.
+
+    `run_experiments.py` writes a FULL run to `results/reruns/<date>/`; the published `RESULTS.md`
+    and `web/data.js` describe the published run and are left alone.
+    """
+    if not load(results):
+        print(f"refused: no bundles in {results}", file=sys.stderr)
+        return 2
+    (results / "RESULTS.md").write_text(render(results), encoding="utf-8")
+    (results / "web-data.js").write_text(render_page_data(results), encoding="utf-8")
+    print(f"wrote RESULTS.md and web-data.js in {results}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Write `RESULTS.md` (and `web/data.js`), or with `--check` report whether both are current."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--results",
+        type=Path,
+        default=None,
+        help="a dated set under results/reruns/: render its RESULTS.md and web-data.js into it, "
+        "leaving the published RESULTS.md and the page alone",
+    )
     args = parser.parse_args(argv)
+    if args.results is not None:
+        # Repo-relative or exercise-relative: `results/reruns/<date>` works from the repo root.
+        here = args.results if args.results.is_dir() else EXERCISE / args.results
+        return render_set(here.resolve())
     fresh = render()
     page = render_page_data() if PAGE_DATA.parent.is_dir() else None
     if args.check:

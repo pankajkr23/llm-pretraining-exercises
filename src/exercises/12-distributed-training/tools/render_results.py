@@ -728,8 +728,36 @@ def render_page_data(run: dict) -> str:
     )
 
 
-def main() -> int:
-    """Render `results/zero.json` into `RESULTS.md`, and into `web/data.js` when the page exists."""
+def render_set(results: Path) -> int:
+    """Render one dated re-run set's `zero.json` into its own `RESULTS.md` and `web-data.js`.
+
+    The published `RESULTS.md` and `web/data.js` describe the published run and are left alone.
+    """
+    bundle = results / "zero.json"
+    if not bundle.is_file():
+        print(f"refused: no zero.json in {results}", file=sys.stderr)
+        return 2
+    run = json.loads(bundle.read_text(encoding="utf-8"))
+    (results / "RESULTS.md").write_text(render(run), encoding="utf-8")
+    (results / "web-data.js").write_text(render_page_data(run), encoding="utf-8")
+    print(f"wrote RESULTS.md and web-data.js in {results}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Render `results/zero.json` into `RESULTS.md`, and into `web/data.js` when the page exists.
+
+    `--results <dated set>` renders a re-run set into itself instead.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(description=main.__doc__.splitlines()[0])
+    parser.add_argument("--results", type=Path, default=None, help="a dated set under reruns/")
+    args = parser.parse_args(argv)
+    if args.results is not None:
+        # Repo-relative or exercise-relative: `results/reruns/<date>` works from the repo root.
+        here = args.results if args.results.is_dir() else EXERCISE / args.results
+        return render_set(here.resolve())
     run = json.loads(RESULTS.read_text(encoding="utf-8"))
     OUT.write_text(render(run), encoding="utf-8")
     print(f"wrote {OUT}")
