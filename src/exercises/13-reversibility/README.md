@@ -50,8 +50,10 @@ reported and not ranked. The published figures are in [`RESULTS.md`](RESULTS.md)
   are noisier than the effect they were used to rank.
 
 **The next hypothesis.** Scale the learning rate with the batch in the largest-batch run. If the
-loss gap to the baseline shrinks well below +0.84, the gap was the step count and not the reversible
-stack. Separately, measure speed with interleaved, repeated trials under the vitals watchdog, and
+loss gap to the baseline shrinks well below the measured one — +0.8845 in the published run
+([`RESULTS.md`](RESULTS.md)), +0.8409 in the
+[2026-10-24 re-run](results/reruns/2026-10-24/RESULTS.md) — the gap was the step count and not the
+reversible stack. Separately, measure speed with interleaved, repeated trials under the vitals watchdog, and
 rank it only if the reversible range sits outside the baseline's.
 
 ## What this is

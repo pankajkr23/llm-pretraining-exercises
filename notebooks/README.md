@@ -27,6 +27,10 @@ root at run time on a laptop and clones and installs it on Colab.
 | 13 | [`13-reversibility`](13-reversibility.ipynb) | reversible residual stacks: exact rebuilt gradients, memory against depth, the largest batch that fits — `reversible` | 11's decoder and corpus | the dense model exercise 14 converts |
 | 14 | [`14-moe`](14-moe.ipynb) | upcycle a dense model into experts, watch the router balance, continue training against the dense control — `moe` | 11's decoder and corpus; 13's dense checkpoint for the full run | the end of the path |
 
+**Two rows borrow forward.** Pipeline order is the order of the topics, not of the imports: 07 takes
+09's model trunk and 08 takes 09's corpus, so both read code from a later exercise. Their setup cells
+install 09's package themselves, so reading in order still works.
+
 **The path converges.** Knobs default to each exercise's recorded decision, so running the
 notebooks in order with no edits retraces the choices the exercises made; change a knob to try an
 alternative, and the cells say what to look for.

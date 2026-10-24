@@ -117,15 +117,15 @@ print("repo root:", root)"""
 
 Nothing below is hard-coded. These are the only arbitrary choices in the notebook, and the last one
 is the interesting one: **the page this exercise publishes says the step count is the only arbitrary
-thing in the run, and it is not.** The seed has never been varied. Section 10 varies it.
+thing in the run, and it is not.** The seed has never been varied. Section 11 varies it.
 
 `LITE` shortens the two training runs and nothing else. Every count, shape and equivalence below is
-identical either way — which is worth checking rather than believing, so section 9 checks it."""
+identical either way — which is worth checking rather than believing, so section 8 checks it."""
         ),
         code(
             """LITE      = True    # False reproduces the published runs. Costs about ten minutes.
 STEPS     = 60 if LITE else 300   # optimiser steps in every training cell
-SEED      = 9       # the published seed. Section 10 sweeps it
+SEED      = 9       # the published seed. Section 11 sweeps it
 SEEDS     = (7, 8, 9, 10, 11) if not LITE else (8, 9, 10)   # for that sweep
 MEM_ROWS  = 1024 if LITE else 4096   # rows the memory comparison scores
 MEM_REPEATS = 3 if LITE else 5       # how many times it repeats, for the noise floor
@@ -349,7 +349,7 @@ print(f"  {'tied':<10} {'UNAVAILABLE':>12}   {unavailable.note[:60]}...")
 
 print(f"\\n  body (estimated) : {config.body_params:>12,}")
 print(f"  untied head      : {config.head_params:>12,}  ({config.head_share:.1%} of the total)")
-print(f"  two dense heads  : {multi_head_params(config):>12,}  — the price of section 8")"""
+print(f"  two dense heads  : {multi_head_params(config):>12,}  — the price of section 9")"""
         ),
         md(
             """## 7 · The same loss, a ninth of the memory
@@ -358,7 +358,7 @@ The logits tensor exists only to become one scalar, and it is the largest thing 
 computes the loss in row blocks so the full `[rows, vocab]` tensor never exists at once.
 
 **Two kinds of chunking, and only one is what the technique is named for.** Chunking a softmax over
-logits that already exist saves the intermediates: about 1.9×. Doing the *projection* inside the
+logits that already exist saves the intermediates: about 1.8×. Doing the *projection* inside the
 loop, so the tensor is never built: about 9×.
 
 **The loss must be identical.** Chunking is not an approximation — if the numbers differ, something

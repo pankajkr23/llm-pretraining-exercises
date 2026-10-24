@@ -4,7 +4,7 @@ Why this exercise is shaped the way it is, and what would overturn each choice.
 
 ---
 
-## D1 · The notebook stays local; `results/` is tracked
+## D1 · Superseded — the notebook stays local; `results/` is tracked
 
 **Superseded 2026-10-24.** Every topic notebook is now tracked, this one included, at
 [`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb),

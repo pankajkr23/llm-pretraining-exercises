@@ -2135,4 +2135,14 @@ predates the harness — so it is logged as what it was.
                           matches today's code", as 13's do. Docs findings: two worktree agents.
                           Source-quote finding (05/06/08): awaiting PK's decision.
                           #208 opened
+2026-10-24  review-docs   The reviewers' documentation findings, 01-14, fixed by two worktree agents
+                          (neither could commit: the receipt is regenerated here, and the 08-14
+                          agent's SKIP of that hook was refused, correctly). Every claim they added
+                          was re-checked against the JSON here (07 six-lane ranks, 05's V5/D1-D4,
+                          the supply correction). Stacked on #208, which edits the same run blocks.
+                          Added by me: 14 notebook's FULL cell uses the runner's dense_run; 07's
+                          page tile qualified; 09 CLAUDE "9.1x" -> "about 9x". Left, with reason:
+                          04 pipeline.py docstring ("seven of the eight") sits inside 05's code
+                          digest; 13's frozen re-run README. ONE JUDGEMENT FOR PK: 05's new "what
+                          stands now" sentence on H3.
 ```

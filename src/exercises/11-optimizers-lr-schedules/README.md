@@ -3,8 +3,10 @@
 **Notebook:** [`notebooks/11-optimizers-lr-schedules.ipynb`](../../../notebooks/11-optimizers-lr-schedules.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/11-optimizers-lr-schedules.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
 
 **Five experiments on what an optimiser actually does to a small language model: Adam written out by
-hand, bias correction switched off, the per-layer update-to-weight ratio, cosine against WSD stopped
-early, and the learning rate swept across widths in the standard parametrization and in muP.** Every
+hand, bias correction switched off, the per-layer update-to-weight ratio, cosine against WSD
+(warmup–stable–decay: hold the peak rate, then decay only at the end) stopped early, and the
+learning rate swept across widths in the standard parametrization and in muP (the maximal-update
+parametrization, which rescales each layer's initialisation and learning rate with width).** Every
 measured number is in [`RESULTS.md`](RESULTS.md), which is generated from `results/*.json` and
 carries each run's provenance. **[The page](https://llm-pretraining-demos.vercel.app/11-optimizers-lr-schedules/)**
 tells the same story for a general reader, with figures you can drive; its data is generated from
@@ -157,8 +159,9 @@ without them, and a test fails if `RESULTS.md` differs from a fresh render.
 
 ## What this cannot establish
 
-- **The models are small and the runs are short.** The experiments train decoders of roughly 8 to 60
-  million parameters for hundreds of steps. That is enough to see each mechanism — the size of an
+- **The models are small and the runs are short.** The experiments train decoders of roughly 8 to 71
+  million parameters (8,312,832 at width 256 to 71,000,064 at width 1,024, [`RESULTS.md`](RESULTS.md)
+  §5) for hundreds of steps. That is enough to see each mechanism — the size of an
   uncorrected step, the effect of warmup on a ratio, the shape of a schedule, the drift of a minimum
   with width — and not enough to say what the best settings are for a production run, where a
   schedule's advantage or a minimum's position can move.
