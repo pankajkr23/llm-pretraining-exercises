@@ -2121,4 +2121,5 @@ predates the harness — so it is logged as what it was.
                           --check and test_standards_history green). Tags: v0.1.0-v0.18.0 only.
                           The `gh release view` check was refused by the permission layer; the
                           github-release job's success is the evidence the Release exists.
+                          #207 opened
 ```
