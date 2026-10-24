@@ -97,8 +97,9 @@ slack is `supply ÷ demand`, and the only lane where that ratio is comfortable i
 
 ## §3 · BrowseComp, composed backward ✅
 
-BrowseComp is in the source material's own target list: *"Hard, verifiable web-browsing for hard-to-locate
-facts."* Traced backward through the notes' `benchmark → loss map → data format → lane share`:
+BrowseComp is on the source material's target list: browsing the web to find facts that are hard
+to locate, with answers that can be checked. Traced backward through `benchmark → loss map → data
+format → lane share`:
 
 | step | answer |
 | --- | --- |
@@ -151,8 +152,8 @@ magnitude smaller than the one that created it.
 
 **The decision that actually determined the outcome: composition time.** Specifically the moment
 the agentic lane was given 2% with no corresponding supply and no generation bill — and, second,
-the moment the anneal reserve was set. The notes are explicit that the reserve is *"decided here,
-at composition time, not discovered at the end"*. By the anneal you are spending a reserve whose
+the moment the anneal reserve was set. The notes are explicit that the reserve is fixed when the
+mixture is composed, not found at the end. By the anneal you are spending a reserve whose
 size and contents were fixed before the run started. If Tier-A agentic trajectories were not
 reserved then, there is nothing to anneal on now, and the run cannot be rewound.
 

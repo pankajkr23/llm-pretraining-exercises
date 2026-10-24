@@ -280,8 +280,8 @@ def check_stages_integrate(deviations: dict[str, float], tolerance: float) -> li
 def check_reserve(covers: bool, share_of_run: float, target: float) -> list[Finding]:
     """INV-7 · The anneal reserve is large enough to fill the stage it feeds.
 
-    §9: reserving the best data *"is decided here, at composition time, not discovered at the
-    end"*. A reserve smaller than its stage means the cooldown runs on ordinary data for part of
+    §9: how much of the best data is reserved is fixed when the mixture is composed, not found at
+    the end. A reserve smaller than its stage means the cooldown runs on ordinary data for part of
     its length, which is the failure this decision exists to prevent.
 
     Args:

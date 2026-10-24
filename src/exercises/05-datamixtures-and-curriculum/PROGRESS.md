@@ -320,8 +320,8 @@ worse — 588 epochs, 35.9× the ceiling — but the discount is deliberately **
 lane fails the ceiling test on raw, uncorrected, unmasked tokens. A reviewer who rejects the
 supervision estimate entirely still lands on impossible.
 
-This is not a reason to drop the lane. It is the source material's own point: agentic data *"must largely
-be built rather than collected"*. The spec keeps the 2% floor and states the generation bill.
+This is not a reason to drop the lane. The source material makes the same point: most agentic
+data has to be built, because there is little of it to collect. The spec keeps the 2% floor and states the generation bill.
 
 ### F5 · The long-context lane is 60% re-counted code
 

@@ -24,8 +24,7 @@ Every row's figures are typed by where they came from:
 
 - ``confirmed``  the source material states it is confirmed from its own sources (Sangraha and V4
 rows)
-- ``approximate`` the source material's own caveat: *"Dataset sizes are approximate and being
-verified"*
+- ``approximate`` the source material flags the size as approximate and not yet verified
 - ``unstated``   the inventory lists the dataset but gives no figure
 """
 

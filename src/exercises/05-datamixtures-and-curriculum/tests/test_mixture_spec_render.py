@@ -97,9 +97,9 @@ def test_the_root_readme_routes_to_the_deliverable_without_a_detour():
     It has been narrowed twice. First it asserted the root carried the share table and the
     curriculum stages; then it asserted a generated per-exercise block routed to the four
     documents. Both were the root retelling the exercise. The root is a map now — one table row per
-    exercise, no generated section — so what is checked is the row, and the requirements' actual
-    requirement: *"the root README is the front door, and it has to carry the reader to `SPEC.md`
-    without a detour"*. That is a routing property, not a content one.
+    exercise, no generated section — so what is checked is the row, and what the requirements
+    actually ask: that the root README is the front door and takes the reader to `SPEC.md` in one
+    hop. That is a routing property, not a content one.
     """
     row = next(
         line

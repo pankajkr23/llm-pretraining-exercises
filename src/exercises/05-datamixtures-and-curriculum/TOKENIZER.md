@@ -82,8 +82,7 @@ small for 13 scripts.
 
 ## What V5's vocabulary should be, and what it costs
 
-**Reuse the instructor's own training script.** The reference solution we were given ships
-`train_tokenizer.py` with the recipe already settled: HuggingFace BPE, `min_frequency=1`, NFKC
+**Keep the recipe that is already settled.** HuggingFace BPE, `min_frequency=1`, NFKC
 normalisation only, **Metaspace** rather than ByteLevel — which spends too many tokens on the
 UTF-8 bytes of Indic scripts, as the Manipuri column above confirms — and a hard round-trip
 rule that `decode(encode(text))` preserves every non-whitespace character.

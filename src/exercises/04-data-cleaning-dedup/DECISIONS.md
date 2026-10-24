@@ -175,7 +175,7 @@ quietly presenting a plausible number:
   carries `provenance: "measured"`.
 - **The PII name layer** is a gazetteer, not NER. No NER model has usable Maithili or Dogri support,
   so importing one would ship hundreds of megabytes of confident garbage. The source material's own widget
-  says "behaviour shown via a small known list"; we match it. **No name precision or recall is
+  demonstrates the behaviour with a small fixed list; we match it. **No name precision or recall is
   published** — there is no gold set, and inventing one is the same sin as a fake classifier.
   Precision for the *structured* layer is published, hand-verified on 40 documents.
 

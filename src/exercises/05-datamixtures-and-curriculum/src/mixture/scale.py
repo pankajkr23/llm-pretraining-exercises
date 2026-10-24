@@ -2,8 +2,8 @@
 
 `SPEC.md` §7 admits that "mixture rankings transfer across scale" is an assumption rather than a
 result, and names precisely what would falsify it: **a rank inversion between the smallest and
-largest arm**. The instructor's own warning is quoted beside it -- asked whether a smaller model is
-a good proxy, the answer was *"Not at all. Weights are completely changed."*
+largest arm**. The course's own warning sits beside it -- asked whether a smaller model is a good
+proxy, the answer was a firm no, because the weights are entirely different.
 
 Naming a falsifier and never testing it is cheaper than it looks honest. This tests it across the
 range this machine can reach: 1.7M to 30.5M parameters, a 17x spread, every arm at every size.
