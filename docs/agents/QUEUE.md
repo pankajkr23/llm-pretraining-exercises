@@ -2084,4 +2084,5 @@ predates the harness — so it is logged as what it was.
                           (verify.py catches it). Builders and notebooks tracked; guard, backup and
                           tripwire classes retired for them; quote check + receipt read .ipynb.
                           Install of builders/notebooks is PK's script (guard: no escape hatch).
+                          #204 opened
 ```
