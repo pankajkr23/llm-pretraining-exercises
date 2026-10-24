@@ -59,22 +59,31 @@ method, `DECISIONS.md` the resolved answers, `OPEN.md` what was deliberately lef
 
 **Best result.** This exercise produces a decision rather than a score, and its strongest outcome is
 the one it was built to reach honestly: **4 of 145 datasets are committable today, carrying 6.56T of
-a 16.8T seen-token budget** (15.372T of it unique), with grades of 14 B · 116 C · 15 X and nothing at
-A because of coverage rather than quality ([what it produces](#what-it-produces); the counts are in
-[`web/data.json`](web/data.json) under `sourcing` and `grades`). Its one head-to-head
-measurement is the Indic tokenizer tax on all 22 scheduled languages, where the best of the three
-tokenizers measured has a mean tax of ×1.66 against ×2.49 for the one the inherited-model path
-would lock in ([`docs/DECISIONS.md`](docs/DECISIONS.md#what-the-fork-now-costs-measured)).
+a 16.8T seen-token budget**. A *seen* token is counted every time training reads it; the mixture's
+tiers need **15.372T of *unique* text** to fill that budget, the difference being scarce tiers that
+are deliberately read more than once. The grades are 14 B · 116 C · 15 X and nothing at A because
+of coverage rather than quality: a grade summarises five gates, **X** means the provenance or
+contamination gate failed and the dataset is excluded, **A** needs all five gates answered and a
+high score, **B** at least three answered and a passing score, and **C** is everything else —
+mostly datasets whose gates nobody has measured ([what it produces](#what-it-produces); the counts
+are in [`web/data.json`](web/data.json) under `sourcing` and `grades`). Its one head-to-head
+measurement is the Indic **tokenizer tax** — a tokenizer's tokens per word on an Indic language
+divided by its tokens per word on English, so ×2 means every Indic word costs twice as much to
+train on and to serve — on all 22 scheduled languages, where the best of the five tokenizers
+measured has a mean tax of ×1.66 against ×2.49 for the one the inherited-model path would lock in
+([`docs/DECISIONS.md`](docs/DECISIONS.md#what-the-fork-now-costs-measured)).
 
 **Candidates that did or could do better.**
 
-- **The fork is priced, not chosen.** Training from scratch, extending an existing model's
+- **The fork — whether to train a new model or start from an existing one — is priced, not
+  chosen.** Training from scratch, extending an existing model's
   vocabulary and continuing its training, or upcycling to a mixture of experts are all still open;
   the stated way to decide is a head-to-head at ~2B scale on identical data
   ([`docs/OPEN.md`](docs/OPEN.md#open--needs-a-decision)).
-- **The deduplicated Indic web has never been measured** — the pages carry 1.31T–2.62T from an
-  assumed 20–40% survival, and every budget that uses it inherits the assumption
-  ([what it cannot tell you](#what-it-cannot-tell-you)).
+- **Nothing here has been deduplicated, and the deduplicated Indic web has never been measured.**
+  The committable 6.56T is a sum of publishers' stated sizes; the pages carry 1.31T–2.62T for it
+  after cross-corpus deduplication only from an assumed 20–40% survival, and every budget that uses
+  it inherits the assumption ([what it cannot tell you](#what-it-cannot-tell-you)).
 - **Four domains have no supply.** Agriculture and health have no catalogued dataset at all, and
   two more exist only inside an unseparated web slice ([`docs/OPEN.md`](docs/OPEN.md#open--needs-a-decision)).
 
@@ -96,7 +105,7 @@ something plausible.
 | Grades | 14 B · 116 C · 15 X — nothing reaches A, and the reason is coverage, not quality |
 | Committable today | **4**, carrying 6.56T |
 | Tokenizer tax | 22 languages × 5 tokenizers, measured on our own runs, not cited |
-| Contamination gate | 126,044 fingerprints over 8,923 MILU items |
+| Contamination gate | 126,044 fingerprints over 8,923 items of MILU, an Indic evaluation benchmark built from Indian competitive-exam questions |
 | Modalities / domains | 7 modalities, 16 domains — with the 4 nothing can currently supply named |
 | Corrections | 30, each with a paired test proving it fails when broken |
 
@@ -185,8 +194,9 @@ State these before quoting any figure above.
 - **120 provenance-typed values are `unknown`**, mostly `size_tokens` for datasets whose publisher
   never stated one. The page prints `unknown` rather than a plausible substitute, which is why the
   committable total is a floor and not an estimate.
-- **The size of the deduplicated Indic web has not been measured by anyone, including here.** What
-  the pages carry is a range — **1.31T–2.62T**, from an assumed **20–40%** cross-corpus survival.
+- **The size of the deduplicated Indic web has not been measured by anyone, including here**, and
+  neither has the deduplicated size of the committable supply. What the pages carry for the latter
+  is a range — **1.31T–2.62T** of the raw 6.56T, from an assumed **20–40%** cross-corpus survival.
   Every budget that consumes it inherits that assumption, and measuring it would move more of this
   framework than any other single quantity.
 - **No dataset reaches grade A, and that is about coverage, not quality.** 14 B · 116 C · 15 X.

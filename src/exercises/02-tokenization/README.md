@@ -357,7 +357,9 @@ language equally mediocre. The Hindi penalty is meant to block that, but it only
 X = 1.2 and every configuration here sits near 0.6 — so on this corpus the guard is inert and the
 exploit is unguarded. That is why every table above reports **corpus-wide X** next to the score:
 a config that shrinks the spread while raising that number has flattened the languages rather than
-improved them, and you can see it happen in the E2 rows.
+improved them, and you can see it happen in the *more Telugu + Maithili* and *te ×5 · mai ×6* rows
+of [Experiments on the graded corpus](#experiments-on-the-graded-corpus): both shrink the spread
+below the submission's and both raise corpus-wide X above its 0.5990.
 
 **Much of what it measures is script-independent.** Punctuation alone is the majority of faithful
 units in every language (en 52.0%, hi 52.3%, te 55.6%, mai 55.8%, ta 52.2%), and the "Indic"
@@ -440,7 +442,7 @@ src/tokenization/
   explainer.py      # exports web/explainer.json — the measured points behind the figures
   __main__.py       # train the submission, write tokenizer.json + report.json
 web/             # zero-dependency pages, all tracked
-  index.html        # the tool: five tokenizers, fertilities, live encoder
+  index.html        # the tool: nine tokenizers (five v2, four v1), fertilities, live encoder
   how-it-works.html # the explainer: three figures, reads explainer.json
   encoder.js        # the BPE encoder in JavaScript, parity-tested against Python
 tests/           # metric math, faithfulness on the real corpus, Python↔JS parity, both pages
@@ -562,7 +564,7 @@ wider than the gap between recipes, and that is its finding.
 ### Rebuilding the site
 
 ```bash
-uv run python -m tokenization.widget      # the five tokenizers the page shows   ~4 min
+uv run python -m tokenization.widget      # the nine tokenizers the page shows   ~4 min
 uv run python -m tokenization.explainer   # the figures on how-it-works.html    ~12 min
 ```
 
@@ -595,7 +597,7 @@ artifacts/            # gitignored — regenerate freely
   holdout.json        # per-recipe held-out scores across five splits
   fourth_language.json
 web/                  # tracked — commit changes to these
-  data.json           # the five tokenizers the page renders
+  data.json           # the nine tokenizers the page renders (five v2, four v1)
   tokenizer.json      # the submission, served for download
   explainer.json      # the measured points behind the figures
 ```
@@ -603,8 +605,8 @@ web/                  # tracked — commit changes to these
 ## Tests
 
 ```bash
-uv run pytest -m "not integration"   # metric math and path wiring — ~1s
-uv run pytest                        # + real-corpus training and the browser — ~1 min
+uv run pytest src/exercises/02-tokenization -m "not integration"   # metric math and path wiring — ~1s
+uv run pytest src/exercises/02-tokenization                        # + real-corpus training and the browser
 ```
 
 Two one-time setups, and **the suite skips rather than fails without them**, which means it stops
@@ -624,6 +626,10 @@ node --version                       # for the Python↔JavaScript parity check
 | `test_js_encoder.py` | `encoder.js` and Python produce identical token **ids** |
 | `test_widget_render.py` | both pages load in a browser and the interactions work |
 | `test_corpus_paths.py` | the corpus builder writes where the loader reads |
+| `test_ablate.py` | corpus weighting, and that a mini-sweep runs offline, ranks, and records a bad spec rather than raising |
+| `test_bpe_scratch.py` | the hand-written BPE: word marking, vocabulary size, determinism, `[UNK]`, weighting, save/load and a multilingual round trip |
+| `test_tokenizer.py` | the byte-level path still trains and round-trips, and a saved tokenizer reloads to identical ids |
+| `test_tokenization_notice.py` | `NOTICE` attributes every redistributed article and reads every character count back from its metadata |
 
 Every invariant is also run against something deliberately broken, so each guard is known to be
 able to fail. When you add one, break the thing on purpose and watch it go red first.

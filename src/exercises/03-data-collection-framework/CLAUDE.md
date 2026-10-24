@@ -8,7 +8,8 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   `docs/OPEN.md` tracks the decisions deliberately left open.
 - **Python package** (src layout) at `src/dataframework/`, installed editable via the uv workspace
   (matched by `members = ["src/exercises/[0-9][0-9]-*"]`). Add deps with `uv add` (never hand-edit
-  `uv.lock`). Pipeline entry point (`python -m dataframework`) arrives in Phase 2.
+  `uv.lock`). Pipeline entry point: `python -m dataframework` (`src/dataframework/__main__.py`),
+  which validates the spine, computes, and writes `web/data.json`.
 - **The five invariants (INV-1…INV-5)** are enforced in **CI tests**, not prose (train never touches
   eval · no grade-X in a commercial mix · every judgment has reasoning+citation+confidence · fertility
   measured not annotated · no Atlas content silently dropped). They come **before** any UI
@@ -50,7 +51,7 @@ Component notes. Repo-wide conventions: root `AGENTS.md`.
   would teach the same thing, write a paragraph instead. Anything that only draws a shape is
   unfinished. Read `../../../docs/EXPLAINER_PROMPT.md` (what to build, and when **not** to) and
   `../../../docs/EXPLAINER_PATTERN.md` (how — DOM, class names, state-and-render shape, voice)
-  before starting one. Both are gitignored — present locally, absent from the remote. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
+  before starting one. Both are tracked, so every clone and CI job can read them. **The site is one page**: `web/index.html` is the shell and `web/chapters.js`
   holds **thirteen chapters plus an appendix**, one per reader question, each in three layers —
   headline, interaction, and a closed "The arithmetic". `web/report/` and `web/reasoning/` are redirect stubs from the two-page
   version. Reference implementation: the contamination gate (chapter 8), reader-supplied input,
