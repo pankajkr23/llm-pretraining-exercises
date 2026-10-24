@@ -59,9 +59,8 @@ are deferred by decision rather than pending.
 
 ### F1 · The source's description of OPUS is wrong in the load-bearing detail
 
-The source says the proxy pass records *"which particular weight of the model is acting bad…
-we're going to store this map"* and that candidates are selected for *"updating those weights"* — a
-weight mask.
+The source describes the proxy pass as storing a map of the individual weights that misbehave,
+and selection as preferring candidates that update them — a weight mask.
 
 **There is no weight mask in either implementation.** Verified against the paper (arXiv:2602.05400v2)
 and against every one of the 25 files in the MIT reference repo. The score is a **continuous

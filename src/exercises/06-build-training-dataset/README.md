@@ -81,10 +81,10 @@ least 3 of 4. If it stays unsupplied, the limit is the lane's supply (2 training
 You are 50 days into a training run and something looks wrong. You want to know what the model read
 on day 40. You open the folder, find 30 GB of files, and there is no way to answer.
 
-That is the motivation, in the instructor's own words. The deliverable is therefore not a data
+That is the problem this exercise is built around. The deliverable is therefore not a data
 loader but a **ledger** — an append-only record written as training happens — so the run can be
-interrogated afterwards. The requirements say the system is complete only when it can prove four
-things, and each maps onto one subsystem:
+interrogated afterwards. The system counts as complete only when it can prove four things, and each
+maps onto one subsystem:
 
 | the question | the subsystem |
 | --- | --- |
@@ -95,11 +95,9 @@ things, and each maps onto one subsystem:
 
 ### The one idea everything hangs off
 
-A student asked how any of this is reproducible when there is randomness and no saved seed. The
-answer inverts the obvious approach:
-
-> *"I will not run the code… **I'm going to run the ledger.** I'm going to read and send. **I will
-> not calculate it."***
+How can any of this be reproducible when there is randomness and no saved seed? The answer
+inverts the obvious approach: **replay reads the ledger and sends what it recorded; it never runs
+the selection code again.**
 
 You do not make a run reproducible by seeding it. You make it reproducible by **writing down what
 actually happened** and replaying that. The record outranks the code — which is the only thing that

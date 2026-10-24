@@ -7,9 +7,9 @@ breakthrough, it is the benchmark answers having reached the training set, and t
 restarted rather than celebrated.
 
 **The strategy — two-sided, and deliberately redundant.** The shard carries a `never-train` tag,
-**and** the trainer independently asks the registry before consuming anything. The instructor is
-explicit that the belt-and-braces is on purpose: a copying slip or a missed
-registration is always possible, so neither side is trusted alone.
+**and** the trainer independently asks the registry before consuming anything. The redundancy is
+on purpose: a copying slip or a missed registration is always possible, so neither side is trusted
+alone.
 
 So `manifest.admit` already refuses a shard whose split is not `train` (that is side one). This
 module is side two: an independent registry the loader consults by shard id, which does not trust

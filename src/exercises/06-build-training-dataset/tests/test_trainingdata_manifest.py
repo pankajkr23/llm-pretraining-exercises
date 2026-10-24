@@ -53,8 +53,8 @@ def test_the_required_hashes_are_the_three_the_lecture_names() -> None:
 
     The refusal tests below iterate `REQUIRED_HASHES`, so deleting an entry from it makes them test
     fewer cases and stay green — a guard derived from the thing it guards. This is the twin that
-    catches that: the three are a contract from the source (*"a minimum cleaning hash, dedup plus
-    eval, PII"*), not a tunable.
+    catches that: the three are a contract from the source — at minimum a cleaning hash, dedup
+    with eval separation, and PII — not a tunable.
     """
     assert set(m.REQUIRED_HASHES) == {"dedup_hash", "pii_hash", "eval_overlap_hash"}, (
         f"REQUIRED_HASHES is {m.REQUIRED_HASHES}. Removing one silently admits shards nobody has "

@@ -1,4 +1,4 @@
-"""Replay — the source material's thesis, and the one line of code that separates it from worthless.
+"""Replay — the exercise's central claim, and the one line of code that separates it from worthless.
 
 Reading a recorded hash back and printing it proves nothing. Re-deriving it from the shard bytes and
 finding it equal proves the shard still holds what the run was fed. Every test here is written so it
