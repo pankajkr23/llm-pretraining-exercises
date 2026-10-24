@@ -1,5 +1,7 @@
 # 12 · Distributed training: ZeRO on 32 simulated GPUs
 
+**Notebook:** [`notebooks/12-distributed-training.ipynb`](../../../notebooks/12-distributed-training.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/12-distributed-training.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Thirty-two simulated devices train one small model four ways — plain data parallelism and ZeRO
 stages 1, 2 and 3. On every device, the bytes of every persistent buffer each stage keeps (weights,
 gradients, master copy, Adam moments) and every byte the ring collectives send are counted, and

@@ -1,5 +1,7 @@
 # 02 · Tokenization — a balanced multilingual BPE
 
+**Notebook:** [`notebooks/02-tokenization.ipynb`](../../../notebooks/02-tokenization.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/02-tokenization.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 Exercise 02 requirement. Build **one 10,000-token BPE vocabulary**
 shared across India's Wikipedia article in **English, Hindi, Telugu, and a fourth language**, tuned
 so all four are tokenized about equally efficiently.

@@ -1,5 +1,7 @@
 # 05 · Data mixtures and curriculum
 
+**Notebook:** [`notebooks/05-datamixtures-and-curriculum.ipynb`](../../../notebooks/05-datamixtures-and-curriculum.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/05-datamixtures-and-curriculum.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **What V5 reads, in what order, and what happens to every share when it is checked against the
 data that actually exists.**
 

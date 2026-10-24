@@ -1,5 +1,7 @@
 # 01 · Introductions — Four Live Proofs
 
+**Notebook:** [`notebooks/01-introductions.ipynb`](../../../notebooks/01-introductions.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/01-introductions.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 Exercise 01 requirement. A small site that *proves* four foundational ML claims by training tiny
 models **live in the browser** — no server, no pre-baked figures, and **no dependencies at all**.
 Every page inlines its own CSS and JS; the neural networks (forward pass, backprop, Adam) are

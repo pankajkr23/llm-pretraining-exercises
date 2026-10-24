@@ -1,5 +1,7 @@
 # 06 · Building the Training Dataset
 
+**Notebook:** [`notebooks/06-build-training-dataset.ipynb`](../../../notebooks/06-build-training-dataset.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/06-build-training-dataset.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **A training run eats data for weeks. This is the system that remembers what it ate, why, what the
 model learned from it, and how to reconstruct any of it.**
 

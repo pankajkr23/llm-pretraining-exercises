@@ -1,5 +1,7 @@
 # 13 · Reversible training: memory against batch size
 
+**Notebook:** [`notebooks/13-reversibility.ipynb`](../../../notebooks/13-reversibility.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/13-reversibility.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **A 21-million-parameter language model trained on 50 million tokens three ways — as an ordinary
 residual stack, as a reversible stack at the same batch, and as a reversible stack at the largest
 batch its memory allows — with the final loss, tokens per second and memory of each.** The numbers

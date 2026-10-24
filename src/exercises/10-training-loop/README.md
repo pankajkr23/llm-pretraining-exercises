@@ -1,5 +1,7 @@
 # 10 · The training loop
 
+**Notebook:** [`notebooks/10-training-loop.ipynb`](../../../notebooks/10-training-loop.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/10-training-loop.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **A training loop will not tell you it is wrong. It will show you a loss going down.** This exercise
 takes a small model and a real loop and makes it report on itself: every shape named, one gradient
 checked against arithmetic by hand, gradient accumulation broken on purpose so the gap is visible

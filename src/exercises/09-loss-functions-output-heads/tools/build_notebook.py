@@ -676,7 +676,7 @@ for i in range(MEM_REPEATS):
 # it cannot be resolved here. That is a property of the size, not a result -- raise MEM_ROWS.
 resolved = np.isfinite(ratios) & np.isfinite(softmax_ratios)
 if not resolved.all():
-    print(f"\n{int((~resolved).sum())} of {len(ratios)} repeats could not resolve the chunked path: "
+    print(f"\\n{int((~resolved).sum())} of {len(ratios)} repeats could not resolve the chunked path: "
           f"its peak never rose above the baseline at MEM_ROWS={MEM_ROWS:,} on this machine. "
           f"Raise MEM_ROWS to make the saving measurable.")
 ratios = list(np.asarray(ratios)[resolved])

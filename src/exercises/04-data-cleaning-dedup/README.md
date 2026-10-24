@@ -1,5 +1,7 @@
 # 04 · Data Cleaning & Deduplication
 
+**Notebook:** [`notebooks/04-data-cleaning-dedup.ipynb`](../../../notebooks/04-data-cleaning-dedup.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/04-data-cleaning-dedup.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 
 **Raw data is not training data.** Eight named stages stand between the two. This exercise runs all
 eight over three real corpora, counts what each one removes, and publishes the result.

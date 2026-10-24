@@ -1,5 +1,7 @@
 # 08 · Modern attention variants — in the order they were launched
 
+**Notebook:** [`notebooks/08-modern-attention-variants.ipynb`](../../../notebooks/08-modern-attention-variants.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/08-modern-attention-variants.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Thirty ways of computing attention and of telling a model where a token sits, ordered by the
 date each one actually appeared, with every date read from the primary source.**
 

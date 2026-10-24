@@ -1,5 +1,7 @@
 # 09 · Loss functions and output heads
 
+**Notebook:** [`notebooks/09-loss-functions-output-heads.ipynb`](../../../notebooks/09-loss-functions-output-heads.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/09-loss-functions-output-heads.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Almost everything that can go wrong between a model's output and its loss goes wrong silently, and
 the worst of it makes the number look better.** This exercise builds those few lines, makes each one
 observable, and then trains a model with the bug on purpose to show what it costs.

@@ -1298,6 +1298,17 @@ believes. Config fingerprint `{config.fingerprint()}`.
 """
 
 
+#: The notebook line under the README's title, built from short literals for the same reason.
+_NOTEBOOK_LINE = (
+    "**Notebook:** [`notebooks/05-datamixtures-and-curriculum.ipynb`]"
+    "(../../../notebooks/05-datamixtures-and-curriculum.ipynb) — run this exercise's"
+    " pipeline yourself, every setting in one cell · [open in Colab]"
+    "(https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/"
+    "notebooks/05-datamixtures-and-curriculum.ipynb) · [all fourteen, in order]"
+    "(../../../notebooks/README.md)"
+)
+
+
 #: The reading path at the top of the exercise README.
 #:
 #: Built from short literals rather than written inline, because each markdown table row has to be
@@ -1387,6 +1398,8 @@ def render_readme(config: Config | None = None) -> str:
 
     return f"""\
 # 05 · Data mixtures and curriculum
+
+{_NOTEBOOK_LINE}
 
 **What V5 reads, in what order, and what happens to every share when it is checked against the
 data that actually exists.**

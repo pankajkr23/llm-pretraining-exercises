@@ -1,5 +1,7 @@
 # 03 · Data Collection & Sourcing — a decision framework
 
+**Notebook:** [`notebooks/03-data-collection-framework.ipynb`](../../../notebooks/03-data-collection-framework.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/03-data-collection-framework.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 A framework for **deciding the pre-training data mix** of an India-first 40B model: grade every
 candidate source through five gates, budget the tokens, measure the tokenizer tax, and then try to
 actually assemble the corpus from what survives. The answer is uncomfortable, which is the point —

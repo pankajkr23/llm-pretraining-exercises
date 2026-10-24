@@ -1,5 +1,7 @@
 # 11 · Optimizers and learning-rate schedules
 
+**Notebook:** [`notebooks/11-optimizers-lr-schedules.ipynb`](../../../notebooks/11-optimizers-lr-schedules.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/11-optimizers-lr-schedules.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Five experiments on what an optimiser actually does to a small language model: Adam written out by
 hand, bias correction switched off, the per-layer update-to-weight ratio, cosine against WSD stopped
 early, and the learning rate swept across widths in the standard parametrization and in muP.** Every

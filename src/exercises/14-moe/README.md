@@ -1,5 +1,7 @@
 # 14 · From a dense model to a mixture of experts
 
+**Notebook:** [`notebooks/14-moe.ipynb`](../../../notebooks/14-moe.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/14-moe.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Exercise 13's dense 21M-parameter model, trained on 50 million tokens, converted into a mixture of
 experts by copying each block's feed-forward layer into eight experts behind a router — shown to
 start exactly where the dense model stopped, and to keep training and reducing its loss, next to the

@@ -1,5 +1,7 @@
 # 07 · Model embeddings internals — Kronecker v2
 
+**Notebook:** [`notebooks/07-model-embeddings-internals.ipynb`](../../../notebooks/07-model-embeddings-internals.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/07-model-embeddings-internals.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
+
 **Kronecker byte embeddings make a model's *input* side independent of its vocabulary. Their own
 paper says the *output* side cannot follow. It can — and once it does, the result is smaller than
 the paper's own design and trains better.**
