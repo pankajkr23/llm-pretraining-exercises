@@ -2112,4 +2112,14 @@ predates the harness — so it is logged as what it was.
                           before [0.17.0], and v0.17.0's notes extract byte-identically to main.
                           Root version stays pinned at 0.0.0.
                           #206 opened
+2026-10-24  deploy        v0.18.0 LIVE. Tagged 1555420 after main CI went 7/7 green; release run
+                          40095462758: github-release ok, deploy ok in 23s after PK approved the
+                          gate, aliased to llm-pretraining-demos.vercel.app. Checked: root and all
+                          14 exercise pages serve 200; build.sh run on the tag gives 138 files and
+                          every one matches production byte for byte (13 NOTICE files compared
+                          after the trailing-slash 308). Standards snapshotted at v0.18.0 (8/8,
+                          --check and test_standards_history green). Tags: v0.1.0-v0.18.0 only.
+                          The `gh release view` check was refused by the permission layer; the
+                          github-release job's success is the evidence the Release exists.
+                          #207 opened
 ```
