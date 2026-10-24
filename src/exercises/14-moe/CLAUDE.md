@@ -22,8 +22,11 @@ router trial, continuation) · `runs.py` (provenance, with the dense checkpoint'
   them summing to one only to ~1e-7 — caught by the float64 test.
 - **The bias chooses; it never weights.** It is added to scores only for the top-k selection. If it
   leaked into the weights, balancing would change the function the model computes.
-- **FULL depends on exercise 13's checkpoint.** `dense_model` refuses with the command to run if it is
-  missing, and loads it with `weights_only=True`.
+- **FULL depends on exercise 13's checkpoint, and on the SAME 13 run's results.** The runner's
+  `dense_run` picks 13's published run when its checkpoint is here, else 13's newest re-run
+  (`artifacts/checkpoints/reruns/<date>/`), and reads `trials.json` and `fixed_batch.json` from
+  that run's directory. It refuses a missing checkpoint before the log is touched; the model
+  is loaded with `weights_only=True`.
 - **The log is written as the run goes**, so a crashed run still leaves its record.
 - **Choose on one half of the validation split, report on the other.** `experiments._windows`:
   the router trial selects on `select`, everything published uses `report`. Selecting on the
@@ -36,8 +39,8 @@ router trial, continuation) · `runs.py` (provenance, with the dense checkpoint'
 ```bash
 uv sync --all-packages --extra train
 uv run pytest src/exercises/14-moe
-uv run python src/exercises/14-moe/tools/run_experiments.py      # after exercise 13
-uv run python src/exercises/14-moe/tools/render_results.py
+uv run python src/exercises/14-moe/tools/run_experiments.py      # after exercise 13; -> results/reruns/<today>/
+uv run python src/exercises/14-moe/tools/render_results.py --results results/reruns/<today>
 ```
 
 Test modules are prefixed `test_moe_*`. Torch-gated files are registered in CI's `train` job and in

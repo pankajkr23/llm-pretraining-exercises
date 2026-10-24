@@ -90,8 +90,10 @@ experts that received no tokens.
 | `experiments.py` | the dense starting point, continuity, the router trial and the two continuations |
 | `runs.py` | provenance over this package and exercise 11's, including the digest of the dense checkpoint used |
 
-`tools/run_experiments.py` runs everything and writes `results/upcycle.json` and the training log;
-`tools/render_results.py` writes `RESULTS.md`. The model architecture, data reader and schedules are
+`tools/run_experiments.py` runs everything and writes a new dated set, `results/reruns/<today>/`,
+holding `upcycle.json` and its training log `run.log`. The published `results/upcycle.json` and
+`submission_artifacts/run.log` are never overwritten. `tools/render_results.py` writes `RESULTS.md`,
+or with `--results` a dated set's own. The model architecture, data reader and schedules are
 exercise 11's; the dense weights are exercise 13's trained baseline, loaded with `weights_only=True`.
 
 ## Run it
@@ -100,9 +102,10 @@ exercise 11's; the dense weights are exercise 13's trained baseline, loaded with
 uv sync --all-packages --extra train
 uv run pytest src/exercises/14-moe
 
-# FULL starts from exercise 13's trained baseline, so run exercise 13 first
-uv run python src/exercises/14-moe/tools/run_experiments.py
-uv run python src/exercises/14-moe/tools/render_results.py
+# FULL starts from exercise 13's trained baseline, so run exercise 13 first. It uses 13's
+# published run if its checkpoint is on this machine, else 13's newest re-run; --dense-run picks one.
+uv run python src/exercises/14-moe/tools/run_experiments.py              # -> results/reruns/<today>/
+uv run python src/exercises/14-moe/tools/render_results.py --results results/reruns/<today>
 
 uv run python src/exercises/14-moe/tools/run_experiments.py --preset lite    # self-contained, minutes
 ```
