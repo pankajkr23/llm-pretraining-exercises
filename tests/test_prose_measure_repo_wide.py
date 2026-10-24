@@ -287,7 +287,7 @@ STEP_JS = """() => {
 }"""
 
 #: Every exercise whose page builds a step strip: the ones that IMPORT the shared explainer, not
-#: the ones that vendor its stylesheet. All six deployable bundles carry `_shared/explainer.css`
+#: the ones that vendor its stylesheet. Most deployable bundles carry `_shared/explainer.css`
 #: and only two ever call `makeExplainer`, which is the same gap `AGENTS.md` records for the rest
 #: of that directory. Detected rather than listed, so a third exercise adopting the component joins
 #: this sweep by adopting it.

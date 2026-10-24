@@ -1,0 +1,320 @@
+{
+ "device": "mps",
+ "steps": 400,
+ "batch": 16,
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "rungs": [
+  {
+   "params": 1709568,
+   "layers": 2,
+   "width": 128,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.8668044818107283,
+     "weighted_sd": 0.009596708301526482,
+     "final_train_loss": 6.68684344291687
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.9464855416026228,
+     "weighted_sd": 0.0065025365133966,
+     "final_train_loss": 6.9858032941818236
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.860425034170594,
+     "weighted_sd": 0.006920067527525917,
+     "final_train_loss": 6.469664255777995
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.8615227794636913,
+     "weighted_sd": 0.011613840786625812,
+     "final_train_loss": 6.538824121157329
+    }
+   },
+   "ranking": [
+    "C",
+    "D",
+    "A",
+    "B"
+   ]
+  },
+  {
+   "params": 5785088,
+   "layers": 4,
+   "width": 256,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.64111648592285,
+     "weighted_sd": 0.014349672563904153,
+     "final_train_loss": 6.1847348451614375
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.7639750641882,
+     "weighted_sd": 0.010810906590221474,
+     "final_train_loss": 6.550863357385
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.6483956876356802,
+     "weighted_sd": 0.011640159974795736,
+     "final_train_loss": 5.98787833849589
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.645209984306769,
+     "weighted_sd": 0.020211014673653854,
+     "final_train_loss": 6.052857498327891
+    }
+   },
+   "ranking": [
+    "A",
+    "D",
+    "C",
+    "B"
+   ]
+  },
+  {
+   "params": 14585856,
+   "layers": 6,
+   "width": 384,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.539662844257871,
+     "weighted_sd": 0.012102186999233868,
+     "final_train_loss": 5.934121890862783
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.64482826605768,
+     "weighted_sd": 0.009898078780343763,
+     "final_train_loss": 6.236556239922841
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.547986883489853,
+     "weighted_sd": 0.008934457775401264,
+     "final_train_loss": 5.741585950056712
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.542387894088313,
+     "weighted_sd": 0.017373241154126747,
+     "final_train_loss": 5.807163222630819
+    }
+   },
+   "ranking": [
+    "A",
+    "D",
+    "C",
+    "B"
+   ]
+  },
+  {
+   "params": 30471168,
+   "layers": 8,
+   "width": 512,
+   "arms": {
+    "A": {
+     "name": "V5 candidate",
+     "weighted_mean": 2.4942853794329167,
+     "weighted_sd": 0.011151757090520287,
+     "final_train_loss": 5.815225303173065
+    },
+    "B": {
+     "name": "Naive web-heavy",
+     "weighted_mean": 2.591145790207485,
+     "weighted_sd": 0.010798599382572669,
+     "final_train_loss": 6.0768420696258545
+    },
+    "C": {
+     "name": "No protected floor",
+     "weighted_mean": 2.480611607003954,
+     "weighted_sd": 0.007746531799554818,
+     "final_train_loss": 5.554087344805399
+    },
+    "D": {
+     "name": "Indic halved",
+     "weighted_mean": 2.4790128034235424,
+     "weighted_sd": 0.015935888646131973,
+     "final_train_loss": 5.637588584423065
+    }
+   },
+   "ranking": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ]
+  }
+ ],
+ "reading": {
+  "rankings": {
+   "1709568": [
+    "C",
+    "D",
+    "A",
+    "B"
+   ],
+   "5785088": [
+    "A",
+    "D",
+    "C",
+    "B"
+   ],
+   "14585856": [
+    "A",
+    "D",
+    "C",
+    "B"
+   ],
+   "30471168": [
+    "D",
+    "C",
+    "A",
+    "B"
+   ]
+  },
+  "swapped_pairs": [
+   {
+    "pair": [
+     "C",
+     "D"
+    ],
+    "separated_at_smallest": false,
+    "separated_at_largest": false,
+    "is_real_inversion": false
+   }
+  ],
+  "real_inversions": [],
+  "winner_changed": true,
+  "verdict": "order moves, inside noise",
+  "note": "1 pair(s) change places (C/D), but none is separated by more than its own seed spread at both ends, so the movement ranks nothing",
+  "caveat": "A fixed small corpus means larger models overfit sooner; compare final_train_loss against weighted_mean before reading an inversion as a fact about scale."
+ },
+ "provenance": {
+  "config_fingerprint": "7dba8514407a",
+  "settings": {
+   "config": {
+    "run_tokens": 2000000000000.0,
+    "model_params": 40000000000.0,
+    "indic_floor": 0.12,
+    "agentic_floor": 0.02,
+    "protected_ceiling": 0.2,
+    "anneal_share": 0.02,
+    "max_synthetic_share_of_indic": 0.5,
+    "warmup_band_tokens": 3000000000.0,
+    "opus_keep_fraction": 0.4,
+    "tokenizer_id": "s02-bpe-10000",
+    "proxy_params": 1000000000.0,
+    "proxy_tokens": 2000000000.0
+   },
+   "sizes": [
+    {
+     "layers": 2,
+     "width": 128,
+     "heads": 4,
+     "context": 256
+    },
+    {
+     "layers": 4,
+     "width": 256,
+     "heads": 4,
+     "context": 256
+    },
+    {
+     "layers": 6,
+     "width": 384,
+     "heads": 6,
+     "context": 256
+    },
+    {
+     "layers": 8,
+     "width": 512,
+     "heads": 8,
+     "context": 256
+    }
+   ],
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "steps": 400,
+   "batch": 16,
+   "arms": {
+    "A": {
+     "web": 0.32,
+     "code": 0.28,
+     "indic": 0.18,
+     "stem": 0.12,
+     "reasoning": 0.08,
+     "agentic": 0.02,
+     "long_context": 0.0
+    },
+    "B": {
+     "web": 0.7,
+     "code": 0.2,
+     "stem": 0.05,
+     "indic": 0.03,
+     "reasoning": 0.02,
+     "agentic": 0.0,
+     "long_context": 0.0
+    },
+    "C": {
+     "indic": 0.04,
+     "agentic": 0.0,
+     "web": 0.384,
+     "code": 0.336,
+     "stem": 0.144,
+     "reasoning": 0.096,
+     "long_context": 0.0
+    },
+    "D": {
+     "indic": 0.09,
+     "web": 0.356,
+     "code": 0.3115,
+     "stem": 0.1335,
+     "reasoning": 0.089,
+     "agentic": 0.02,
+     "long_context": 0.0
+    }
+   }
+  },
+  "git_sha": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+  "code_digest": "sha256:e56f973be2931362cb798751db1413ee94eea142fb21b9fe9bd07e9033b513a6",
+  "corpus_digest": "sha256:a5601e11486843c75bdd38949e75c9513db4bd3dd650cd3510d296cd801273e9",
+  "corpus_lane_digests": {
+   "web": "sha256:775d8d6797d84dbc212035371024ce23543eb95aea53a7ea0045564967349e1b",
+   "indic": "sha256:b1aad99f2f4c39bebcc086bd38b68195e2a970db61df4c52b86dbecff32ee016",
+   "code": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e",
+   "stem": "sha256:3c2cfabe62eb92ea92dc300cfac69483b39996d1ba6bdf5780ce21c9829cf5ed",
+   "reasoning": "sha256:a79cd6788a64cbe94406f975ea0a9f3498118e89e02e7671f8353c2bbce00003",
+   "agentic": "sha256:e8435791019615a62f5ad3f275d26025317fc034701552799c810fd8936471f3"
+  },
+  "code_lane": {
+   "commit": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+   "digest": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e"
+  },
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "numpy": "2.5.2",
+   "platform": "macOS-27.0.1-arm64-arm-64bit",
+   "machine": "arm64",
+   "omp_num_threads": "unset",
+   "device": "mps:apple-silicon",
+   "torch": "2.13.0",
+   "torch_threads": 12
+  }
+ }
+}

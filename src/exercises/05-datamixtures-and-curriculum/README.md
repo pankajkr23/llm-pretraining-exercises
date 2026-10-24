@@ -32,6 +32,21 @@ Four documents, and the right one depends on what you came for. Start with your 
 
 **Two things to know before reading any table below.** Every number on this page is *generated* from the modules the tests pin — if a sentence states a count, it was computed rather than typed. And every measurement here is **proxy-scale**: a 4-layer model over 1.78M tokens, three orders of magnitude below the scale these shares are for. [What it cannot tell you](#what-it-cannot-tell-you) is not a footnote — read it beside the results, not after them.
 
+## Best result, and what could beat it
+
+**Best result.** **Arm A, the V5 candidate — the mixture this specification declares.** Run-weighted held-out **2.4996 bits per byte** (lower is better), seed spread 0.0145 over 5 seeds, in [the published Step 0](results/step0.json). By this exercise's own rule — a difference counts only when it clears the seed spread — no arm beats it in any run so far.
+
+**Candidates that did or could do better.**
+
+- **Lowest point estimate, inside the noise:** arm D (Indic halved) in [the published Step 0](results/step0.json): 2.4935 against the candidate's 2.4996, a 0.0061 gap inside the 0.0241 seed spread.
+- **Lowest point estimate, inside the noise:** arm D (Indic halved) in [the 2026-10-24 re-run](results/reruns/2026-10-24/step0.json): 2.5363 against the candidate's 2.5392, a 0.0029 gap inside the 0.0377 seed spread.
+- **At the largest model (30,471,168 parameters), published E3:** arm D (Indic halved) leads at 2.4295 (±0.0094 sd) — [results/scale.json](results/scale.json).
+- **At the largest model (30,471,168 parameters), 2026-10-24 re-run E3:** arm D (Indic halved) leads at 2.4790 (±0.0159 sd) — [results/reruns/2026-10-24/scale.json](results/reruns/2026-10-24/scale.json).
+- **A published conclusion a re-run diverges from.** H3 was published **refuted** (effect +3.52%; stem gain 1.12% against a 0.71% seed spread) in [the published Step 0](results/step0.json), and that conclusion stands as drawn. On the frozen code lane of [the 2026-10-24 re-run](results/reruns/2026-10-24/README.md) it reads **supported** (effect +3.54%; stem gain 0.93% against a 2.41% seed spread). E4, the same test on the second STEM stand-in, went from **refuted** (effect +3.75%; stem gain 1.72% against a 1.52% seed spread) to **qualified** (effect +3.77%; stem gain 1.51% against a 2.57% seed spread). The re-run's README says why they differ.
+- **Untested, and the one that would decide it:** the arms at a real rung. Everything above is a 4-layer proxy; the 1B rung is priced in `SPEC.md` and not scheduled.
+
+**The next hypothesis.** Run arms A and D at the 1B rung on the frozen corpus, 5 seeds each. If D's run-weighted bits per byte beats A's by more than the seed spread **and** another lane gains more than 1%, H3's refutation holds at scale and the Indic share should move from 18% toward its 12% floor; if neither clears its spread, 18% stands as declared.
+
 ## What this is, and how it was arrived at
 
 **The recipe for what a 40B model reads, and in what order.** Seven capability lanes, a share for
@@ -295,6 +310,10 @@ That consequence was fixed in advance, so it is owed rather than negotiable.
 
 **The share still does not move, and this is now a decision rather than a deferral.** 18% stands for V5, because every measurement behind the refutation is proxy-scale and this document does not let a 4-layer model set a 40B share — a rule that does not change because the deciding run was cancelled. What the refutation buys instead is a standing instruction: **treat 18% as an upper bound rather than a target.** The first run at real scale instruments the Indic lane against its 12% floor, and the burden of proof has moved — 18% is now the number that has to justify itself.
 
+**Dated note, 2026-10-24 — a re-run diverges; the conclusion above is kept as published.** The run above read its code lane from the live repository, which then grew from 87 files and 352,415 training tokens to 378 files and 1,970,257 (5.6x), so the corpus it measured can no longer be rebuilt. The re-run freezes that lane at commit `fd18c2e` and changes nothing else. On it, H3 reads **supported** (effect +3.54%; stem gain 0.93% against a 2.41% seed spread) where it read **refuted** (effect +3.52%; stem gain 1.12% against a 0.71% seed spread). E4, the same test on the second STEM stand-in, reads **qualified** (effect +3.77%; stem gain 1.51% against a 2.57% seed spread) where it read **refuted** (effect +3.75%; stem gain 1.72% against a 1.52% seed spread). [Why they differ, with every number side by side](results/reruns/2026-10-24/README.md).
+
+**Dated note, 2026-10-24:** this decision was made on the published run and is kept as made. On the frozen-lane re-run the refutation it rests on does not reproduce — H3 reads `supported`, and E4 on the second stand-in reads `qualified` — so the evidence behind it now depends on which text the code lane held, rather than agreeing across two stand-ins. [The re-run](results/reruns/2026-10-24/README.md) has the numbers.
+
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, all 6 funded lanes are present, three of them from openly-licensed **stand-in** text rather than the datasets the specification funds them from, and an arm that looks better here would still be an arm that looks better on a corpus small enough to memorise.
 
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md). **If `H3`, `arm` or `bits per byte` are not familiar, [`METHOD.md`](METHOD.md) explains the whole apparatus from scratch** — the vocabulary, the model, the metric, both diagrams, and what each experiment was for.
@@ -307,7 +326,7 @@ The 1B rung needs money. These did not, and each one tests something the specifi
 | --- | --- | --- | --- |
 | **E1** | what is a re-read token actually worth? | the supply analysis borrows a `x16.4` ceiling whose shape was never checked on our own data | re-reading **costs** loss — 18.4 epochs is 6.8% worse than 1.15; curve not monotone |
 | **E2** | does a warmup band at a stage seam calm the gradient? | §6 schedules one at every seam; this document promised the test and never ran it | **inconclusive** — 1.52 vs 1.41, inside a 0.18 spread |
-| **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier | **assumption survives** across 18x — arm D wins at every size, the same direction H3 points |
+| **E3** | does the arm ranking survive a change of scale? | §7 names a rank inversion as its own falsifier | **assumption survives** across 18x — arm D wins at every size, the same direction H3 points (dated note: the 2026-10-24 re-run diverges — see [its README](results/reruns/2026-10-24/README.md)) |
 
 Results, with what each does and does not settle, are in
 [`EXPERIMENTS.md`](EXPERIMENTS.md). **[`METHOD.md`](METHOD.md) is the one to read first if any of
@@ -320,7 +339,7 @@ This is the honest boundary, and it is stated here rather than left for a review
 
 - **The corpus is 1,784,212 tokens.** Three orders of magnitude below the scale a mixture decision is made at. Every effect above inherits that.
 - **3 of the 6 lanes are stand-ins** (stem, reasoning, agentic) — openly-licensed text of the right *kind*, not the datasets the specification funds those lanes from. GSM8K is not peS2o, and any finding resting on one of these rests on the stand-in too.
-- **H3 is refuted and the share has not moved.** The declared consequence is that the Indic lane is over-provisioned; acting on it would mean changing a headline number on evidence this document calls insufficient. It is the specification's largest open question. The 1B rung that was to decide it is deprioritised, so the finding was instead re-tested against a second, deliberately different STEM stand-in and came back refuted again. 18% therefore stands as an **upper bound rather than a target**, to be instrumented against its 12% floor at real scale.
+- **H3 is refuted and the share has not moved.** The declared consequence is that the Indic lane is over-provisioned; acting on it would mean changing a headline number on evidence this document calls insufficient. It is the specification's largest open question. The 1B rung that was to decide it is deprioritised, so the finding was instead re-tested against a second, deliberately different STEM stand-in and came back refuted again. 18% therefore stands as an **upper bound rather than a target**, to be instrumented against its 12% floor at real scale. **Dated note, 2026-10-24:** this decision was made on the published run and is kept as made. On the frozen-lane re-run the refutation it rests on does not reproduce — H3 reads `supported`, and E4 on the second stand-in reads `qualified` — so the evidence behind it now depends on which text the code lane held, rather than agreeing across two stand-ins. [The re-run](results/reruns/2026-10-24/README.md) has the numbers.
 - **Scale transfer is tested but not settled.** E3 ran every arm from 1,709,568 to 30,471,168 parameters and the endpoints rank identically, so §7's falsifier does not fire — but two intermediate sizes order the middle of the field differently, and 30M is still five orders of magnitude short of 40B.
 - **The 1B/3B rung has not been run.** It is priced from a measurement rather than a guess, and it remains a commitment. Step 0 is not offered as a substitute for it.
 
@@ -356,7 +375,18 @@ uv sync --all-packages --extra proxy
 uv run python -m mixture.repetition   # what a re-read token is actually worth
 uv run python -m mixture.seam         # does a warmup band calm a stage seam?
 uv run python -m mixture.scale        # does the ranking survive a change of scale?
+uv run python -m mixture.experiment --alt-stem   # E4: H3's arms on the second STEM stand-in
 ```
+
+Every run writes its bundle to `results/reruns/<today>/` with a `provenance` block — settings
+fingerprint, code digest, commit, machine, and full digests of the corpus and the vocabulary — and
+refuses to write without one. **The published runs in `results/` are never written over**: a
+re-run is added beside them, and each dated set's `README.md` compares the two.
+
+**The code lane is read from git at a pinned commit** (`corpus.CODE_LANE_COMMIT`), never from the
+working tree, so a clone needs that commit: a shallow clone is refused with the command that
+fetches it. E4 also needs the second stand-in, fetched with
+`tools/fetch_proxy_corpus.py --alt-stem`.
 
 **The three follow-on experiments used to be listed on the deployed page and nowhere else.** They
 moved here when the page's command blocks came out — a page is read far more often than it is

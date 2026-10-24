@@ -26,7 +26,7 @@ import statistics
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from mixture import corpus, lanes, proxy
+from mixture import corpus, lanes, provenance, proxy
 
 # `evaluate`, `model` and `train` import torch at module scope, and torch is an optional extra this
 # repository deliberately keeps out of CI. Importing them here would make the whole module
@@ -36,7 +36,9 @@ from mixture import corpus, lanes, proxy
 
 logger = logging.getLogger(__name__)
 
-RESULTS = corpus.EXERCISE_ROOT / "results" / "repetition.json"
+RESULTS: Path | None = None
+"""An explicit destination, or None for `results/reruns/<today>/repetition.json`. Never the
+published `results/repetition.json`, which `provenance.destination` refuses."""
 
 # Powers of two down from the whole corpus. A coarse sweep does not report "roughly the optimum",
 # it reports the wrong one -- exercise 02 learned that from a 2-5-6 weight sweep that named the
@@ -107,13 +109,16 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         The result bundle.
     """
     from mixture import evaluate
+    from mixture.config import Config
     from mixture.model import ModelConfig
-    from mixture.train import TrainConfig, pick_device, train
+    from mixture.train import TrainConfig, describe_device, pick_device, train
 
     device = pick_device(None)
     model_config = ModelConfig()
     shares = lanes.shares()
     tokens_seen = steps * batch * model_config.context
+    corpus.build()
+    before = provenance.inputs()
 
     rungs: list[Rung] = []
     for fraction in FRACTIONS:
@@ -163,6 +168,19 @@ def run(seeds: tuple[int, ...] = SEEDS, steps: int = STEPS, batch: int = BATCH) 
         else lanes.WORTH_CEILING_MULTIPLE,
         "rungs": [asdict(rung) for rung in rungs],
         "reading": _read(rungs),
+        "provenance": provenance.block(
+            {
+                "config": asdict(Config()),
+                "model": asdict(model_config),
+                "fractions": list(FRACTIONS),
+                "seeds": list(seeds),
+                "steps": steps,
+                "batch": batch,
+                "shares": dict(shares),
+            },
+            describe_device(device),
+            before,
+        ),
     }
 
 
@@ -257,12 +275,19 @@ def save(bundle: dict, path: Path | None = None) -> Path:
 
     Args:
         bundle: What `run` returned.
-        path: Destination; defaults to `RESULTS` **as it is at call time**.
+        path: Destination; defaults to `RESULTS` **as it is at call time**, and when that is None
+            too, to today's re-run set.
 
     Returns:
         The path written.
+
+    Raises:
+        ValueError: If the bundle carries no complete provenance block, or the destination is a
+            published run. Nothing is written.
+        FileExistsError: If that day's set already holds this run.
     """
-    path = path or RESULTS
+    provenance.require(bundle)
+    path = provenance.destination("repetition", path=path or RESULTS)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(bundle, indent=1, default=str) + "\n", encoding="utf-8")
     return path

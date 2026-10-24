@@ -301,6 +301,107 @@ def test_every_published_run_has_its_manifest_and_audit_tracked() -> None:
         ), "the tracked manifest describes a different run from the bundle that names it"
 
 
+def _strings(node):
+    """Every string value anywhere in a parsed JSON document."""
+    if isinstance(node, str):
+        yield node
+    elif isinstance(node, dict):
+        for value in node.values():
+            yield from _strings(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _strings(value)
+
+
+def _absolute_paths(node) -> list[str]:
+    """String values that are absolute filesystem paths — a URL or a prose sentence is not one."""
+    return [s for s in _strings(node) if "\n" not in s and " " not in s and Path(s).is_absolute()]
+
+
+RERUNS = EXERCISE / "results" / "reruns"
+
+
+def test_no_rerun_carries_a_path_from_the_machine_that_wrote_it() -> None:
+    """A published bundle named its run directory by absolute path, account name and all.
+
+    It resolved nowhere in a clone and recorded only who ran it. The historical `results/rerun.json`
+    keeps that path, because a published experiment is never rewritten; `publish_rerun.py` now
+    writes the path relative to the repository root, and this sweeps every bundle and run record
+    in the dated re-run sets so the property holds for any field, not only the one that leaked.
+    """
+    paths = sorted(RERUNS.rglob("*.json"))
+    assert paths, "no re-run sets to sweep"
+    leaked = {
+        str(p.relative_to(EXERCISE)): found
+        for p in paths
+        if (found := _absolute_paths(json.loads(p.read_text(encoding="utf-8"))))
+    }
+    assert not leaked, f"absolute paths in re-run bundles: {leaked}"
+
+
+def test_the_absolute_path_sweep_would_notice_one() -> None:
+    """The twin: the detector finds a planted absolute path and passes over URLs and prose."""
+    planted = {"run_directory": str(EXERCISE / "artifacts" / "runs" / "x"), "n": [1, "a b /c"]}
+    assert _absolute_paths(planted) == [planted["run_directory"]]
+    assert not _absolute_paths({"u": "https://example.org/a", "r": "artifacts/runs/x"})
+
+
+def test_publishing_writes_the_run_directory_relative_to_the_repository() -> None:
+    """`trim` rewrites an absolute run directory, and refuses one it cannot express relatively."""
+    publish = _publish()
+    inside = EXERCISE / "artifacts" / "runs" / "2026-01-01-000000000000"
+    bundle = {"run_directory": str(inside), "runs": [], "corpus": {}}
+    assert publish.trim(bundle)["run_directory"] == (
+        "src/exercises/07-model-embeddings-internals/artifacts/runs/2026-01-01-000000000000"
+    )
+    assert publish._resolve(publish.trim(bundle)["run_directory"]) == inside
+    with pytest.raises(ValueError, match="outside the repository"):
+        publish.trim({**bundle, "run_directory": "/elsewhere/runs/x"})
+
+
+def _reruns_named(name: str) -> list[Path]:
+    return sorted(RERUNS.glob(f"*/{name}"))
+
+
+@pytest.mark.parametrize(
+    "name", ["position_schemes.json", "wrap_recovery.json", "codec_facts.json"]
+)
+def test_a_codec_measurement_fingerprint_recomputes_from_its_published_settings(name) -> None:
+    """The fingerprint is taken over the bundle's own `config` block, so a reader can check it."""
+    from embeddings.experiment import settings_fingerprint
+
+    published = _reruns_named(name)
+    assert published, f"no re-run set carries {name}"
+    for path in published:
+        bundle = json.loads(path.read_text(encoding="utf-8"))
+        assert bundle["provenance"]["config_fingerprint"] == settings_fingerprint(
+            bundle["config"]
+        ), (
+            f"{path.relative_to(EXERCISE)}'s config_fingerprint does not recompute from its own "
+            "config block, so it vouches for settings the bundle does not show"
+        )
+
+
+def test_publishing_adds_beside_the_record_and_never_writes_over_it(tmp_path) -> None:
+    """A published run is never replaced: publishing lands in a dated set and refuses a clash."""
+    publish = _publish()
+    assert publish.RERUNS == EXERCISE / "results" / "reruns"
+    with pytest.raises(ValueError):
+        publish.destination("not-a-date")
+
+    source = tmp_path / "artifacts" / "probe.json"
+    source.parent.mkdir()
+    source.write_text(json.dumps({"what": "a probe"}), encoding="utf-8")
+    dated = tmp_path / "2026-01-01"
+    dated.mkdir()
+    written = publish.publish_measurement(source, dated)
+    assert written == dated / "probe.json"
+    before = written.read_bytes()
+    with pytest.raises(FileExistsError, match="never replaced"):
+        publish.publish_measurement(source, dated)
+    assert written.read_bytes() == before, "the refused publish still touched the file"
+
+
 def test_the_audit_of_a_published_run_found_nothing_wrong() -> None:
     """Publishing a run whose own auditor disagreed with it would be the whole point, missed.
 

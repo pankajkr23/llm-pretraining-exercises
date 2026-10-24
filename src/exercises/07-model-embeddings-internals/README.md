@@ -108,6 +108,40 @@ language, each marked with where its evidence came from and what would refute it
 
 ---
 
+## Best result, and what could beat it
+
+**Best result.** By this exercise's own criterion — lowest loss from a head with no
+vocabulary-sized parameter, paired against v1 on the same seeds — the strongest arm is **wrap +
+n-gram**: loss **5.112** against v1's **5.277**, a paired gap of **−0.164** (sd 0.025, 5/5 seeds)
+in the earlier run, [`results/measurements.json`](results/measurements.json) (`arms`,
+`attribution`). The single-problem version, tied + n-gram on v1's own one-hot positions, reads
+**5.136** (−0.141). What holds on any corpus is the arithmetic: at V = 1,000,000 the head is
+**6,291,457** parameters against a dense tie's **768,000,000** (`scale_cost`).
+
+**Candidates that did or could do better.**
+
+- **v1 itself, on a second corpus.** The fully specified re-run on the six-lane corpus,
+  [`results/rerun.json`](results/rerun.json), puts v1 first at **4.822** and wrap + n-gram behind it
+  by **+0.148** (sd 0.007, 5/5 seeds; values rounded from the file). The earlier conclusion stands as
+  published and the divergence is stated beside it in
+  [The one-sentence result, and it changed](#the-one-sentence-result-and-it-changed).
+- **`spc` positions, untrained.** On the code alone they recover **99.35%** of 33–64-byte tokens and
+  **83.82%** of 65–128-byte tokens whole, where one-hot and wrap recover **0.00%**
+  ([`results/position_schemes.json`](results/position_schemes.json)) — at **189.4** non-zeros per
+  token against one-hot's **8.2**.
+- **`d_p` = 128.** **99.9%** whole-token recovery and **99.8%** on long tokens at four times the
+  code width (`measurements.json::d_p_128`).
+
+**The next hypothesis.** Train `spc` + n-gram on the six-lane corpus with `rerun.json`'s seeds and
+settings. If its paired gap to v1 stays above zero like wrap + n-gram's, the tokens past 32 bytes
+that one-hot and wrap cannot represent are not what decides the corpus effect; if it falls below
+zero, they are.
+
+A dated re-run of every codec measurement, all matching the published values exactly, is in
+[`results/reruns/2026-10-24/`](results/reruns/2026-10-24/README.md).
+
+---
+
 ## What a Kronecker embedding is
 
 An ordinary language model stores one learned vector per token. That table is `V × d_model`

@@ -1,13 +1,15 @@
 """A page does not link a stylesheet that styles nothing on it.
 
-`_shared/explainer.css` is 560 lines, vendored byte-identically into eight `web/` directories and
-linked by eight pages. **Measured against the built site, exercise 07 matched zero of its 143
-selectors** — the file styles the scrollytelling strip, the step panels, the derivation badges and
-the stage lists, and that exercise builds none of them. Screenshots with and without the link hashed
-identically at 2000, 1180 and 390px, so it was doing nothing but arriving.
+**Measured against the built site on 2026-09-10, exercise 07 matched zero of the 143 selectors
+in `_shared/explainer.css`** — the file styles the scrollytelling strip, the step panels, the
+derivation badges and the stage lists, and that exercise builds none of them. Screenshots with and
+without the link hashed identically at 2000, 1180 and 390px, so it was doing nothing but arriving.
+Exercises 07 and 12 have since stopped vendoring the file at all, recorded in
+`test_vendored_shared_layer.py`'s `DELIBERATELY_NOT_VENDORED`; which pages link it today is read
+from the tree by `_linking_pages()`, never typed here.
 
-The rest of the spread is worth having written down, because it is the argument for measuring before
-deleting anything:
+The rest of that day's spread is worth having written down, because it is the argument for
+measuring before deleting anything:
 
 | page | selectors matched |
 | --- | ---: |
@@ -47,9 +49,9 @@ PUBLIC = REPO_ROOT / "public"
 pytestmark = pytest.mark.integration
 
 #: The shared stylesheets this holds. Only `explainer.css` for now: it is the one that is vendored
-#: eight times, linked by pages that do not use it, and named in `AGENTS.md` as the one whose real
-#: usage was unmeasured. `page.css` and `components.css` are linked by every page and used by every
-#: page, so the question does not arise for them.
+#: into most exercises, was linked by pages that did not use it, and is named in `AGENTS.md` as the
+#: one whose real usage was unmeasured. `page.css` and `components.css` are linked by every page
+#: and used by every page, so the question does not arise for them.
 WATCHED = ("_shared/explainer.css",)
 
 #: Pages that link a watched stylesheet and match none of it at rest, each with the reason it is

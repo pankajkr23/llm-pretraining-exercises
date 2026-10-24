@@ -180,7 +180,7 @@ def test_the_orphan_guard_can_actually_fail() -> None:
 
 #: What may legitimately follow a selector line that ends in a comma. Three shapes, and the third
 #: is the one the first version missed: the last selector in a list often carries its whole rule on
-#: one line (`.catsearch-hits { max-width: 72ch; }`), which ends in `}` rather than in `{`.
+#: one line (`.resolver-sub { max-width: 72ch; }`), which ends in `}` rather than in `{`.
 _CONTINUES_A_LIST = re.compile(r"^[.#:\[a-zA-Z@&*][^{};]*(,|\{|\{[^{}]*\}\s*)$")
 
 

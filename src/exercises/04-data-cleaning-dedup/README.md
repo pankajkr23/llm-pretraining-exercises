@@ -48,6 +48,36 @@ uv run python -m datacleaning --profile full    # the published corpus
 | **Deciding whether to believe it** | [How: three decisions worth knowing](#how-three-decisions-worth-knowing) — especially why counts are never estimated | [What it cannot tell you](#what-it-cannot-tell-you), then [`DECISIONS.md`](./DECISIONS.md) |
 | **Running it yourself** | [`notebooks/04-data-cleaning-dedup.ipynb`](../../../notebooks/04-data-cleaning-dedup.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/04-data-cleaning-dedup.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
+## Best result, and what could beat it
+
+**Best result.** This exercise's criterion is that nothing is dropped silently or for the wrong
+reason, and its best result is the one stage where that changed the answer: script-aware quality
+rules drop `12354` documents where the unchanged English thresholds would drop `23492` — `11138`
+documents kept rather than deleted, all but `34` of them from the Indic corpus (`20751` dropped
+under English thresholds against `9647` script-aware). The published run
+(`s04-full-212b79209dae`, profile `full`) keeps `59861546` of `85691489` tokens, a share of
+`0.6986`, and `36890` of `50010` documents. All of it is in [`web/data.json`](web/data.json)
+(`yield`, and the quality stage's `detail`); the one run is the only measurement, so there is no
+noise figure to quote.
+
+**Candidates that did or could do better.**
+
+- **The script-aware rules narrow the bias; they do not close it.** Survival after the quality stage
+  is `0.9688` for the Q&A corpus and `0.5494` for the Indic one, and `stop_words` alone removes
+  `9252` Indic documents. The stop-word list is built from Hindi, so it under-serves Maithili and
+  Bodo, and the `[3, 10]` word-length band was tuned on English prose
+  ([`src/datacleaning/quality.py`](src/datacleaning/quality.py)).
+- **The word-length rule also cuts the reasoning traces** — `1688` of them, whose LaTeX-heavy text
+  is not short words but a different kind of text (same file).
+- **Near-duplicate detection runs at `0.719`, not the quoted `0.75`,** and `496` of its `1279`
+  candidate pairs failed verification; a different threshold moves the dedup count, which this run
+  does not measure ([what it cannot tell you](#what-it-cannot-tell-you)).
+
+**The next hypothesis.** Per-language stop-word lists and a word-length band measured on each
+script should raise Indic survival from `0.5494` toward the English-like corpora's mean of `0.8154`;
+if a hand check of the newly kept documents finds them no worse than those already kept, the gap was
+bias, and if they are visibly worse, the remaining gap is a real difference in quality.
+
 ## What
 
 | | |

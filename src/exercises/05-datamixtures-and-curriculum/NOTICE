@@ -81,3 +81,11 @@ hypothesis, and the specification says so.
 
 The run that would settle it -- a rung large enough to rank the arms for real --
 is priced from a measurement rather than a guess, and is not scheduled.
+
+DATED NOTE, 2026-10-24. The paragraphs above describe the published run and stay
+as written. That run read its code lane from the live repository, which has since
+grown, so its corpus can no longer be rebuilt. A re-run on a code lane frozen at
+a pinned commit is kept beside it in results/reruns/2026-10-24/, and there the
+refuted hypothesis (H3) reads supported. That directory's README.md has every
+number side by side and says why the two differ. The published files in
+results/ are not modified.

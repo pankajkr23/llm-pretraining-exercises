@@ -23,6 +23,37 @@ The same results, drawn and argued for a general reader, are
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** The memory saving, which both full runs reproduce. After the forward pass the
+reversible stack keeps **58.7× fewer bytes** for the backward pass than the ordinary residual stack
+(42.4 MiB against 2,490.2 MiB at batch 32). Under an 8 GiB cap that buys a largest batch **about
+six times larger**: 496 against 81 in the published run, and 467 against 81 in the
+[2026-10-24 re-run](results/reruns/2026-10-24/README.md). Final loss at the same batch is within
+0.05 of the baseline's in both runs (+0.0494, then +0.0486). That is one seed each, so it is
+reported and not ranked. The published figures are in [`RESULTS.md`](RESULTS.md), rendered from
+[`results/*.json`](results/), and the re-run's sit beside them in
+[`results/reruns/2026-10-24/`](results/reruns/2026-10-24/RESULTS.md).
+
+**Candidates that did or could do better.**
+
+- **The re-run's largest-batch run ended lower:** 3.8912 against the published 3.9370. It used a
+  smaller batch (396 against 421, because the search found less) and so took more steps (493
+  against 463). That is consistent with the explanation the results give for this run's loss gap,
+  that fewer, larger steps train less far, but it does not test it.
+- **Leapfrog at h = 0.25 won the trials in both runs**, and both times the blend rule was excluded
+  for rebuilding its float32 gradients 1–5% wrong (`DECISIONS.md` D10). A blend that rebuilds
+  accurately, for example one computed in higher precision, is untested.
+- **Speed is the open question.** The published trials put every reversible candidate below every
+  baseline run. The re-run's trials overlap, while its long pair sizes the reversible model at 16%
+  slower. The baseline's own speed varied 1.57× across three trials of identical cost, so the trials
+  are noisier than the effect they were used to rank.
+
+**The next hypothesis.** Scale the learning rate with the batch in the largest-batch run. If the
+loss gap to the baseline shrinks well below +0.84, the gap was the step count and not the reversible
+stack. Separately, measure speed with interleaved, repeated trials under the vitals watchdog, and
+rank it only if the reversible range sits outside the baseline's.
+
 ## What this is
 
 **Why training needs so much memory.** To compute gradients, the backward pass needs the input to
@@ -137,6 +168,11 @@ All of it is in [`RESULTS.md`](RESULTS.md). How each number was produced:
   reversible candidate was slower (or faster) than every baseline run. The long runs were made at
   different times, so a gap between them counts only if it is larger than the machine's own drift —
   how far the same baseline configuration moved between its trial and its long run.
+  *2026-10-24:* the [re-run](results/reruns/2026-10-24/README.md) does not reproduce the trial
+  verdict. Its baseline trials ran 1.57× apart at identical cost, and its slowest one sits inside the
+  reversible range. Its long pair, with 1.02× drift, sizes the reversible model at 16% slower. The
+  published verdict stands as published, and the speed comparison is the part of this exercise that
+  is not settled.
 - **The variant is chosen before the long runs**, by validation loss on short runs at the same data
   and learning rate, on the first half of the validation split; every reported loss is measured on
   the second half. The fixed-batch runs use the chosen rule and rate as they are; the run at the

@@ -970,6 +970,58 @@ def provenance(config: RunConfig, device: "torch.device | None" = None) -> dict[
     }
 
 
+MEASUREMENT_PROVENANCE = ("config_fingerprint", "code_digest", "git_sha", "environment")
+"""The four fields every codec measurement bundle must carry before it may be written.
+
+A codec measurement (`tools/measure_wrap_recovery.py`, `tools/measure_position_schemes.py`) trains
+nothing and reads no corpus, so it has no `RunConfig` and no tokenizer-shaped input beyond the
+vocabulary digest it records itself. What it still has is settings, code, a commit and a machine,
+and a bundle missing any of them cannot say which run it describes."""
+
+
+def settings_fingerprint(settings: dict[str, object]) -> str:
+    """`RunConfig.fingerprint` for a measurement whose settings are a plain dict.
+
+    The same formula — `blake2b(repr(sorted(items)), digest_size=6)` — so a fingerprint means one
+    thing everywhere in this exercise. Every key the caller passes moves it, which is why callers
+    pass the whole `config` block they publish rather than a hand-picked subset.
+    """
+    payload = repr(sorted(settings.items())).encode("utf-8")
+    return hashlib.blake2b(payload, digest_size=6).hexdigest()
+
+
+def measurement_provenance(settings: dict[str, object]) -> dict[str, object]:
+    """The provenance block for a codec measurement, refused when any field is empty.
+
+    Args:
+        settings: Every knob the measurement turned — the `config` block the bundle publishes.
+    """
+    block = {
+        "config_fingerprint": settings_fingerprint(settings),
+        "code_digest": code_digest(),
+        "git_sha": git_sha(),
+        "environment": environment(),
+    }
+    require_measurement_provenance({"provenance": block})
+    return block
+
+
+def require_measurement_provenance(payload: dict[str, object]) -> None:
+    """Raise unless `payload["provenance"]` carries every field in `MEASUREMENT_PROVENANCE`.
+
+    Called by each measurement tool on the finished payload, immediately before it writes, so a
+    later edit that drops a field fails the run instead of publishing a bundle that cannot say what
+    produced it.
+    """
+    block = payload.get("provenance") or {}
+    missing = [field for field in MEASUREMENT_PROVENANCE if not block.get(field)]
+    if missing:
+        raise ValueError(
+            "refusing to write a measurement that cannot say where it came from; missing "
+            f"{', '.join(missing)}."
+        )
+
+
 # =========================================================================== the arms
 
 

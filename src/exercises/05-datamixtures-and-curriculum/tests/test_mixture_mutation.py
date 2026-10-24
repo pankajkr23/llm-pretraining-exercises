@@ -73,7 +73,7 @@ def _run_fast_suite() -> int:
 
 
 @pytest.mark.integration
-def test_every_guard_is_load_bearing():
+def test_every_guard_is_load_bearing(mutating_checks):
     """Disabling any single guard must make some test fail.
 
     Restores the original file in a `finally` even if pytest is interrupted, because leaving a

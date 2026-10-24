@@ -3,8 +3,8 @@
 A running log of what was built, what was measured, what changed and what is still open. Written so
 the work can be picked up cold. Newest entries at the top of each section.
 
-**Where the work lives:** on a branch, not yet merged. This file does not name branch or PR numbers
-— `git log` and `gh pr list` answer that correctly and a markdown file goes stale.
+**Where the work lives:** merged to `main`. This file does not name branch or PR numbers — `git log`
+answers that correctly and a markdown file goes stale.
 
 **Deliverable shape — read this before calling the source material done.** Check the submission
 platform's own field list, not `REQUIREMENTS.md`, which can be truncated. As read on the local
@@ -28,7 +28,7 @@ login-walled preview does not satisfy it. Both submission and merging are PK's.
 | 8 | Topic notebook | **done** | Built and executed end to end; tracked with its builder since 2026-10-24. |
 | 9 | CI registration of the torch-gated test files | **done — lead** | Landed in the same pull request as this exercise. |
 | 10 | Audit fixes | **done** | See the change log entry below. |
-| 11 | Review, merge, submission | **open — PK** | |
+| 11 | Review, merge, submission | **done** | Merged and submitted; awaiting the graders' review. |
 
 ---
 
@@ -40,7 +40,7 @@ login-walled preview does not satisfy it. Both submission and merging are PK's.
 | O2 | Register the torch-gated test files in `.github/workflows/ci.yml` and `tests/test_ci_shards_cover_everything.py::OPTIONAL_DEPENDENCY_GATES` | **done** | By the lead, in the same pull request. |
 | O3 | Root README row summary | **done** | By the lead, in the same pull request. |
 | O4 | A browser page | **done** | `web/`, built after the exercise merged; see the change log. Production promotion is PK's gate. |
-| O5 | `tests/test_shared_layer.py` counts a vendored file as "referenced" when the page merely **names** it — a comment is enough | **open — PK** | This page vendors `_shared/explainer.css` (required by `tests/test_vendored_shared_layer.py`) without linking it, as exercise 07 does; the comment in `web/index.html` is what clears the orphan gate. The two repo-wide guards disagree about an unlinked vendored file, and resolving that is a repo-wide change, out of this page's scope. |
+| O5 | `tests/test_shared_layer.py` counts a vendored file as "referenced" when the page merely **names** it — a comment is enough | **done** | Resolved repo-wide, with PK's approval. This page no longer vendors `_shared/explainer.css` (it builds no explainer, so nothing linked it); `tests/test_vendored_shared_layer.py` names the omission in `DELIBERATELY_NOT_VENDORED` with that reason, a ledger that fails in both directions; and `tests/test_shared_layer.py` strips HTML comments before matching, so a comment that only names a file no longer counts as a reference. The comment in `web/index.html` is gone. Exercise 07 had the same shape and got the same fix. |
 
 ---
 

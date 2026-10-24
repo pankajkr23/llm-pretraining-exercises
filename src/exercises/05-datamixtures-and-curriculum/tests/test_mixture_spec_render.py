@@ -581,3 +581,66 @@ def test_the_method_doc_diagrams_actually_render(tmp_path):
                     f"{combined.strip()[-300:]}"
                 )
             pytest.fail(f"diagram {index} did not render:\n{combined[-600:]}")
+
+
+# ---- re-runs are added beside the published runs, never over them ----------------------------
+
+
+@pytest.mark.parametrize("day", export.rerun_days())
+def test_each_rerun_readme_matches_what_the_code_renders(day: str):
+    """A re-run set's README is generated from the bundles beside it, so its numbers are read."""
+    committed = (export.RERUNS / day / "README.md").read_text(encoding="utf-8")
+    assert committed == export.render_rerun_readme(day), (
+        f"results/reruns/{day}/README.md is stale — run `uv run python -m mixture`"
+    )
+
+
+def test_the_readme_leads_with_the_best_result_right_after_the_reading_path():
+    readme = export.render_readme(CFG)
+    headings = [line for line in readme.splitlines() if line.startswith("## ")]
+    at = headings.index("## How to read this")
+    assert headings[at + 1] == "## Best result, and what could beat it"
+    section = readme.split("## Best result, and what could beat it", 1)[1].split("\n## ", 1)[0]
+    for part in (
+        "**Best result.**",
+        "**Candidates that did or could do better.**",
+        "**The next hypothesis.**",
+    ):
+        assert part in section, f"the best-result section is missing {part}"
+    assert "](results/step0.json)" in section, "the best result must link the file it is in"
+
+
+def _diverging_day() -> str | None:
+    for day in export.rerun_days():
+        old = export._h3(export._published("step0"))
+        new = export._h3(export._rerun(day, "step0"))
+        if old and new and old["verdict"] != new["verdict"]:
+            return day
+    return None
+
+
+def test_a_diverging_rerun_keeps_the_published_conclusion_and_adds_a_dated_note(spec: str):
+    """The published verdict stays where it was drawn; the re-run is a note beside it, linked."""
+    day = _diverging_day()
+    if day is None:
+        pytest.skip("no re-run disagrees with a published verdict on this checkout")
+    published = export._h3(export._published("step0"))["verdict"]
+    documents = {
+        "SPEC.md": spec,
+        "README.md": export.render_readme(CFG),
+        "METHOD.md": export.render_method(CFG),
+        "EXPERIMENTS.md": export.render_experiments(export._published("step0")),
+    }
+    for name, text in documents.items():
+        assert f"**{published}**" in text, f"{name} no longer states the published H3 verdict"
+        assert f"Dated note, {day}" in text, f"{name} carries no dated note for the {day} re-run"
+        assert f"results/reruns/{day}/README.md" in text, f"{name} does not link the re-run"
+
+
+def test_the_notes_disappear_when_no_rerun_disagrees(monkeypatch):
+    """A note that outlived its reason would be a correction of nothing."""
+    monkeypatch.setattr(export, "rerun_days", lambda: [])
+    assert export._h3_rerun_note() == ""
+    assert export._e4_rerun_note() == ""
+    assert export._decision_rerun_note() == ""
+    assert "Dated note" not in export.render_readme(CFG)

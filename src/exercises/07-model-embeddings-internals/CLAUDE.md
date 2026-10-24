@@ -40,7 +40,8 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `tools/measure_lane_sensitivity.py` | the grid on one lane at a time — does the advantage track the script? | **yes** |
 | `tools/measure_parallel_text.py` | parallel against ordinary Indic text, matched on size, epochs and script | **yes** |
 | `tools/measure_position_schemes.py` | every position scheme on the SAME recovery question — the complete token, and the bytes each scheme represents | **yes** |
-| `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/`, and rebuilds `results/MANIFEST.md` | **yes** |
+| `tools/measure_codec_facts.py` | re-derives the part of `measurements.json` tracked code can reproduce — `v1_arithmetic`, `collisions`, the scale-cost parameter columns, the lock samples — with a full provenance block | **yes** |
+| `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/reruns/<date>/`, never over a historical `results/*.json`, and indexes that set in its own `MANIFEST.md` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
 | `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |
@@ -226,10 +227,11 @@ side effect.
 
 - **`spc` buys reach with density, and the factor is about `d_p`.** A position writes a whole
   `d_p`-vector into the shared space instead of one coordinate, so
-  `tools/measure_position_schemes.py` measures **207.2** non-zeros per token against `onehot`'s
-  **9.6** on the 1-32 band — 21.6x, the same order as `fourier`'s 23x, whose training runs were
-  about 8x slower. Quote the recovery table without the density column and half the trade is
-  missing.
+  `results/position_schemes.json` records **189.4** non-zeros per token against `onehot`'s
+  **8.2** on the 1-32 band (`rows[0].<scheme>.atoms_per_token`) — 23.2x, the same order as
+  `fourier`'s 23x, whose training runs were about 8x slower. Quote the recovery table without the
+  density column and half the trade is missing. (This paragraph once said 207.2 against 9.6, which
+  the bundle does not carry. Read the number from the file, not from here.)
 
 - **`spc` is measured on the CODE and has never been trained.** It makes no claim against `wrap`'s
   −0.212 nats. `heads.py` builds its sparse code matrix through `codec.atoms`, so an `spc` arm needs

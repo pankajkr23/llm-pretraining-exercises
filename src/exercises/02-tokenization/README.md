@@ -75,6 +75,35 @@ different denominators, and they are never ranked against each other — the sam
 ≈ 2.13 under one and ≈ 0.60 under the other. [Two measurements, kept side by side](#two-measurements-kept-side-by-side)
 explains why both are retained instead of the older one being overwritten.
 
+## Best result, and what could beat it
+
+**Best result.** By this exercise's own criterion — a higher v2 score **and** no more total tokens
+than the reference — the best recipe is the submission, *documents · mai ×3*: spread `0.088885`,
+score `11250.51`, `189785` total tokens, against the reference's `6502.56` and `191266`
+([`web/data.json`](web/data.json), pinned by [`tests/test_submission.py`](tests/test_submission.py)).
+The score is computed once over the whole committed corpus, so it is deterministic; what has no
+usable noise floor is any attempt to confirm it on held-out text (see below).
+
+**Candidates that did or could do better.**
+
+- **Higher score, worse compression.** *te ×5 · mai ×6* scores 15,254 at 191,893 tokens and the
+  rejected *more Telugu + Maithili* row `35603.74` at `192713` — both buy evenness by spending more
+  tokens on the same text ([experiments on the graded corpus](#experiments-on-the-graded-corpus),
+  [why not the row that scores 3× higher](#why-not-the-row-that-scores-3-higher)).
+- **Better compression, lower score.** *BPE from scratch* uses the fewest tokens, `188091`, but
+  scores `6174.88` and partly by never spending a token on a newline
+  ([BPE from scratch](#bpe-from-scratch-no-library)).
+- **Held-out text cannot rank any of them.** One recipe swings 9,421 points across the five splits
+  while the three means sit 648 apart; on those averages the rejected recipe even comes out ahead,
+  which is noise, not evidence ([the test that did not work](#the-test-that-did-not-work)).
+- **A different fourth language** reaches 14,690 with Tamil, on a different corpus that cannot be
+  ranked against this one ([the fourth language](#the-fourth-language)).
+
+**The next hypothesis.** With several articles per language instead of one, held-out scoring should
+acquire a noise floor smaller than the gap between recipes; if *documents · mai ×3* still beats the
+reference there at no extra total tokens, the submission stands, and if *te ×5 · mai ×6* then wins
+on held-out score **without** costing tokens, it should replace it.
+
 ## Two measurements, kept side by side
 
 This exercise has been measured two different ways, and **both are retained here** — not as old

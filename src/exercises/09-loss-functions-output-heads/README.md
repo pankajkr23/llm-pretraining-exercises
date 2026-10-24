@@ -22,6 +22,37 @@ correct one is still at **4.14**. Nothing raises. The curve looks like a triumph
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** This exercise ranks no loss by model quality (see
+[What this cannot establish](#what-this-cannot-establish)), so its best result is the one saving it
+measures: computing the loss in chunks, with the output projection inside the loop, cuts peak
+memory by **about 9x** at a loss identical to the plain path. Five repeats gave 8.88x to 9.44x, a
+spread of 0.56, which is why it is quoted to no decimals —
+[`RESULTS.md` §7](RESULTS.md#7--peak-memory) and its noise floor, from
+[`results/harness.json`](results/harness.json) and [`results/sensitivity.json`](results/sensitivity.json).
+The [2026-10-24 re-run](results/reruns/2026-10-24/README.md) reproduced every training figure bit
+for bit and moved the memory ratio only within that range.
+
+**Candidates that did or could do better.**
+
+- **Keeping the saving while training.** The ~9x is a no-gradient figure. Under autograd every
+  chunk's softmax is kept for the backward pass, so the saving disappears unless each chunk is
+  recomputed there, as exercise 13 does ([`DECISIONS.md` D10](DECISIONS.md)).
+- **A fused kernel** would remove the per-chunk intermediate rather than shrink it, and is the step
+  past chunking that [`DECISIONS.md` D5](DECISIONS.md) names. Untested here.
+- **A tied head** adds no parameters where the untied one adds 2,560,256
+  ([`RESULTS.md` §6](RESULTS.md#6--the-head)) — available only where the input side has one row per
+  token, and never compared here on loss.
+
+**The next hypothesis.** Measure the chunked projection under autograd, with and without per-chunk
+recomputation, at the same shapes: if the recomputing version keeps most of the ~9x at identical
+gradients, the saving transfers to training; if its peak sits near the plain path's, the figure
+describes inference only. Separately, re-running Part 2 on a corpus large enough that the run reads it
+less than once (today: 8.55 epochs) would show whether the further head still sits above the nearer
+one when nothing is memorised; if the gap closes, the published ordering was a property of
+repetition.
+
 ## What this is
 
 A language model is never told the right answer by anybody. The answer is simply *the next token*,

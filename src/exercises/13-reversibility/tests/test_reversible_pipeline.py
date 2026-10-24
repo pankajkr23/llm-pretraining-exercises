@@ -245,3 +245,28 @@ def test_every_bundle_records_the_corpus_it_actually_read(produced) -> None:
         assert (
             json.loads(path.read_text(encoding="utf-8"))["provenance"]["corpus_digest"] == expected
         ), path.name
+
+
+def _found(capped: bool, measured: int | None, derived: int = 108) -> dict:
+    entry = {"measured_max_batch": measured, "derived_max_batch": derived}
+    return {"capped": capped, "budget_gib": 2.0, "device": "mps", "reversible": entry}
+
+
+def test_a_measured_batch_is_used_when_the_device_was_capped() -> None:
+    from reversible.experiments import largest_found
+
+    assert largest_found(_found(True, 86)) == 86
+
+
+def test_a_measured_zero_is_refused_rather_than_read_as_missing() -> None:
+    """`measured or derived` trained at a batch the device had just failed to hold."""
+    from reversible.experiments import largest_found
+
+    with pytest.raises(RuntimeError, match="no batch fit"):
+        largest_found(_found(True, 0))
+
+
+def test_the_derived_batch_is_used_only_where_nothing_could_be_capped() -> None:
+    from reversible.experiments import largest_found
+
+    assert largest_found(_found(False, None)) == 108

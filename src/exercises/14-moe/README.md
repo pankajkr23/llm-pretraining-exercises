@@ -22,6 +22,32 @@ conversion, the router's balance and the cost drawn from the same files.
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** The conversion is exact: the dense model and the converted one, before any update,
+both score a validation loss of **3.052571**, with the largest logit difference **1.6e-05**. Trained
+on the same 10,000,000 further tokens, **the MoE ends at 3.0172 against the dense control's 3.0240
+(-0.0068)** — with 31,159,040 parameters active per token against 21,278,720. One run each, so that
+gap measures these two runs and does not rank the designs. All of it is in [`RESULTS.md`](RESULTS.md),
+rendered from [`results/upcycle.json`](results/upcycle.json), with every step in
+[`submission_artifacts/run.log`](submission_artifacts/run.log).
+
+**Candidates that did or could do better.**
+
+- **The dense control led for part of the run.** It was lower at every measurement from step 300 to
+  700 and fell behind only from step 800 ([`RESULTS.md`](RESULTS.md) §3), so reading the curves at
+  any of those points reverses the order.
+- **Sigmoid routing lost by 0.0007** (3.0682 against softmax's 3.0675) on one short run each — a
+  choice, not a ranking ([`DECISIONS.md`](DECISIONS.md) D6).
+- **Untested:** the expert count and top-k (D3), the continuation's learning rate (D7), and a second
+  seed for either arm.
+
+**The next hypothesis.** Repeat both continuations with a second and third seed: if the MoE's
+final-loss advantage is smaller than the seed-to-seed spread of either arm, the -0.0068 is noise and
+the published result reduces to "conversion is lossless". Separately, extend both arms past
+10,000,000 tokens; if the gap keeps widening as the experts grow apart, the advantage comes from
+routing rather than from the extra parameters alone.
+
 ## What this is
 
 **A dense model** sends every token through the same feed-forward layer in every block.

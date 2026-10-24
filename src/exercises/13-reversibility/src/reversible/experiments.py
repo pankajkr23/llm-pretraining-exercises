@@ -47,7 +47,7 @@ from .memory import (
     state_bytes,
 )
 from .model import ChainedGPT, rebuild_agreement
-from .train import Run, build, train
+from .train import Run, build, evaluate, train
 
 
 def validation_half(corpus: Corpus, use: str) -> np.ndarray:
@@ -214,15 +214,18 @@ def fixed_batch(
 
 
 def _step_at(preset: Preset, corpus: Corpus, device: str, variant: str, h: float):
-    """`batch -> None`: two training steps at that batch on a fresh model, or an OOM error.
+    """`batch -> None`: two training steps and a validation pass at that batch, or an OOM error.
 
     The same operations `train` performs — clipping included — and two of them, so the optimiser's
     state already exists when the second runs. One bare step was what this probed at first, and a
-    run at the batch it passed ran out of memory in its first steps.
+    run at the batch it passed ran out of memory in its first steps. **The validation pass is here
+    for the same reason:** a run evaluates while its optimiser state is resident, and a search that
+    never evaluated passed a batch whose run then failed inside `evaluate` on Apple's GPU.
     """
     model = build(preset, variant, h, device)
     optimizer = torch.optim.AdamW(param_groups(model, 1e-4, 0.0))
     tokens = corpus.split("train")
+    windows = validation_set(validation_half(corpus, "select"), preset.val_windows, preset.seq_len)
 
     def step(batch: int) -> None:
         batches = Batches(tokens, batch, preset.seq_len, seed=preset.seed)
@@ -236,6 +239,9 @@ def _step_at(preset: Preset, corpus: Corpus, device: str, variant: str, h: float
                 getattr(torch, device).synchronize()
             del x
         optimizer.zero_grad(set_to_none=True)
+        evaluate(model, windows, device)
+        if device in ("mps", "cuda"):
+            getattr(torch, device).synchronize()
 
     return model, step
 
@@ -320,12 +326,41 @@ def max_batch(preset: Preset, corpus: Corpus, device: str, choice: dict) -> dict
     return out
 
 
+def largest_found(found: dict, variant: str = "reversible") -> int:
+    """The largest batch `max_batch` established for `variant`: measured when the device was capped.
+
+    **A measured 0 is an answer, not a missing value.** It means not even the starting batch fit
+    under the cap. The callers used to write `measured or derived`, which reads that 0 as "nothing
+    measured" and trains at the derived batch — a batch the device had just failed to hold — so the
+    run then died out of memory. The derived figure is the answer only where nothing could be
+    capped (a CPU), and a cap too small for the starting batch is refused with what to change.
+
+    Raises:
+        RuntimeError: When the device was capped and no batch fit under it.
+    """
+    entry = found[variant]
+    if not found["capped"]:
+        return entry["derived_max_batch"]
+    if not entry["measured_max_batch"]:
+        raise RuntimeError(
+            f"no batch fit under the {found['budget_gib']} GiB cap on {found['device']} for "
+            f"{variant!r}: raise the preset's memory_budget_gib"
+        )
+    return entry["measured_max_batch"]
+
+
 def max_batch_run(preset: Preset, corpus: Corpus, device: str, choice: dict, batch: int) -> dict:
     """The reversible model on the full budget at `batch`, after a short rate check there.
 
     Each candidate rate trains for `max_batch_check_steps` optimiser steps at `batch`, scored on the
     selection half of the validation split; the full run is reported on the other half.
     """
+    # **Start from an empty cache, as every later run here does.** The search that precedes this in
+    # the same process leaves its last models and the allocator's cached blocks behind, and under a
+    # hard cap those count: on Apple's GPU the first rate check's opening forward pass ran out of
+    # memory at 85% of a batch the search had just passed, with nothing of its own allocated yet.
+    gc.collect()
+    release(device)
     check_tokens = preset.max_batch_check_steps * batch * preset.seq_len
     checks = {}
     for multiplier in preset.max_batch_lrs:

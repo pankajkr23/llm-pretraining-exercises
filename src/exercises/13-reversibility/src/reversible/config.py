@@ -104,7 +104,9 @@ LITE = replace(
     trial_tokens=60_000,
     trial_lrs=(1e-3, 3e-3),
     trial_h=(0.5, 1.0),
-    memory_budget_gib=1.0,
+    # 2 GiB, not 1: on Apple's GPU the allocator reserves memory in large heaps, and under a 1 GiB
+    # cap not even the starting batch fit, so the search measured nothing at all.
+    memory_budget_gib=2.0,
     max_batch_ceiling=128,  # so the run at the largest batch takes ~24 steps, not 3
     max_batch_lrs=(1.0, 2.0),
     max_batch_check_steps=10,

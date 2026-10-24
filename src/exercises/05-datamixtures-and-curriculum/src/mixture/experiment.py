@@ -14,15 +14,17 @@ The hypotheses, their thresholds and their refutation conditions are not defined
 `proxy.HYPOTHESES`, written before any of this existed, and this module only evaluates them.
 """
 
+import argparse
 import json
+import os
 import statistics
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from mixture import corpus, evaluate, lanes, proxy
+from mixture import corpus, evaluate, lanes, provenance, proxy
 from mixture.config import Config
 from mixture.model import ModelConfig, pick_device
-from mixture.train import RunRecord, TrainConfig, save_record, train
+from mixture.train import RunRecord, TrainConfig, describe_device, save_record, train
 
 
 @dataclass
@@ -330,6 +332,7 @@ def run(
     """
     model_config = model_config or ModelConfig(layers=4, heads=4, width=256, context=256)
     corpus.build()
+    before = provenance.inputs()
 
     selected = [arm for arm in proxy.arms() if arms is None or arm.key in arms]
     results: dict[str, ArmResult] = {}
@@ -338,6 +341,15 @@ def run(
 
     comparisons = compare(results)
     throughputs = [record["throughput"] for result in results.values() for record in result.records]
+    settings = {
+        "config": asdict(Config()),
+        "model": asdict(model_config),
+        "seeds": list(seeds),
+        "steps": steps,
+        "batch": batch,
+        "arms": {arm.key: dict(arm.shares) for arm in selected},
+        "stem": os.environ.get("MIXTURE_STEM") or "default",
+    }
 
     return {
         "config": asdict(Config()),
@@ -356,14 +368,19 @@ def run(
         "corpus": {lane: asdict(shard) for lane, shard in corpus.build().items()},
         "arms": {key: asdict(result) for key, result in results.items()},
         "comparisons": [asdict(comparison) for comparison in comparisons],
+        "provenance": provenance.block(settings, describe_device(pick_device(device)), before),
     }
 
 
 RESULTS_DIR = corpus.EXERCISE_ROOT / "results"
+"""The published runs — read, never written. See `provenance.HISTORICAL`."""
+
+RERUN_DIR: Path | None = None
+"""Where `save` writes; None means `results/reruns/<today>/`, resolved at call time."""
 
 
 def save(bundle: dict, name: str = "step0") -> Path:
-    """Write an experiment bundle.
+    """Write an experiment bundle beside the published runs, never over one.
 
     Args:
         bundle: Output of `run`.
@@ -371,18 +388,85 @@ def save(bundle: dict, name: str = "step0") -> Path:
 
     Returns:
         The path written.
+
+    Raises:
+        ValueError: If the bundle carries no complete provenance block, or the destination is a
+            published run. Nothing is written.
+        FileExistsError: If that day's set already holds a run of this name.
     """
+    provenance.require(bundle)
     # `results/`, which is TRACKED, not `artifacts/`, which is gitignored. This wrote to artifacts
     # first, so a completed run left the committed evidence untouched: the documents kept
     # rendering an older experiment while the terminal showed the new one, and nothing failed.
     # The published result and the run that produced it have to be the same file.
-    path = RESULTS_DIR / f"{name}.json"
+    path = provenance.destination(name, RERUN_DIR)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(bundle, indent=1, default=str), encoding="utf-8")
     return path
 
 
-def main() -> None:
+#: The manifest `tools/fetch_proxy_corpus.py` writes beside the fetched lanes.
+FETCHED_MANIFEST = corpus.REPO_ROOT / "data" / "proxy" / "manifest.json"
+
+
+def stem_sensitivity(
+    seeds: tuple[int, ...] = (0, 1, 2, 3, 4), steps: int = 500, batch: int = 16
+) -> dict:
+    """E4 — re-run H3's two arms with the second STEM stand-in in place of the first.
+
+    H3's refutation rests on the STEM lane gaining past its second clause, and that lane is a
+    stand-in. Same arms, seeds, steps and thresholds as Step 0; only the STEM text changes. This
+    used to be produced by setting `MIXTURE_STEM=alt` by hand and reshaping the bundle outside the
+    package, so the published file had no tracked producer. It has one now.
+
+    Args:
+        seeds: Seeds per arm; Step 0's.
+        steps: Optimiser steps per run; Step 0's.
+        batch: Sequences per step; Step 0's.
+
+    Returns:
+        The sensitivity bundle, carrying its own provenance block.
+
+    Raises:
+        FileNotFoundError: If the second stand-in has not been fetched. Without it the STEM lane
+            would silently be the first stand-in again, and the comparison would compare a run
+            with itself.
+    """
+    manifest = json.loads(FETCHED_MANIFEST.read_text(encoding="utf-8"))
+    entry = next(lane for lane in manifest["lanes"] if lane["lane"] == "stem-alt")
+    if not (FETCHED_MANIFEST.parent / "stem-alt.txt").exists():
+        raise FileNotFoundError(
+            "the second STEM stand-in is missing; run "
+            "`uv run python src/exercises/05-datamixtures-and-curriculum/tools/"
+            "fetch_proxy_corpus.py --alt-stem` first"
+        )
+
+    previous = os.environ.get("MIXTURE_STEM")
+    os.environ["MIXTURE_STEM"] = "alt"
+    try:
+        bundle = run(seeds=seeds, steps=steps, batch=batch, arms=("A", "D"))
+    finally:
+        if previous is None:
+            os.environ.pop("MIXTURE_STEM", None)
+        else:
+            os.environ["MIXTURE_STEM"] = previous
+
+    return {
+        "stem_stand_in": f"{entry['dataset']} ({entry['licence']})",
+        "device": bundle["device"],
+        "steps": bundle["steps"],
+        "batch": bundle["batch"],
+        "seeds": bundle["seeds"],
+        "arms": {
+            key: {"per_seed": arm["per_seed"], "weighted": arm["weighted"]}
+            for key, arm in bundle["arms"].items()
+        },
+        "comparisons": [c for c in bundle["comparisons"] if c["key"] == "H3"],
+        "provenance": bundle["provenance"],
+    }
+
+
+def main(argv: list[str] | None = None) -> None:
     """Run Step 0 and print what it found.
 
     The scale is chosen from two measurements rather than from preference. `bench.py` says this
@@ -391,7 +475,30 @@ def main() -> None:
     **The corpus is the limit** -- the same lesson the specification draws about the mixture, that
     supply rather than preference is the hard cap. So the run is sized at roughly four epochs, the
     point past which the repetition curve says another pass stops being near-free.
+
+    `--alt-stem` runs E4 instead — see `stem_sensitivity` — and writes `stem_sensitivity.json`.
+
+    Args:
+        argv: Command-line arguments, or None for `sys.argv`.
     """
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--alt-stem",
+        action="store_true",
+        help="re-run H3's arms with the second STEM stand-in and write stem_sensitivity.json",
+    )
+    if parser.parse_args(argv).alt_stem:
+        sensitivity = stem_sensitivity()
+        path = save(sensitivity, "stem_sensitivity")
+        for comparison in sensitivity["comparisons"]:
+            print(
+                f"{comparison['key']} with {sensitivity['stem_stand_in']}: effect "
+                f"{comparison['effect']:+.2%}, noise {comparison['noise']:.2%} -> "
+                f"{comparison['verdict'].upper()}"
+            )
+        print(f"\nwrote {path.name}")
+        return
+
     bundle = run(seeds=(0, 1, 2, 3, 4), steps=500, batch=16)
     path = save(bundle)
 

@@ -5,9 +5,8 @@ running log is `PROGRESS.md`, the measured evidence is `RESULTS.md` (generated),
 requirements are `REQUIREMENTS.md` (local only, gitignored).
 
 **Status: built.** All six items run and write `results/run.json`; the notebook and the deployable
-page are done and registered. Two things remain, and only one is engineering: the reviewer pass
-(stage 14, still not started), and the production promotion that puts the page in front of a
-reader — which is PK's gate.
+page are done and registered, the reviewer pass (stage 14) is done (#179), and the page is live in
+production.
 
 ## The rules this exercise added, each learned by getting it wrong
 

@@ -22,6 +22,34 @@ the same bundles by the same renderer.
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** The exercise ranks only what clears the seed spread. Of the two finished models at
+a 200-step budget, **the WSD branch** — decayed over its last 30 steps — reaches a validation loss of
+**5.7180** (seeds 5.6948, 5.7412) against **5.8913** for a cosine planned for 200, a gap larger
+than the seed spread. Across widths, **muP narrows the drift in the best learning rate from 3.07×
+to 1.23×** between widths 256 and 1,024, both above the measured noise. Both are in
+[`RESULTS.md`](RESULTS.md) §4 and §5, rendered from
+[`results/schedules.json`](results/schedules.json) and
+[`results/width_sweep.json`](results/width_sweep.json).
+
+**Candidates that did or could do better.**
+
+- **WSD run to 300 steps ends at 5.3361**, the lowest loss in the schedule experiment — but on 100
+  more steps of data, so it answers a different budget ([`RESULTS.md`](RESULTS.md) §4).
+- **Cosine against WSD stopped at step 200 is not ranked**: a 0.0181 gap inside a 0.0411 seed
+  spread. The decay itself bought -0.0011, also inside the noise.
+- **SP reached a lower loss than muP at width 1,024** — 5.3324 at η = 0.0005 against muP's best
+  5.5082 ([`RESULTS.md`](RESULTS.md) §5). muP bought a rate that transfers, not a lower loss, at
+  300 steps.
+- **Untested:** muP against the authors' own package, more than two seeds, any width above 1,024,
+  and any schedule beyond cosine and WSD ([`PROGRESS.md`](PROGRESS.md)).
+
+**The next hypothesis.** Train width 4,096 at the muP prediction (η ≈ 1.283e-03) and at the SP
+prediction (η ≈ 2.059e-04), two seeds each, with a sweep around both. If muP's measured minimum
+lands inside its per-seed range (1.165e-03 to 1.412e-03) while SP's misses its own, muP's rate
+transfers past the measured widths; if both miss, neither extrapolation holds 4× beyond the data.
+
 ## What this is
 
 An optimiser turns a gradient into a step. Adam does it with two running averages — one for the

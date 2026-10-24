@@ -8,7 +8,7 @@ So this module builds its lanes from **committed text only**:
 
 - **web**   exercise 02's wiki-faithful English Markdown
 - **indic** the same article in Hindi, Telugu and Maithili
-- **code**  this repository's own Python
+- **code**  this repository's own Python, **as tracked at one pinned commit** (`CODE_LANE_COMMIT`)
 
 That is real prose in three scripts and real code, about 2.3MB of it, present in any checkout and
 needing no network at all. It is also **small**, and `EXPERIMENTS.md` says so in the same breath as
@@ -32,6 +32,7 @@ Three rules carried forward from earlier topics:
 import hashlib
 import json
 import os
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -60,6 +61,19 @@ _WIKI = REPO_ROOT / "src/exercises/02-tokenization/corpus/v2"
 # so a fresh clone has none of them and the corpus falls back to the three committed lanes.
 _FETCHED = REPO_ROOT / "data" / "proxy"
 
+#: The commit whose **tracked** Python is the code lane. Changing it is a decision about published
+#: results: every number in `results/` was trained on the lane this names.
+#:
+#: **Why it is pinned.** The lane used to be read from the working tree, so it grew every time any
+#: other exercise did. The published Step 0 trained on 352,415 code tokens from 87 files; by the
+#: time anyone looked again the same function returned 2,136,162 from 392, the run that produced
+#: the published numbers could no longer be rebuilt from anything, and nothing had failed. A
+#: working-tree read also admits uncommitted edits and untracked files — text no commit holds. So
+#: the lane is read from git at this commit, through `git ls-tree` and `git cat-file`, and never
+#: from disk. A clone that does not have the commit (a shallow one) gets an error saying so, never
+#: a silent fallback to the working tree, which would be a different corpus under the same name.
+CODE_LANE_COMMIT = "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e"
+
 
 @dataclass(frozen=True)
 class LaneSource:
@@ -70,16 +84,97 @@ class LaneSource:
         description: What the text is.
         paths: Files contributing to it, in a fixed order so the corpus is deterministic.
         licence_note: What governs reuse of this text.
+        commit: When set, `paths` are read from this commit through git rather than from disk, so
+            the working tree cannot reach the lane.
     """
 
     lane: str
     description: str
     paths: tuple[Path, ...]
     licence_note: str
+    commit: str | None = None
 
 
-def _repo_python() -> tuple[Path, ...]:
-    """This repository's own Python, as the code lane.
+def _require_commit(commit: str) -> None:
+    """Raise unless `commit` is present in this clone.
+
+    Args:
+        commit: The full commit id.
+
+    Raises:
+        RuntimeError: Saying how to get it. Never a fallback: the working tree is not this lane.
+    """
+    try:
+        subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "cat-file", "-e", f"{commit}^{{commit}}"],
+            check=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise RuntimeError(
+            f"the code lane is pinned to commit {commit} (corpus.CODE_LANE_COMMIT) and this clone "
+            "does not have it — a shallow clone is the usual reason. Fetch it with "
+            f"`git fetch origin {commit}` or clone without --depth. The lane is never read from "
+            "the working tree instead: that would be a different corpus under the same name."
+        ) from error
+
+
+def _read_at_commit(commit: str, names: list[str]) -> list[bytes]:
+    """Every named file's bytes as committed, in one `git cat-file --batch` call.
+
+    Args:
+        commit: The commit to read from.
+        names: Repository-relative POSIX paths.
+
+    Returns:
+        Each file's content, in the order given.
+
+    Raises:
+        RuntimeError: If a path is not in that commit.
+    """
+    request = "".join(f"{commit}:{name}\n" for name in names).encode("utf-8")
+    out = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "cat-file", "--batch"],
+        input=request,
+        capture_output=True,
+        check=True,
+    ).stdout
+    contents, offset = [], 0
+    for name in names:
+        end = out.index(b"\n", offset)
+        header = out[offset:end].decode("utf-8")
+        if header.endswith("missing"):
+            raise RuntimeError(f"{name} is not in commit {commit}")
+        size = int(header.rsplit(" ", 1)[1])
+        contents.append(out[end + 1 : end + 1 + size])
+        offset = end + 1 + size + 1  # the content is followed by one newline
+    return contents
+
+
+def read_bytes(source: LaneSource) -> list[tuple[str, bytes]]:
+    """A lane's files as `(repository-relative path, bytes)`, from its commit when it has one.
+
+    The single place lane text is read from, so the corpus and its provenance digest cannot read
+    two different things.
+
+    Args:
+        source: The lane.
+
+    Returns:
+        One pair per file, in the lane's order.
+    """
+    names = [path.resolve().relative_to(REPO_ROOT).as_posix() for path in source.paths]
+    if source.commit is None:
+        return list(zip(names, (path.read_bytes() for path in source.paths), strict=True))
+    _require_commit(source.commit)
+    return list(zip(names, _read_at_commit(source.commit, names), strict=True))
+
+
+def _repo_python(commit: str | None = None) -> tuple[Path, ...]:
+    """This repository's own Python **as tracked at `commit`**, as the code lane.
+
+    Listed with `git ls-tree`, so an untracked or gitignored file cannot enter it however it got
+    onto disk, and a file deleted since the pin stays in it. See `CODE_LANE_COMMIT` for why.
 
     Three exclusions, each for a reason.
 
@@ -90,13 +185,28 @@ def _repo_python() -> tuple[Path, ...]:
     churn through development. A corpus that moves when you touch the experiment is not a fixed
     corpus.
 
+    Args:
+        commit: The commit to list; None for `CODE_LANE_COMMIT` **as it is at call time** — not a
+            default bound at import, which would ignore any later change to the constant.
+
     Returns:
-        Paths in sorted order, so the corpus does not depend on filesystem iteration order.
+        Paths in sorted order, so the corpus does not depend on listing order.
+
+    Raises:
+        RuntimeError: If this clone does not have `commit`.
     """
+    commit = commit or CODE_LANE_COMMIT
+    _require_commit(commit)
+    listed = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-tree", "-r", "--name-only", commit, "--", "src"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.splitlines()
     return tuple(
         sorted(
             path
-            for path in (REPO_ROOT / "src").rglob("*.py")
+            for path in (REPO_ROOT / name for name in listed if name.endswith(".py"))
             if "__pycache__" not in path.parts
             and "solution" not in path.parts
             and "05-datamixtures-and-curriculum" not in path.parts
@@ -278,9 +388,10 @@ def sources() -> tuple[LaneSource, ...]:
         ),
         LaneSource(
             lane="code",
-            description="this repository's own Python",
-            paths=_repo_python(),
+            description=f"this repository's own Python, as tracked at {CODE_LANE_COMMIT[:7]}",
+            paths=_repo_python(CODE_LANE_COMMIT),
             licence_note="this project's own source",
+            commit=CODE_LANE_COMMIT,
         ),
         *_fetched_sources(),
     )
@@ -322,13 +433,16 @@ def _read(source: LaneSource) -> str:
         The lane's text, files separated by a blank line so documents do not run together.
     """
     parts = []
-    for path in source.paths:
+    for _, payload in read_bytes(source):
         try:
-            parts.append(path.read_text(encoding="utf-8"))
+            text = payload.decode("utf-8")
         except UnicodeDecodeError:
             # A stray non-UTF-8 file in the code lane is skipped rather than crashing the build;
             # it would contribute mojibake to a language model either way.
             continue
+        # The newline translation `Path.read_text` applies, kept so a lane read from git is the
+        # same text as the same file read from disk.
+        parts.append(text.replace("\r\n", "\n").replace("\r", "\n"))
     return "\n\n".join(parts)
 
 

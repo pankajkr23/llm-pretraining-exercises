@@ -1,0 +1,222 @@
+{
+ "stem_stand_in": "math-ai/StackMathQA (cc-by-4.0)",
+ "device": "mps:apple-silicon",
+ "steps": 500,
+ "batch": 16,
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "arms": {
+  "A": {
+   "per_seed": {
+    "0": {
+     "web": 1.817635018715841,
+     "indic": 1.3405746610640905,
+     "code": 3.560164521214404,
+     "stem": 3.686153271635135,
+     "reasoning": 3.30906875557035,
+     "agentic": 3.2257796363691824
+    },
+    "1": {
+     "web": 1.8217489490861194,
+     "indic": 1.3362520634094919,
+     "code": 3.5648031020740936,
+     "stem": 3.7263148539557145,
+     "reasoning": 3.3305010921609255,
+     "agentic": 3.229173681935238
+    },
+    "2": {
+     "web": 1.818844271726847,
+     "indic": 1.3290146523361968,
+     "code": 3.5640278793109523,
+     "stem": 3.6785583938385296,
+     "reasoning": 3.3276865421875623,
+     "agentic": 3.215874281288805
+    },
+    "3": {
+     "web": 1.801536722164182,
+     "indic": 1.3307902984105764,
+     "code": 3.553040132426421,
+     "stem": 3.699509406288285,
+     "reasoning": 3.2868221815585135,
+     "agentic": 3.2032730636963427
+    },
+    "4": {
+     "web": 1.814280267321714,
+     "indic": 1.3234476332092742,
+     "code": 3.5603490319821294,
+     "stem": 3.639431053520651,
+     "reasoning": 3.307394518477308,
+     "agentic": 3.21275520087422
+    }
+   },
+   "weighted": {
+    "0": 2.5913721966898664,
+    "1": 2.5998112471882777,
+    "2": 2.5911400268415776,
+    "3": 2.5818376064390423,
+    "4": 2.581266380393761
+   }
+  },
+  "D": {
+   "per_seed": {
+    "0": {
+     "web": 1.8141800307072138,
+     "indic": 1.3883438257679848,
+     "code": 3.5277688786331285,
+     "stem": 3.634544813176417,
+     "reasoning": 3.281094007871142,
+     "agentic": 3.214179280468285
+    },
+    "1": {
+     "web": 1.8154515960263784,
+     "indic": 1.3947064535812903,
+     "code": 3.5336174295600458,
+     "stem": 3.6385992208857245,
+     "reasoning": 3.2897491579603435,
+     "agentic": 3.216956175977819
+    },
+    "2": {
+     "web": 1.816824549766872,
+     "indic": 1.3802122278644384,
+     "code": 3.564114171018352,
+     "stem": 3.6742662357374263,
+     "reasoning": 3.3111450666553064,
+     "agentic": 3.2235903767134357
+    },
+    "3": {
+     "web": 1.8013173728365446,
+     "indic": 1.3797225332923864,
+     "code": 3.5288513971972475,
+     "stem": 3.6240575153364056,
+     "reasoning": 3.2537923282396415,
+     "agentic": 3.1871187967361463
+    },
+    "4": {
+     "web": 1.8126788218788137,
+     "indic": 1.367896212319139,
+     "code": 3.5229724767384427,
+     "stem": 3.579440844825118,
+     "reasoning": 3.2661832254939918,
+     "agentic": 3.1913159176612114
+    }
+   },
+   "weighted": {
+    "0": 2.5811312683020486,
+    "1": 2.585555515312557,
+    "2": 2.598049385981321,
+    "3": 2.5717826705498164,
+    "4": 2.567364712477187
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "key": "H3",
+   "claim": "halving Indic costs Indic more than it gains the other lanes",
+   "lane": "indic",
+   "baseline": 1.332015861685926,
+   "challenger": 1.3821762505650477,
+   "effect": 0.03765750117692594,
+   "threshold": 0.03,
+   "noise": 0.020127569072802016,
+   "verdict": "qualified",
+   "note": "the primary effect holds (+3.77%) and clears its noise, but the second clause of the declared refutation is triggered on the point estimate: stem gains 1.51% against a 1% threshold. That gain is inside its own seed spread (2.57%), so these runs cannot settle it either way",
+   "secondary": {
+    "lane": "stem",
+    "gain": 0.015141554490661204,
+    "noise": 0.025725871082441697,
+    "threshold": 0.01,
+    "triggered": true,
+    "clears_noise": false
+   }
+  }
+ ],
+ "provenance": {
+  "config_fingerprint": "56ec0be5ee02",
+  "settings": {
+   "config": {
+    "run_tokens": 2000000000000.0,
+    "model_params": 40000000000.0,
+    "indic_floor": 0.12,
+    "agentic_floor": 0.02,
+    "protected_ceiling": 0.2,
+    "anneal_share": 0.02,
+    "max_synthetic_share_of_indic": 0.5,
+    "warmup_band_tokens": 3000000000.0,
+    "opus_keep_fraction": 0.4,
+    "tokenizer_id": "s02-bpe-10000",
+    "proxy_params": 1000000000.0,
+    "proxy_tokens": 2000000000.0
+   },
+   "model": {
+    "vocab_size": 10000,
+    "context": 256,
+    "layers": 4,
+    "heads": 4,
+    "width": 256,
+    "seed": 0
+   },
+   "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "steps": 500,
+   "batch": 16,
+   "arms": {
+    "A": {
+     "web": 0.32,
+     "code": 0.28,
+     "indic": 0.18,
+     "stem": 0.12,
+     "reasoning": 0.08,
+     "agentic": 0.02,
+     "long_context": 0.0
+    },
+    "D": {
+     "indic": 0.09,
+     "web": 0.356,
+     "code": 0.3115,
+     "stem": 0.1335,
+     "reasoning": 0.089,
+     "agentic": 0.02,
+     "long_context": 0.0
+    }
+   },
+   "stem": "alt"
+  },
+  "git_sha": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+  "code_digest": "sha256:e56f973be2931362cb798751db1413ee94eea142fb21b9fe9bd07e9033b513a6",
+  "corpus_digest": "sha256:0616e3c587597d8413dae398e707f8f6677c469cac454f864e903ab9566d56da",
+  "corpus_lane_digests": {
+   "web": "sha256:775d8d6797d84dbc212035371024ce23543eb95aea53a7ea0045564967349e1b",
+   "indic": "sha256:b1aad99f2f4c39bebcc086bd38b68195e2a970db61df4c52b86dbecff32ee016",
+   "code": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e",
+   "stem": "sha256:366c88aaa697290f9df9fc513e08d49ef51963b77204c2be7dd8203e25d6fe24",
+   "reasoning": "sha256:a79cd6788a64cbe94406f975ea0a9f3498118e89e02e7671f8353c2bbce00003",
+   "agentic": "sha256:e8435791019615a62f5ad3f275d26025317fc034701552799c810fd8936471f3"
+  },
+  "code_lane": {
+   "commit": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+   "digest": "sha256:92039527f9da303396acb5b44230a19628c4a438197f2317531be5d6ed17093e"
+  },
+  "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae",
+  "environment": {
+   "python": "3.12.13",
+   "numpy": "2.5.2",
+   "platform": "macOS-27.0.1-arm64-arm-64bit",
+   "machine": "arm64",
+   "omp_num_threads": "unset",
+   "device": "mps:apple-silicon",
+   "torch": "2.13.0",
+   "torch_threads": 12
+  }
+ }
+}

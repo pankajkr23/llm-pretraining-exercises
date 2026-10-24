@@ -24,9 +24,16 @@ torch = pytest.importorskip("torch", reason="torch is an optional extra: uv sync
 
 
 def test_every_corpus_source_exists_on_this_checkout():
-    """A lane that names a missing file would fail at build time with a worse message."""
+    """A lane that names a missing file would fail at build time with a worse message.
+
+    A lane pinned to a commit is read from that commit, so its files must exist *there* — a file
+    deleted from the working tree since the pin is still, correctly, part of the lane.
+    """
     for source in corpus.sources():
         assert source.paths, f"lane {source.lane} has no sources"
+        if source.commit:
+            assert len(corpus.read_bytes(source)) == len(source.paths)
+            continue
         for path in source.paths:
             assert path.exists(), f"{path} is missing from the checkout"
 
@@ -578,3 +585,34 @@ def test_hypotheses_without_a_second_clause_carry_none():
     by_key = {c.key: c for c in compare(results)}
     assert by_key["H1"].secondary is None
     assert by_key["H2"].secondary is None
+
+
+# ---- provenance: the step-0 producer refuses, and its last line works -------------------------
+
+
+def test_step0_refuses_to_write_an_unprovenanced_bundle(tmp_path, monkeypatch):
+    """`experiment.save` raises before writing, the way the three follow-ons' `save` does."""
+    from mixture import experiment
+
+    monkeypatch.setattr(experiment, "RERUN_DIR", tmp_path)
+    with pytest.raises(ValueError, match="cannot say where it came from"):
+        experiment.save({"steps": 500, "seeds": [0], "batch": 16}, "out")
+    assert not list(tmp_path.iterdir()), "the refusal must come before the write, not after it"
+
+
+@pytest.mark.integration
+def test_step0_can_write_its_own_results_with_provenance(tmp_path, monkeypatch, stable_checks):
+    """Two steps of one arm, purely to prove the bundle — provenance included — can be written.
+
+    The last line of a long job is the one to test first: Step 0 is twenty trained models, and a
+    provenance block that failed to serialise would throw every one of them away.
+    """
+    import json
+
+    from mixture import experiment, provenance
+
+    monkeypatch.setattr(experiment, "RERUN_DIR", tmp_path)
+    bundle = experiment.run(seeds=(0,), steps=2, batch=2, arms=("A",), device="cpu")
+    written = json.loads(experiment.save(bundle, "out").read_text(encoding="utf-8"))
+    provenance.require(written)
+    assert written["provenance"]["settings"]["arms"] == {"A": written["arms"]["A"]["shares"]}

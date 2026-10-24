@@ -16,22 +16,39 @@ downstream reports a compliance figure over it — rather than at read time.
 re-fetched is that the previous one was 4.8 epochs short and 30.2 epochs of web against 0.41 of
 agentic. A builder that emitted shards without checking would let that back in silently.
 
-*The result is written where a document can render it from.* `artifacts/` is regenerable and
-gitignored; a number a document quotes has to survive a clone, so the build report goes to
-`results/`, which is tracked.
+*The result is written where a document can render it from, and beside the record, never over it.*
+`artifacts/` is regenerable and gitignored; a number a document quotes has to survive a clone, so
+the build report goes under `results/`, which is tracked. **`results/corpus_build.json` is the
+historical build** whose figures the documents quote, and it is never rewritten: a new build writes
+`results/reruns/<today>/corpus_build.json` (or wherever `--report` says), refuses the historical
+path outright, and refuses to replace a report already there, so a second run is added rather than
+substituted. A dated set carries a `README.md` comparing it with the historical build.
+
+*The report says what produced it, or it is not written.* It carries a `provenance` block — which
+code, which commit, which machine, which corpus bytes — beside the `config_fingerprint` and
+`tokenizer_sha256` it always had, and `require_provenance` refuses to write a report missing any of
+them. For a long time it carried only the fingerprint and the plan digest, so the shard counts and
+token totals every document renders could not say which builder or which fetch they came from.
 
 Run it::
 
     uv run python src/exercises/06-build-training-dataset/tools/build_corpus.py
     uv run python .../build_corpus.py --out artifacts/shards-v2   # keep the previous build
     uv run python .../build_corpus.py --allow-short   # build anyway, and say so in the report
+    uv run python .../build_corpus.py --report results/reruns/<date>/corpus_build-2.json
 """
 
 import argparse
+import hashlib
+import importlib.metadata
 import json
 import logging
+import os
+import platform
+import subprocess
 import sys
 from dataclasses import asdict
+from datetime import date
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -49,9 +66,49 @@ CORPUS_DIR = REPO_ROOT / "data" / "corpus"
 #: Where shards go. Gitignored and regenerable: 10.6M tokens is not something to track.
 SHARD_DIR = EXERCISE / "artifacts" / "shards"
 
-#: Where the build report goes. **Tracked**, because documents render numbers from it and a figure
+#: Where build reports go. **Tracked**, because documents render numbers from them and a figure
 #: that cannot survive a clone cannot be checked by whoever reads the claim.
 RESULTS_DIR = EXERCISE / "results"
+
+#: The historical build the documents quote. Read by `run_demo.py`; never written by this tool.
+HISTORICAL_REPORT = RESULTS_DIR / "corpus_build.json"
+
+
+def default_report_path(day: date | None = None) -> Path:
+    """Where a new build's report goes when `--report` is not given.
+
+    Args:
+        day: The run's date; today when omitted.
+
+    Returns:
+        `results/reruns/<YYYY-MM-DD>/corpus_build.json`.
+    """
+    return RESULTS_DIR / "reruns" / (day or date.today()).isoformat() / "corpus_build.json"
+
+
+def check_destination(path: Path) -> None:
+    """Refuse a destination that would rewrite a published report.
+
+    Checked before the build as well as before the write, so a refusal costs nothing rather than a
+    full build.
+
+    Args:
+        path: Where the report would go.
+
+    Raises:
+        SystemExit: If `path` is the historical report, or any report already written.
+    """
+    if path.resolve() == HISTORICAL_REPORT.resolve():
+        raise SystemExit(
+            f"{path} is the historical build report the documents quote, and a published "
+            f"experiment is never rewritten. Write the new run beside it: omit --report for "
+            f"{default_report_path().relative_to(EXERCISE)}."
+        )
+    if path.exists():
+        raise SystemExit(
+            f"{path} already holds a build report. A new run is added, never substituted: pass "
+            f"--report with a new file name in that directory."
+        )
 
 
 #: How far below its exact token budget a lane may land before the build refuses.
@@ -62,6 +119,180 @@ RESULTS_DIR = EXERCISE / "results"
 #: fail a corpus that is compliant to within a point with every floor held, which is the criterion
 #: that actually matters.
 SUPPLY_TOLERANCE: float = 0.05
+
+#: Every field a report must carry before `write_report` will put it under `results/`. The first two
+#: sit at the top level, where the report has always carried them; the rest under `provenance`.
+REQUIRED_PROVENANCE: tuple[str, ...] = (
+    "config_fingerprint",
+    "tokenizer_sha256",
+    "code_digest",
+    "git_sha",
+    "environment",
+    "corpus_digest",
+)
+
+
+def _digest_files(paths: list[tuple[str, Path]]) -> str:
+    """`sha256:<64 hex>` over `(label, file)` pairs, each label hashed before its bytes.
+
+    Args:
+        paths: What to digest, already in the order to digest it.
+
+    Returns:
+        The full-length digest. Named `*_digest` by its callers, never `*_key`: gitleaks reads a
+        high-entropy value beside *key* as a leaked credential.
+    """
+    digest = hashlib.sha256()
+    for label, path in paths:
+        digest.update(label.encode("utf-8"))
+        digest.update(path.read_bytes())
+    return "sha256:" + digest.hexdigest()
+
+
+def code_digest() -> str:
+    """A digest over every module the build's numbers depend on, in name order.
+
+    **The modules, not the driver.** This file decides the refusals; `trainingdata` shards, splits
+    and plans; and exercise 04's `datacleaning` runs the deduplication, scrubbing and
+    decontamination whose removals the report counts. A digest over this file alone would vouch
+    for the two packages without having read them.
+
+    Returns:
+        `sha256:<64 hex>`.
+    """
+    import datacleaning
+    import trainingdata
+
+    files = [("tools/build_corpus.py", Path(__file__).resolve())]
+    for package in (trainingdata, datacleaning):
+        root = Path(package.__file__).resolve().parent
+        files.extend((f"{root.name}/{p.name}", p) for p in sorted(root.glob("*.py")))
+    return _digest_files(files)
+
+
+def corpus_digest(corpus_dir: Path) -> str:
+    """A digest over every file the fetcher wrote — the text and its manifest — in name order.
+
+    Recomputed from the bytes on every build. A digest copied from the fetch manifest would report
+    what the fetcher claimed rather than what the builder read.
+
+    Args:
+        corpus_dir: Where the fetcher wrote.
+
+    Returns:
+        `sha256:<64 hex>`.
+    """
+    files = sorted(p for p in corpus_dir.iterdir() if p.is_file())
+    return _digest_files([(p.name, p) for p in files])
+
+
+def git_sha() -> str:
+    """The commit the build ran from, or `"unknown"` off a checkout.
+
+    Reported rather than required to be clean: `code_digest` is what pins the code that actually
+    ran, including any uncommitted edit, and refusing to record a dirty-tree build would only mean
+    it went unrecorded.
+
+    Returns:
+        The full commit hash.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(EXERCISE), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown"
+    return out.stdout.strip() or "unknown"
+
+
+def environment() -> dict[str, str]:
+    """The machine and libraries the build ran on.
+
+    **Torch is read from package metadata, never imported.** The data system is torch-free so CI
+    can run it with no extras; importing torch here to learn its version would break that for a
+    build that never touches a tensor. It is recorded anyway because `AGENTS.md` asks for the same
+    shape everywhere, and "not installed" is an answer.
+
+    Returns:
+        A JSON-serialisable description of this process.
+    """
+    import numpy as np
+
+    try:
+        torch_version = importlib.metadata.version("torch")
+    except importlib.metadata.PackageNotFoundError:
+        torch_version = "not installed"
+    return {
+        "python": platform.python_version(),
+        "numpy": np.__version__,
+        "torch": torch_version,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS", "unset"),
+        "device": "cpu",
+    }
+
+
+def provenance(corpus_dir: Path) -> dict:
+    """The block that goes under `"provenance"` in the report.
+
+    Args:
+        corpus_dir: Where the fetcher wrote.
+
+    Returns:
+        `code_digest`, `git_sha`, `environment` and `corpus_digest`.
+    """
+    return {
+        "code_digest": code_digest(),
+        "git_sha": git_sha(),
+        "environment": environment(),
+        "corpus_digest": corpus_digest(corpus_dir),
+    }
+
+
+def require_provenance(report: dict) -> None:
+    """Raise unless the report says what produced it.
+
+    **Refuse, do not warn.** A provenance block nothing enforces is one that gets dropped in the
+    first hurried run, and this report spent its whole life without one while README, NOTICE and
+    the page rendered its shard and token counts.
+
+    Args:
+        report: The build report.
+
+    Raises:
+        ValueError: Naming every missing field.
+    """
+    fields = {**report, **(report.get("provenance") or {})}
+    missing = [name for name in REQUIRED_PROVENANCE if not fields.get(name)]
+    if missing:
+        raise ValueError(
+            f"refusing to write a corpus report that cannot say where it came from; missing "
+            f"{', '.join(missing)}. Documents render these counts, and a number nobody can "
+            f"regenerate is not evidence."
+        )
+
+
+def write_report(report: dict, path: Path) -> Path:
+    """Check the report's provenance and its destination, then write it.
+
+    Nothing is written if either check fails.
+
+    Args:
+        report: The build report.
+        path: The file to write — never the historical report, never an existing one.
+
+    Returns:
+        The path written.
+    """
+    require_provenance(report)
+    check_destination(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, indent=2, sort_keys=True, default=str), encoding="utf-8")
+    return path
 
 
 def check_supply(built: dict[str, corpus.LaneBuild], config: Config) -> tuple[list[str], list[str]]:
@@ -206,6 +437,7 @@ def build(out: Path, corpus_dir: Path, *, allow_short: bool, rebuild: bool = Fal
         "short_lanes": short,
         "marginally_short_lanes": marginal,
         "built_despite_short_lanes": bool(short and allow_short),
+        "provenance": provenance(corpus_dir),
     }
 
     for lane, result in sorted(built.items()):
@@ -274,7 +506,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--corpus", type=Path, default=CORPUS_DIR)
     parser.add_argument("--out", type=Path, default=SHARD_DIR)
-    parser.add_argument("--results", type=Path, default=RESULTS_DIR)
+    parser.add_argument(
+        "--report",
+        type=Path,
+        default=None,
+        help="where the build report goes (default: results/reruns/<today>/corpus_build.json)",
+    )
     parser.add_argument(
         "--rebuild",
         action="store_true",
@@ -287,14 +524,13 @@ def main() -> int:
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    destination = args.report or default_report_path()
+    check_destination(destination)
 
     report = build(args.out, args.corpus, allow_short=args.allow_short, rebuild=args.rebuild)
 
-    args.results.mkdir(parents=True, exist_ok=True)
-    (args.results / "corpus_build.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True, default=str), encoding="utf-8"
-    )
-    logger.info("report -> %s", args.results / "corpus_build.json")
+    path = write_report(report, destination)
+    logger.info("report -> %s", path)
     return 0
 
 

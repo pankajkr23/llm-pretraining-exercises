@@ -23,6 +23,34 @@ is one you have to take on trust.
 | **Deciding whether to believe it** | [What each proof actually runs](#what-each-proof-actually-runs) — every architecture and dataset stated | [What these demos cannot show](#what-these-demos-cannot-show) |
 | **Running it yourself** | [`notebooks/01-introductions.ipynb`](../../../notebooks/01-introductions.ipynb) — this exercise's own pipeline, step by step, every setting in one cell | [Open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/01-introductions.ipynb) · [the map of all fourteen](../../../notebooks/README.md) |
 
+## Best result, and what could beat it
+
+**Best result.** This exercise ranks nothing, so its best result is a claim that survived its own
+refutation: all four proofs hold in the seeded `foundations` experiments, each asserted beside the
+observation that would refute it in
+[`tests/test_foundations_claims.py`](tests/test_foundations_claims.py). A linear model stays below
+`0.6` test accuracy on the rings while one hidden layer with any activation clears `0.97`; a linear
+stack differs from its single matrix by less than `1e-12` while a ReLU stack differs by more than
+`1e-2`; trained embeddings reach nearest-neighbour purity `1.0`; and the largest dataset closes the
+train-to-test gap to under `0.05`. Those are thresholds the runs must clear, not point estimates —
+the pages retrain from fresh weights on every load, so their own figures move by a point or two.
+
+**Candidates that did or could do better.**
+
+- **Depth at a fixed budget did not win.** At about 300 parameters a deep-narrow ReLU network did
+  not beat a shallow-wide one — the verdict sits inside the seed spread, against the expectation
+  written before it ran ([`PROGRESS.md`](PROGRESS.md#what-is-here-and-what-is-deliberately-not)).
+  Three seeds is the whole sample, so "no difference" is not yet "no effect".
+- **The pages and the package are separate implementations of the same ideas.** The browser proofs
+  are hand-written JavaScript and the package is torch; nothing checks that they agree on a number
+  ([What these demos cannot show](#what-these-demos-cannot-show)).
+
+**The next hypothesis.** On the spirals in `DepthConfig`, a deep-narrow ReLU network beats a
+shallow-wide one by more than the seed-to-seed range once the budget is large enough to give each of
+its layers real width; running `foundations.experiments.depth` across a gapless ladder of budgets
+with more seeds would show where, if anywhere, `spread_verdict` turns from "within the seed spread"
+to "first higher" — and a ladder on which it never turns would say depth buys nothing on this task.
+
 ## The four proofs
 
 | Page | Claim | The interactive |

@@ -1,4 +1,11 @@
-"""Promote one run from `artifacts/` to `results/`, and rebuild the manifest that indexes it.
+"""Promote one run from `artifacts/` to `results/reruns/<date>/`, and index that dated set.
+
+**A published run is never replaced** (`AGENTS.md`, "A published experiment is never rewritten").
+The top-level `results/*.json` are the historical record and this tool does not write to them, nor
+to `results/MANIFEST.md`, which indexes them. Every publish goes to `results/reruns/<date>/` —
+today's date unless `--date` says otherwise — and refuses to overwrite a file already there, so a
+second run of the same measurement on the same day is a decision (a different `--date` directory or
+`--name`), not an accident. The set's own `MANIFEST.md` is regenerated from the bundles in it.
 
 **Publishing is a separate act from running, and this file is where the line is drawn.** A run
 writes to `artifacts/`, which is gitignored; `results/` is the measured evidence a document renders
@@ -29,15 +36,72 @@ a clone by the same rule that put the arm comparison here.
 
     uv run python .../tools/publish_rerun.py --bundle artifacts/rerun-cpu.json
     uv run python .../tools/publish_rerun.py --measurement artifacts/unk_confound.json
-    uv run python .../tools/publish_rerun.py --manifest-only     # rebuild the index alone
+    uv run python .../tools/publish_rerun.py --manifest-only     # rebuild today's set's index
 """
 
 import argparse
+import datetime
 import json
 import sys
 from pathlib import Path
 
 from embeddings.experiment import EXERCISE
+
+RERUNS = EXERCISE / "results" / "reruns"
+"""Where every publish lands, one directory per date. Never the historical `results/` itself."""
+
+
+def destination(date: str) -> Path:
+    """`results/reruns/<date>/`, created if needed. `date` must be `YYYY-MM-DD`."""
+    datetime.date.fromisoformat(date)
+    out = RERUNS / date
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _refuse_existing(target: Path) -> None:
+    """A published run is added beside the others, never written over one."""
+    if target.exists():
+        raise FileExistsError(
+            f"refusing to overwrite {target}: a published run is never replaced. Publish under "
+            "another --date or --name, so both runs stay on the record."
+        )
+
+
+REPO_ROOT = EXERCISE.parents[2]
+"""What a published `run_directory` is relative to.
+
+`experiment.run` records the run directory as the absolute path it wrote to, which is right for a
+gitignored bundle under `artifacts/` and wrong for a tracked one: an absolute path names the machine
+and the account that ran it, and resolves nowhere in a clone. So publishing rewrites it relative to
+the repository root, where it means the same thing on every checkout."""
+
+
+def repo_relative(where: str) -> str:
+    """`where` as a POSIX path relative to the repository root.
+
+    Raises:
+        ValueError: when `where` is an absolute path outside the repository. Publishing it would put
+            a path from somebody's machine into a tracked file, and there is no relative form of it
+            that a clone could resolve.
+    """
+    path = Path(where)
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        raise ValueError(
+            f"refusing to publish run_directory {where!r}: it is outside the repository, so no "
+            "clone could resolve it and the absolute path would only record this machine"
+        ) from None
+
+
+def _resolve(where: str) -> Path:
+    """A published (repo-relative) or legacy (absolute) `run_directory`, as a local path."""
+    path = Path(where)
+    return path if path.is_absolute() else REPO_ROOT / path
+
 
 KEEP_PER_RUN = (
     "arm",
@@ -92,8 +156,11 @@ def trim(bundle: dict) -> dict:
     corpus = bundle.get("corpus") or {}
     if corpus.get("lanes"):
         corpus = {**corpus, "lanes": [_publishable(row) for row in corpus["lanes"]]}
+    published = {k: v for k, v in bundle.items() if k not in ("runs", "corpus")}
+    if published.get("run_directory"):
+        published["run_directory"] = repo_relative(published["run_directory"])
     return {
-        **{k: v for k, v in bundle.items() if k not in ("runs", "corpus")},
+        **published,
         "corpus": corpus,
         "per_step_curves": (
             "Dropped here and kept in the run directory named by `run_directory`, and in "
@@ -118,7 +185,7 @@ def copy_run_record(bundle: dict, results: Path) -> list[Path]:
     where = bundle.get("run_directory")
     if not where:
         return []
-    run = Path(where)
+    run = _resolve(where)
     if not run.is_dir():
         return []
     out = results / "runs" / run.name
@@ -138,6 +205,7 @@ def copy_run_record(bundle: dict, results: Path) -> list[Path]:
                 "corpus": {**corpus, "lanes": [_publishable(row) for row in corpus["lanes"]]},
             }
         target = out / name
+        _refuse_existing(target)
         target.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")
         written.append(target)
     return written
@@ -162,12 +230,17 @@ def publish_measurement(source: Path, results: Path) -> Path:
                 for name, side in block.items()
             }
     target = results / source.name
+    _refuse_existing(target)
     target.write_text(json.dumps(payload, indent=1, default=str), encoding="utf-8")
     return target
 
 
-def render_manifest(results: Path) -> str:
-    """`results/MANIFEST.md`, from the tracked bundles in `results/` and nothing else."""
+def render_manifest(results: Path, date: str | None = None) -> str:
+    """`MANIFEST.md` for `results/`, or for the dated set under `results/reruns/`.
+
+    Built from the tracked bundles in that directory and nothing else. `date` names the dated set
+    in the heading and the rebuild command; without it the output is the historical index.
+    """
     rows = []
     for path in sorted(results.glob("*.json")):
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -211,13 +284,13 @@ def render_manifest(results: Path) -> str:
         )
 
     lines = [
-        "# What is in `results/`, and what produced it",
+        f"# What is in `results/{f'reruns/{date}/' if date else ''}`, and what produced it",
         "",
         "**Generated — do not edit.** Rebuild with:",
         "",
         "```bash",
         "uv run python src/exercises/07-model-embeddings-internals/tools/publish_rerun.py \\",
-        "    --manifest-only",
+        f"    --manifest-only{f' --date {date}' if date else ''}",
         "```",
         "",
         "It reads the tracked bundles in this directory and nothing else, so it rebuilds in",
@@ -300,14 +373,19 @@ def main(argv: list[str] | None = None) -> int:
     """Publish a bundle, rebuild the manifest, and say what changed."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--bundle", default=None, help="a bundle under artifacts/")
-    parser.add_argument("--name", default="rerun.json", help="what to call it in results/")
+    parser.add_argument("--name", default="rerun.json", help="what to call it in the dated set")
+    parser.add_argument(
+        "--date",
+        default=datetime.date.today().isoformat(),
+        help="the dated set under results/reruns/ to publish into (YYYY-MM-DD, default today)",
+    )
     parser.add_argument("--manifest-only", action="store_true")
     parser.add_argument(
         "--measurement", default=None, help="a measurement bundle under artifacts/, copied as-is"
     )
     args = parser.parse_args(argv)
 
-    results = EXERCISE / "results"
+    results = destination(args.date)
     if args.measurement:
         source = Path(args.measurement)
         if not source.is_absolute():
@@ -322,6 +400,7 @@ def main(argv: list[str] | None = None) -> int:
         bundle = json.loads(source.read_text(encoding="utf-8"))
         trimmed = trim(bundle)
         out = results / args.name
+        _refuse_existing(out)
         out.write_text(json.dumps(trimmed, indent=1, default=str), encoding="utf-8")
         print(
             f"{source.stat().st_size / 1024:,.0f} KB -> {out.stat().st_size / 1024:,.0f} KB"
@@ -337,7 +416,7 @@ def main(argv: list[str] | None = None) -> int:
             )
 
     manifest = results / "MANIFEST.md"
-    manifest.write_text(render_manifest(results), encoding="utf-8")
+    manifest.write_text(render_manifest(results, args.date), encoding="utf-8")
     print(f"-> {manifest}")
     return 0
 

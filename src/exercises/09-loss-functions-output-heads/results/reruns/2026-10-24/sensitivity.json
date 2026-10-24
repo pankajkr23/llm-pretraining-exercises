@@ -1,0 +1,86 @@
+{
+  "by_steps": [
+    {
+      "broken_shift_is_lower": true,
+      "epochs": 1.7094682952616789,
+      "final_broken_shift": 3.0484540462493896,
+      "final_correct_shift": 6.207566261291504,
+      "further_head_is_harder": true,
+      "gap": 0.019927978515625,
+      "steps": 60,
+      "steps_where_further_head_was_higher": 57
+    },
+    {
+      "broken_shift_is_lower": true,
+      "epochs": 4.273670738154197,
+      "final_broken_shift": 0.9144216179847717,
+      "final_correct_shift": 5.240525245666504,
+      "further_head_is_harder": true,
+      "gap": 0.31708240509033203,
+      "steps": 150,
+      "steps_where_further_head_was_higher": 146
+    },
+    {
+      "broken_shift_is_lower": true,
+      "epochs": 8.547341476308395,
+      "final_broken_shift": 0.17835122346878052,
+      "final_correct_shift": 4.144702911376953,
+      "further_head_is_harder": true,
+      "gap": 1.0415992736816406,
+      "steps": 300,
+      "steps_where_further_head_was_higher": 297
+    }
+  ],
+  "corpus": {
+    "corpus_tokens": 35941,
+    "epochs": 8.547341476308395,
+    "source": "corpus/agents-md-95c740e.txt \u2014 this repository's own AGENTS.md frozen at the revision the published run read, tokenized with exercise 02's BPE",
+    "source_bytes": 92021,
+    "source_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "tokens_consumed": 307200
+  },
+  "every_run_found_the_broken_shift_lower": true,
+  "every_run_found_the_further_head_harder": true,
+  "gap_grows_monotonically": true,
+  "memory": {
+    "losses_agreed_every_time": true,
+    "max": 9.251484308736217,
+    "min": 8.960623461853979,
+    "ratios": [
+      8.960623461853979,
+      9.175357443229604,
+      9.164913756836349,
+      9.251484308736217,
+      9.21455938697318
+    ],
+    "repeats": 5,
+    "rows": 4096,
+    "softmax_only_max": 1.8105236949124408,
+    "softmax_only_min": 1.791673509607489,
+    "softmax_only_ratios": [
+      1.795217355575643,
+      1.791673509607489,
+      1.8014553874142065,
+      1.8105236949124408,
+      1.798504362276693
+    ],
+    "softmax_only_spread": 0.01885018530495186,
+    "spread": 0.29086084688223757
+  },
+  "provenance": {
+    "code_digest": "sha256:7b1a1007485ada5f6cc4639f42f46e05830dfb65d4c7cb5eeeca68393c121ff5",
+    "config_fingerprint": "cd2603d4144f",
+    "corpus_digest": "sha256:19f24ce7db26e4f3dde1b3663b6edb19019d887f0188bdaca16ffad7087b0261",
+    "environment": {
+      "device": "cpu",
+      "machine": "arm64",
+      "omp_num_threads": "unset",
+      "platform": "macOS-27.0.1-arm64-arm-64bit",
+      "python": "3.12.13",
+      "torch": "2.13.0",
+      "torch_threads": 12
+    },
+    "git_sha": "fd18c2e190b8c487d930e1eea2d93a13b95c2f6e",
+    "tokenizer_digest": "sha256:b2c4905dc61645931cd545e86c503fd34671a9a31719f3dd1bce0a7f8ea129ae"
+  }
+}

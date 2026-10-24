@@ -1127,3 +1127,23 @@ def test_no_code_block_is_cut_off_and_no_command_is_rendered(page, width: int) -
         "read far more often than it is executed, so a command on one is the copy that goes stale "
         "while every test stays green."
     )
+
+
+def test_a_diverging_rerun_is_a_dated_note_beside_the_published_conclusion(page):
+    """The page keeps the published H3 conclusion and shows a later run's disagreement beside it."""
+    bundle = json.loads(
+        (PUBLIC / SLUG / "data.js")
+        .read_text(encoding="utf-8")
+        .split("Object.freeze(", 1)[1]
+        .rsplit(");", 1)[0]
+    )
+    notes = bundle.get("reruns")
+    if not notes:
+        pytest.skip("no re-run disagrees with a published verdict in this bundle")
+    conclusion = page.eval_on_selector("#conclusion", "el => el.textContent")
+    assert "H3 is refuted" in conclusion, "the published conclusion must stay as drawn"
+    assert "Dated note" in conclusion, "the re-run's disagreement is not beside the conclusion"
+    assert "results/reruns/" in conclusion, "the note must say where the re-run's numbers are"
+    if notes.get("e4"):
+        negatives = page.eval_on_selector("#negatives", "el => el.textContent")
+        assert "E4 reads" in negatives, "the E4 correction carries no dated note"

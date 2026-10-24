@@ -239,8 +239,16 @@ def train(
 
 
 @torch.no_grad()
+@torch.no_grad()
 def evaluate(model: ChainedGPT, windows: torch.Tensor, device: str, chunk: int = 32) -> float:
-    """Mean validation loss over fixed windows."""
+    """Mean validation loss over fixed windows, with no autograd graph.
+
+    **It used to build one.** Evaluation ran with gradients enabled, so every validation pass
+    recorded a graph nobody would differentiate — memory the largest-batch search never measured,
+    because the search probes training steps only. Under the LITE preset's 1 GiB cap on Apple's GPU
+    that unmeasured graph was the allocation that failed. With no gradient the stack takes the
+    stored path and keeps nothing for a backward pass; the loss it returns is the same number.
+    """
     model.eval()
     total = 0.0
     for i in range(0, len(windows), chunk):

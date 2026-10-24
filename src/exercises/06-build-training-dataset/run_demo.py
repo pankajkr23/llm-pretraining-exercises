@@ -167,6 +167,29 @@ def open_corpus(shard_dir: Path, log: RunLog) -> tuple[dict, list]:
     return handles, manifests
 
 
+def repo_relative(path: Path) -> str:
+    """A path as the bundle records it: relative to the repository root when it is inside it.
+
+    **The bundle is tracked and public, so it must not carry this machine's layout.** The firewall
+    record published the scratch directory as an absolute path — the home directory and the
+    checkout location of whoever ran the demo — in a file whose only job is to say where the eval
+    shard went. Repo-relative says that, and means the same thing on every clone. A `--work`
+    outside the repository has no repo-relative form and is kept absolute; that bundle is not the
+    tracked one.
+
+    Args:
+        path: Any path.
+
+    Returns:
+        A POSIX path relative to the repository root, or the absolute path if it lies outside.
+    """
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
 def demonstrate_firewall(shard_dir: Path, work: Path, manifests: list, log: RunLog) -> dict:
     """Write a real evaluation shard, offer it to the loader, and record that it is refused.
 
@@ -226,7 +249,7 @@ def demonstrate_firewall(shard_dir: Path, work: Path, manifests: list, log: RunL
     )
     return {
         "shard_id": shard_id,
-        "written_to": str(lane_dir),
+        "written_to": repo_relative(lane_dir),
         "manifest_refused": bool(refusal),
         "manifest_reasons": list(refusal.reasons),
         "registry_allowed": allowed,
@@ -477,6 +500,13 @@ def main() -> int:
     log = RunLog(args.out / "run.log")
 
     handles, manifests = open_corpus(args.shards, log)
+    # Only the shards opened here, before the firewall demo appends its own eval shard: the build
+    # report describes a build, and the eval shard is this run's, not the corpus's.
+    corpus_report, mismatch = evidence.corpus_report_for(
+        manifests, EXERCISE / "results" / "corpus_build.json"
+    )
+    if mismatch:
+        log.note(mismatch)
     firewall_report = demonstrate_firewall(args.shards, args.work, manifests, log)
     manifests.extend(manifest.read_all(args.work / "firewall"))
 
@@ -661,11 +691,6 @@ def main() -> int:
     )
 
     # -- the bundle -------------------------------------------------------------------------------
-    corpus_report = None
-    results = EXERCISE / "results" / "corpus_build.json"
-    if results.is_file():
-        corpus_report = json.loads(results.read_text(encoding="utf-8"))
-
     rows = evidence.build_rows(
         after,
         manifests,

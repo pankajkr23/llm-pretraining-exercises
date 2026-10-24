@@ -555,6 +555,41 @@ def test_the_fingerprint_moves_when_any_knob_moves() -> None:
         )
 
 
+def test_a_measurement_fingerprint_moves_when_any_setting_moves() -> None:
+    """The codec measurements' fingerprint, held to the same rule as `RunConfig.fingerprint`."""
+    from embeddings.experiment import settings_fingerprint
+
+    base = {"d_p": 32, "d_model": 768, "reach": 128, "seed": 0, "sample": 0}
+    assert settings_fingerprint(base) == settings_fingerprint(dict(reversed(base.items()))), (
+        "the fingerprint depends on key order, so the same settings could fingerprint two ways"
+    )
+    for key, value in (("d_p", 16), ("d_model", 256), ("reach", 64), ("seed", 1), ("sample", 150)):
+        assert settings_fingerprint({**base, key: value}) != settings_fingerprint(base), (
+            f"changing {key} left the measurement fingerprint unchanged"
+        )
+
+
+def test_a_measurement_without_a_complete_provenance_block_is_refused() -> None:
+    """The twin: every field of the block is required, and an empty one counts as missing."""
+    from embeddings.experiment import (
+        MEASUREMENT_PROVENANCE,
+        measurement_provenance,
+        require_measurement_provenance,
+    )
+
+    block = measurement_provenance({"d_p": 32, "seed": 0})
+    require_measurement_provenance({"provenance": block})
+    for field in MEASUREMENT_PROVENANCE:
+        for broken in (
+            {k: v for k, v in block.items() if k != field},
+            {**block, field: ""},
+        ):
+            with pytest.raises(ValueError, match="where it came from"):
+                require_measurement_provenance({"provenance": broken})
+    with pytest.raises(ValueError, match="where it came from"):
+        require_measurement_provenance({})
+
+
 def test_the_code_digest_moves_when_the_package_changes(tmp_path) -> None:
     """The digest must cover the modules the numbers are a property of, not just this one.
 

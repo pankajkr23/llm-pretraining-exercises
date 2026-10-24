@@ -283,7 +283,7 @@ def test_a_middle_pair_swapping_is_reported_even_when_the_winner_holds():
 
 @pytest.mark.integration
 @pytest.mark.parametrize("module", [repetition, seam, scale])
-def test_each_experiment_can_write_its_own_results(module, tmp_path, monkeypatch):
+def test_each_experiment_can_write_its_own_results(module, tmp_path, monkeypatch, stable_checks):
     """A one-step run of each experiment, purely to prove its bundle can be written.
 
     This exists because all three could not. `pick_device` returns a `torch.device`, which the

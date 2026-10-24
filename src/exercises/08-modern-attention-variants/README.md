@@ -41,6 +41,34 @@ construct.
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** Nothing here is trained, so the best result is what the chronology established: 30
+mechanisms from 2014 to 31 August 2026, each dated by its own source's `v1` line (29 papers and one
+archived post), all in [`results/mechanisms.json`](results/mechanisms.json). Tested on that axis,
+the claimed arc `compute → cache → position → cache` **does not hold**: six windows decide, in a
+different order, and the cache bill never dominates a window on its own under either slicing of
+the window edges ([the arc test](#the-arc-was-tested-and-the-test-had-to-be-fixed-first),
+[`DECISIONS.md`](DECISIONS.md) D14).
+
+**Candidates that did or could do better.**
+
+- **The reading the noise floor removed.** "The field settles on both bills from 2020" holds with
+  the edges at 2014 and fails with them shifted a year; it is kept as one reading, not a measurement
+  ([the arc test](#the-arc-was-tested-and-the-test-had-to-be-fixed-first)).
+- **The position lane is unsettled.** DroPE says delete positions, HD-RoPE says enrich them, and both
+  report gains over RoPE ([what the order shows](#what-the-order-shows)). The lab implements both
+  ([`docs/ATTENTION_LAB.md`](docs/ATTENTION_LAB.md)); no comparison between them is published here.
+- **What the catalogue cannot see.** Kimi K3's Attention Residuals were not read
+  ([`PROGRESS.md`](PROGRESS.md)), and 22 of the 30 entries name no shipping model, so adoption is
+  outside this result.
+
+**The next hypothesis.** Add every mechanism published after 31 August 2026 and re-run
+`timeline.arc_robustness`: if the cache bill dominates any window under both edge choices, the
+finding that the arc fails on its cache step is overturned. Separately, if the lab's DroPE beats
+its HD-RoPE on text longer than either trained on, across two seeds, the lab sides with deleting
+positions — a statement about these implementations, not the papers.
+
 ## What the two bills are
 
 Attention charges twice, and the two bills grow differently:

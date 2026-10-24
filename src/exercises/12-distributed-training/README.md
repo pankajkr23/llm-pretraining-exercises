@@ -28,6 +28,33 @@ its formula, and the ladder at scale — with every number generated from `resul
   with every setting in one cell; [the map](../../../notebooks/README.md) shows where it sits
   among the fourteen.
 
+## Best result, and what could beat it
+
+**Best result.** The exercise's criterion is that every measured byte equals its hand formula and no
+stage changes the answer; all four stages pass both. Of the four, **ZeRO-3 holds the least**: 0.5
+bytes per weight at N = 32, 333,280 bytes per device against data parallelism's 10,664,960, for
+3,874,380 bytes sent per step against 2,582,920 — and weights bit-identical to data parallelism's
+([`RESULTS.md` §1, §3 and §6](RESULTS.md), from [`results/zero.json`](results/zero.json)). These are
+exact counts, so there is no noise to state. The
+[2026-10-24 re-run](results/reruns/2026-10-24/README.md) reproduced every measured number exactly.
+
+**Candidates that did or could do better.**
+
+- **ZeRO-2 costs no extra communication** and, at 30 billion weights, fits from 32 devices at
+  68.1 GiB; ZeRO-3 fits from 8 at 55.9 GiB for 50% more traffic
+  ([the ladder](#the-memory-ladder-at-30-billion-weights)). Which is better depends on how many
+  devices you have — a prediction, not a run.
+- **Prefetching the next unit in ZeRO-3** would hide gather latency at the cost of a second
+  transient unit; it was left out on purpose ([`DECISIONS.md` D12](DECISIONS.md)).
+- **Overlap and hierarchical collectives** would cut the modelled step times, which assume neither
+  ([`DECISIONS.md` D9](DECISIONS.md)). Only the byte counts here are measured.
+
+**The next hypothesis.** Activations are excluded from every figure. Add them to the 30-billion-weight
+ladder for a stated batch and sequence length: if ZeRO-3 on 8 devices still fits the assumed card,
+the recommendation stands; if it does not, the smallest workable count moves up and ZeRO-2 on 32
+becomes the closer contest. With prefetching added, the measured transient peak should be exactly
+two units; anything more means the engine holds state it was not designed to.
+
 ## What this is
 
 Training a model on many GPUs usually starts with **data parallelism**: every GPU gets a complete

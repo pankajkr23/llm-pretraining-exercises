@@ -260,15 +260,6 @@ fraction of the largest batch found — never at the exact edge — after a shor
         code("""
 import json
 
-# **A known defect, stated rather than hidden.** On Apple's GPU the LITE preset's 1 GiB cap is too
-# tight for the validation pass inside the run at the largest batch: the search probes training
-# steps only, and `train.evaluate` then needs memory the probe never measured. The package's own
-# `tools/run_experiments.py --preset lite` fails the same way on MPS (recorded in this exercise's
-# PROGRESS.md). Fixing it changes the package, whose code digest the published results pin, so it
-# is a separate change. Until then this stage runs on the CPU there, where nothing is capped and
-# the largest batch is derived from the measured bytes instead. CUDA is unaffected.
-cap_device = "cpu" if DEVICE == "mps" else DEVICE
-print(f"capped stage runs on: {cap_device}")
 
 child = f'''
 import json, sys
@@ -279,10 +270,10 @@ from reversible.config import FULL, LITE
 preset = {"LITE" if LITE else "FULL"}
 corpus = open_corpus(CORPUS_DIR)
 choice = {choice!r}
-found = experiments.max_batch(preset, corpus, {cap_device!r}, choice)
-largest = found["reversible"]["measured_max_batch"] or found["reversible"]["derived_max_batch"]
+found = experiments.max_batch(preset, corpus, {DEVICE!r}, choice)
+largest = experiments.largest_found(found)
 batch = max(1, int(largest * preset.max_batch_run_fraction))
-big = experiments.max_batch_run(preset, corpus, {cap_device!r}, choice, batch)
+big = experiments.max_batch_run(preset, corpus, {DEVICE!r}, choice, batch)
 print(json.dumps({{"found": found, "largest": largest, "batch": batch, "big": big}}, default=str))
 '''
 done = subprocess.run([sys.executable, "-c", child], capture_output=True, text=True, cwd=root)

@@ -39,6 +39,39 @@ open, written so the work can be picked up cold. [`NOTICE`](NOTICE) is the autho
 of scope, affiliation and third-party credit. [`CLAUDE.md`](CLAUDE.md) carries the rules specific to
 this exercise, for anyone — human or agent — changing the code.
 
+## Best result, and what could beat it
+
+**Best result.** This exercise's own criterion is whether the bundle meets every requirement and
+whether a separate auditor can re-derive every claim from it. The submitted bundle meets **9 of 9**
+requirements ([`evidence.json`](submission_artifacts/evidence.json)), and
+[`verify.py`](verify.py) re-derives **40 of 40** checks from it alone. It draws on a corpus of
+**10,649,549** training tokens at **1.0139** epochs of supply, every funded lane within tolerance
+and both floors held ([`results/corpus_build.json`](results/corpus_build.json)). The
+[2026-10-24 re-run](results/reruns/2026-10-24/README.md) rebuilt that corpus with full provenance
+and matched it exactly, so the historical figures stand and now say what produced them.
+
+**Candidates that did or could do better.**
+
+- **Selection coverage.** The `agentic` floor was unsupplied in 3 of 4 OPUS passes and held in 1:
+  its buffer of 32 consecutive plan slots rarely contains a lane funded at 2%
+  ([`evidence.json`](submission_artifacts/evidence.json), `opus_audit_trail`). A larger buffer
+  could hold it every pass. Not yet tried.
+- **Throughput has no noise floor.** The 118,376 loss-bearing tokens/s in
+  [`performance.json`](submission_artifacts/performance.json) comes from one 4-step timing on a
+  laptop. Repeated runs on an idle machine would give a range to compare against. Until then, a
+  higher or lower figure from another run is not evidence about the code.
+- **Packing utilisation is fixed at 1.0.** The trainer calls the packer without `window=`, so
+  `pack_utilization` cannot move. Loss utilisation (0.997 in the same file) is the honest figure.
+  Passing the window would let a short tail show. See [`CLAUDE.md`](CLAUDE.md).
+- **Scale.** Multi-GPU sharded training is deferred (O7 in [`PROGRESS.md`](PROGRESS.md)). Nothing
+  here measures it.
+
+**The next hypothesis.** At 2% of the mixture, a 32-slot buffer is expected to hold 0.64 `agentic`
+candidates per pass ([Selection](#selection)), and a 128-slot buffer about four times that. So
+widening the buffer to 128 should take the floor from unsupplied in 3 of 4 passes to held in at
+least 3 of 4. If it stays unsupplied, the limit is the lane's supply (2 training shards in
+[`corpus_build.json`](results/corpus_build.json)), not the buffer.
+
 ## The problem
 
 You are 50 days into a training run and something looks wrong. You want to know what the model read
