@@ -2102,5 +2102,7 @@ predates the harness — so it is logged as what it was.
                           dead classes removed, 24/24 screenshots identical. 13 FULL re-run on
                           05e8cfe (13:58-15:55): memory holds (58.7x; largest batch 6.1x -> 5.8x),
                           losses hold; speed DIVERGES (trials overlap; long pair 16% slower at 1.02x
-                          drift). Published verdict kept, dated note added.
+                          drift). Published verdict kept, dated note added. Local full run found a
+                          race this branch made (05 mutation test vs producer digest check); locked.
+                          #205 opened
 ```
