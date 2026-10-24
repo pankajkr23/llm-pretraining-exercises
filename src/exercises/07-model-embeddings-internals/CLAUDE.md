@@ -7,7 +7,8 @@ only records what is specific here, and mostly what has already gone wrong.
 
 Kronecker byte embeddings (v1: [arXiv:2605.29459v1](https://arxiv.org/html/2605.29459v1)) make the
 *input* side of a model vocabulary-independent. The paper says the *output* side cannot follow. This
-exercise shows it can, and that the result beats v1 on loss with fewer parameters.
+exercise shows it can, and that the result beats v1 on loss with fewer parameters on the corpus it
+was first measured on — on a second corpus the loss result reverses.
 
 The full argument, every table, and the limits are in `README.md`. Do not restate them here.
 
@@ -33,7 +34,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | path | what it is | tracked? |
 | --- | --- | --- |
 | `results/measurements.json` | **every number the README and the page render** | **yes** — required |
-| `tools/build_web_data.py` | generates `web/data.js` from it | **yes** — unlike the notebook builder |
+| `tools/build_web_data.py` | generates `web/data.js` from it | **yes** |
 | `tools/measure_lock_samples.py` | measures the rectangle identity on the real head | **yes** |
 | `tools/run_experiment.py` | runs the arm comparison into `artifacts/`, never `results/`; `--repeat` measures determinism, `--device` forces one | **yes** |
 | `tools/measure_unk_confound.py` | the same specification twice on one corpus, one language swapped — what the unreadable language was worth | **yes** |
@@ -44,7 +45,7 @@ The full argument, every table, and the limits are in `README.md`. Do not restat
 | `tools/publish_rerun.py` | promotes one run from `artifacts/` to `results/reruns/<date>/`, never over a historical `results/*.json`, and indexes that set in its own `MANIFEST.md` | **yes** |
 | `web/index.html` · `chapters.js` · `page-extra.css` | the page | yes |
 | `web/_shared/` | vendored, byte-identical to 05 and 06 | yes |
-| `tests/test_embeddings_render.py` | 17 test functions, 20 collected, over the assembled site | yes |
+| `tests/test_embeddings_render.py` | the browser suite over the assembled site; its count is stated once, in `README.md`, and checked by `tests/test_embeddings_docs.py` | yes |
 
 **No number is written into `chapters.js`.** The page reads `data.js`, which is generated from
 `results/measurements.json`. `AGENTS.md` requires the evidence a published document renders to

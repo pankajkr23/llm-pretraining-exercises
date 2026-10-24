@@ -9,7 +9,7 @@ and `REQUIREMENTS.md` is the requirements (local only, gitignored).
 `train.py`, `runner.py`, `checkpoint.py`, `resume.py`, `replay.py`, `mixture.py`, `corpus.py`,
 `fork.py`, `metrics.py`, `evidence.py`, `opus.py` and `opus_score.py`, plus `run_demo.py` and
 `verify.py` at the exercise root, `tools/fetch_corpus.py`, `tools/build_corpus.py` and
-`tools/build_web_data.py`, all **tracked** (unlike the notebook builder), and a deployed `web/`
+`tools/build_web_data.py` and `tools/build_notebook.py`, all **tracked**, and a deployed `web/`
 explainer. `results/` is tracked and documents render `corpus_build.json` from it.
 
 **Nothing is outstanding**, so there is no "not shipped" list here any more — and its absence is
@@ -248,7 +248,7 @@ lines and 14 tests.
 
 - **`pack_util` in the telemetry is arithmetic, not a measurement — it is always `1.0`.**
   `feed.py:286` calls `pack.build_window(...)` with `context_spans=` but **no** `window=`, so `size = end - start`, `packed[: end - start]` fills the array end to end, no `PAD`
-  is written, and `masks.utilization` can only return 1.0. `train.py:206` records it per microbatch
+  is written, and `masks.utilization` can only return 1.0. `train.consume` records it per microbatch
   and `ledger.ConsumeEvent` carries it into the committed bundle, where a reader will take it as
   evidence the packer is efficient. Fix it by passing `window=cfg.sequence_length` so a short tail
   can show, or delete the field — do not leave a constant in the ledger dressed as a statistic.

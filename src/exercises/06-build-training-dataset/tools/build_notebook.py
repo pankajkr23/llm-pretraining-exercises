@@ -813,9 +813,10 @@ produced = subprocess.run(
      "--ranks", str(RANKS)],
     capture_output=True, text=True, env=ENV)
 print(f"run_demo.py exit status {produced.returncode}\\n")
-print((BUNDLE / "run.log").read_text(encoding="utf-8"))
 if produced.returncode:
-    print(produced.stderr[-3000:])"""
+    print(produced.stderr[-3000:])
+assert produced.returncode == 0, "run_demo.py failed; its stderr is printed above"
+print((BUNDLE / "run.log").read_text(encoding="utf-8"))"""
         ),
         code(
             """audit = subprocess.run(
@@ -830,6 +831,24 @@ for line in lines:
         print(line)
 print(f"\\n{sum(l.startswith('PASS') for l in lines)} of {len(lines)} checks pass "
       f"(exit status {audit.returncode})")
+
+# Only the two mixture checks explained below may fail, and the requirement check only for the
+# mixture row. On the tracked corpus both must fail (the opened shards hold no `agentic` text);
+# on the fetched one they may hold or not.
+MIXTURE_ONLY = {
+    "no protected floor is breached beyond tolerance": "breached: ['agentic']",
+    "every requirement is met": "not met: ['mixture_compliance']",
+}
+failing = [line for line in lines if line.startswith("FAIL")]
+assert lines, "verify.py printed no checks:\\n" + audit.stdout[-3000:] + audit.stderr[-3000:]
+unexpected = [
+    line for line in failing
+    if not any(check in line and detail in line for check, detail in MIXTURE_ONLY.items())
+]
+assert not unexpected, f"unexpected failures: {unexpected}"
+if LITE:
+    assert len(failing) == len(MIXTURE_ONLY), f"expected both mixture checks to fail: {failing}"
+assert audit.returncode == (1 if failing else 0), f"exit status {audit.returncode}"
 
 evidence = json.loads((BUNDLE / "evidence.json").read_text(encoding="utf-8"))
 row = next(r for r in evidence["requirements"] if r["requirement"] == "mixture_compliance")
@@ -847,9 +866,11 @@ every ledger file chains, every required event appears in order, the resume re-e
 counted microbatches, no refused shard reached a loss-bearing batch, and every selector decision
 re-derives from its log.
 
-On the tracked corpus one check fails, and it is the right one to fail. The run read only `web` and
-`indic`, so the `agentic` floor (2% of every batch) cannot hold, and the auditor says so from the
-ledger. The producer's own `mixture_compliance` row agrees and reads `unmet`. For a run this short
+On the tracked corpus two checks fail, both for one reason, and it is the right one. The run read
+only `web` and `indic`, so the `agentic` floor (2% of every batch) cannot hold, and the auditor
+says so from the ledger. The producer's own `mixture_compliance` row agrees and reads `unmet`,
+which is why "every requirement is met" fails too, naming that row and no other. The cell above
+asserts exactly that pair, so any other failure stops the notebook. For a run this short
 the row judges the corpus rather than the sample, and the corpus it judges is the shards this run
 opened: the tracked `results/corpus_build.json` is used only when the shard ids it lists are
 exactly the ones opened. Here they are not (it describes the fetched six-lane corpus), so

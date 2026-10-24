@@ -4,7 +4,8 @@
 
 **Kronecker byte embeddings make a model's *input* side independent of its vocabulary. Their own
 paper says the *output* side cannot follow. It can — and once it does, the result is smaller than
-the paper's own design and trains better.**
+the paper's own design, and trained better on the corpus it was first measured on. On a second
+corpus that loss result reverses; the parameter saving does not.**
 
 This exercise attacks one sentence in [arXiv:2605.29459v1](https://arxiv.org/html/2605.29459v1),
 listed there under *Limitations*:
@@ -55,10 +56,13 @@ evidence is:
 
 - **Trained comparisons, 5 seeds, paired.** Every arm shares a transformer body, the same seeds and
   the same data order, so differences subtract cleanly. The unpaired spread across seeds is 0.469
-  nats — larger than every effect measured — which is why pairing is not optional here.
+  nats — larger than the margin by which any arm beats v1 — which is why pairing is not optional
+  here.
 - **Two baselines, not one.** Beating the ordinary tied model proves little when v1 already beats
   it by more. **v1 is the bar**, and the #5 solution clears it by **−0.141 nats on 5/5 seeds**
-  (a paired sign test at p = 0.031) with **fewer parameters**.
+  (a paired sign test at p = 0.031) with **fewer parameters** — on the four-language corpus it was
+  first measured on. **On a second, six-lane corpus it reverses**: v1 wins by +0.158, also 5/5
+  ([The one-sentence result, and it changed](#the-one-sentence-result-and-it-changed)).
 - **A decoder that certifies itself**, checked to agree with ground truth 100% of the time —
   including on the runs where it fails, which is what makes it a certificate.
 - **Adversarial checks on our own claims.** Three are corrected in place below; the n-gram term is
@@ -67,7 +71,9 @@ evidence is:
   Both counts are checked against the test files by `tests/test_embeddings_docs.py`, because this
   line said *54* and *20* for long enough that neither was close.
 
-**Run it:** [`## Layout
+**Run it:** every command, in the order each one costs you something, is under [Run it](#run-it).
+
+## Layout
 
 ```text
 README.md         # this file
@@ -118,9 +124,20 @@ in the earlier run, [`results/measurements.json`](results/measurements.json) (`a
 **5.136** (−0.141). What holds on any corpus is the arithmetic: at V = 1,000,000 the head is
 **6,291,457** parameters against a dense tie's **768,000,000** (`scale_cost`).
 
+**Which arm is recommended, and why.** The submission is **tied + n-gram on one-hot positions** —
+the arm this README calls *the #5 row* and *the recommendation*. Wrap + n-gram reads lower, but it
+spans problems #3 and #5, and the #5 row answers problem #5 alone with v1's own positions.
+
+**Three result files, one name each.** *The earlier run* is
+[`results/measurements.json`](results/measurements.json): the four-language corpus, the table this
+README renders. *The six-lane run* is [`results/rerun.json`](results/rerun.json): the same ten arms,
+trained again fully specified on exercise 06's six-lane corpus. *The 2026-10-24 re-run set* is
+[`results/reruns/2026-10-24/`](results/reruns/2026-10-24/README.md): no new training — the codec
+measurements re-run by their tracked producers to add provenance.
+
 **Candidates that did or could do better.**
 
-- **v1 itself, on a second corpus.** The fully specified re-run on the six-lane corpus,
+- **v1 itself, on a second corpus.** The six-lane run,
   [`results/rerun.json`](results/rerun.json), puts v1 first at **4.822** and wrap + n-gram behind it
   by **+0.148** (sd 0.007, 5/5 seeds; values rounded from the file). The earlier conclusion stands as
   published and the divergence is stated beside it in
@@ -137,8 +154,8 @@ settings. If its paired gap to v1 stays above zero like wrap + n-gram's, the tok
 that one-hot and wrap cannot represent are not what decides the corpus effect; if it falls below
 zero, they are.
 
-A dated re-run of every codec measurement, all matching the published values exactly, is in
-[`results/reruns/2026-10-24/`](results/reruns/2026-10-24/README.md).
+The 2026-10-24 re-run set reproduces every codec measurement it re-ran, all matching the published
+values exactly — see [its README](results/reruns/2026-10-24/README.md).
 
 ---
 
@@ -216,8 +233,8 @@ a second corpus it does not.
 > The frozen vocabulary cannot read one of them, so **40.07% of that corpus is `[UNK]`**, and the
 > run's optimiser settings were never recorded, so its losses cannot be aimed at.
 >
-> The comparison was re-run, fully specified, on a licence-manifested six-lane corpus at 0.0217
-> epochs. **The recommendation loses to v1 there** — `+0.158` where it published `−0.141`. Four
+> The comparison was trained again, fully specified, on a licence-manifested six-lane corpus at
+> 0.0217 epochs — the six-lane run. **The recommendation loses to v1 there** — `+0.158` where it published `−0.141`. Four
 > candidate explanations were tested and all four refuted: the `[UNK]` share (removing it makes the
 > recommendation win by *more*), the step count, the script mix (it does *worst* on the Indic lane),
 > and corpus size and epoch fraction.
@@ -231,7 +248,8 @@ a second corpus it does not.
 > *inverts* depending on the sequence length chosen.
 >
 > Both runs are published. `results/MANIFEST.md` indexes them and names what produced each;
-> `results/rerun.json` is the re-run, `results/measurements.json` the table below.
+> `results/rerun.json` is the six-lane run, `results/measurements.json` the earlier run and the
+> table below.
 
 **What survives without qualification** is the part that never depended on a corpus: the code is
 invertible, so the head can be tied, so the parameter saving is real. That is problem #5, and it is
@@ -249,13 +267,15 @@ arithmetic rather than a loss.
 | v2 + wrap + n-gram | #3+#5 | 5.112 | −0.624 | −0.164 | 5,571,841 | **yes** |
 
 The **#5 row is the submission**: it uses v1's own one-hot positions, changes only the output side,
-and still beats v1. The last row is better but spans two problems, so it is reported as such.
+and on this corpus still beats v1. The last row is better but spans two problems, so it is reported
+as such.
 
 5 seeds × 500 steps, identical data order within each seed. Every arm except Fourier and the byte
 head beats the control on 5/5 seeds.
 
 **Read this table as the corpus it was measured on.** The same arms on a six-lane corpus reorder:
-the byte head, worst here by a distance, comes out *ahead* of every tied arm there. The two tables
+the byte head, worst here by a distance, comes out *ahead* of every tied arm without the n-gram
+term there, behind only v1 and the two n-gram arms (`results/rerun.json`). The two tables
 sit side by side in `results/` rather than one replacing the other, because the difference between
 them is the finding.
 
@@ -397,7 +417,8 @@ uv run pytest src/exercises/07-model-embeddings-internals/tests -m integration
 
 ---
 
-**A specified re-run is not a reproduction of the inherited table, and the difference matters.**
+**The six-lane run is a specified re-run, not a reproduction of the inherited table, and the
+difference matters.**
 Those numbers came from a driver that lived in a scratch directory rather than in this repository.
 Seven of its files were recovered and are tracked in `prior-run/`; **nine were not**, including the
 one that produced the ten-arm table. So two differently-specified runs are comparable by the *sign
@@ -512,7 +533,9 @@ since block-sparse recovery is stated over exactly that property. Coherence betw
 
 **Tying costs essentially nothing here.** Mean coherence under our tie is 0.051 against the *untied*
 baseline's 0.050 — a difference of one part in fifty, where training itself moved it from 0.041 to
-0.050. That is why recovery from a trained `W` still reads 99.85%.
+0.050. That is why recovery from the tied + n-gram arm's `W` after 500 steps still reads 99.85% —
+a different measurement from the 100.00% above, which is v1's `W` trained 2,000 steps to loss 2.45
+(both in `trained_projection`).
 
 <!-- /evidence-numbers -->
 
@@ -812,14 +835,14 @@ Named in the order they would settle the most doubt.
 1. **Run it at 124M parameters.** Every limitation below begins with scale, and one real run answers
    more than everything else here. Ties are known to behave differently late in training, and this
    is the experiment that would say so.
-2. **Grow the vocabulary instead of shrinking the buckets.** §2d answered the capacity question with
+2. **Grow the vocabulary instead of shrinking the buckets.** §4 answered the capacity question with
    a stand-in — varying `m` at fixed `V`. The direct experiment is a larger vocabulary at a fixed
    bucket count, and it is the one a reviewer will ask for.
 3. **Generate from the byte head.** It exists so a model can spell words it has never seen. Nothing
    here tests generation, which is the entire reason that arm is interesting.
 4. **Make the tie cheap in compute, not only in parameters.** Because the logit is additive over
    (position, byte), the whole vocabulary can in principle be scored by walking a trie of spellings
-   rather than touching every row — an exact V-independent normaliser, where §5's sampled softmax is
+   rather than touching every row — an exact V-independent normaliser, where §6's sampled softmax is
    an approximation of the normalisation.
 
 ---

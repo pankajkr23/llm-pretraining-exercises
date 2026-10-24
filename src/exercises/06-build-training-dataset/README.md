@@ -52,7 +52,10 @@ and matched it exactly, so the historical figures stand and now say what produce
 
 **Candidates that did or could do better.**
 
-- **Selection coverage.** The `agentic` floor was unsupplied in 3 of 4 OPUS passes and held in 1:
+- **Selection coverage.** OPUS is the data selector this run uses (defined under
+  [Selection](#selection)): each *pass* scores a buffer of candidate *plan slots*, where a slot is
+  one position in the training schedule together with the shard span it would read. The `agentic`
+  floor was unsupplied in 3 of 4 OPUS passes and held in 1:
   its buffer of 32 consecutive plan slots rarely contains a lane funded at 2%
   ([`evidence.json`](submission_artifacts/evidence.json), `opus_audit_trail`). A larger buffer
   could hold it every pass. Not yet tried.
@@ -63,7 +66,8 @@ and matched it exactly, so the historical figures stand and now say what produce
 - **Packing utilisation is fixed at 1.0.** The trainer calls the packer without `window=`, so
   `pack_utilization` cannot move. Loss utilisation (0.997 in the same file) is the honest figure.
   Passing the window would let a short tail show. See [`CLAUDE.md`](CLAUDE.md).
-- **Scale.** Multi-GPU sharded training is deferred (O7 in [`PROGRESS.md`](PROGRESS.md)). Nothing
+- **Scale.** Multi-GPU sharded training is deferred (open item O7, *cloud multi-GPU*, in
+  [`PROGRESS.md`](PROGRESS.md)). Nothing
   here measures it.
 
 **The next hypothesis.** At 2% of the mixture, a 32-slot buffer is expected to hold 0.64 `agentic`
@@ -245,7 +249,8 @@ after it was built, eight lines below a paragraph saying so.)
 
 ## What it cannot establish
 
-Stated here, and it will be stated again beside the numbers when there are numbers.
+The measured figures each limit qualifies are in [Best result](#best-result-and-what-could-beat-it)
+and [Selection](#selection); the limits themselves are these.
 
 - **Data parallelism only.** No tensor, pipeline or sequence parallelism, and no sharded optimizer
   state — those need multiple GPUs, and this runs on one machine.

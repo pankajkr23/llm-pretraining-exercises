@@ -414,6 +414,8 @@ That consequence was fixed in advance, so it is owed rather than negotiable.
 
 **Dated note, 2026-10-24:** this decision was made on the published run and is kept as made. On the frozen-lane re-run the refutation it rests on does not reproduce — H3 reads `supported`, and E4 on the second stand-in reads `qualified` — so the evidence behind it now depends on which text the code lane held, rather than agreeing across two stand-ins. [The re-run](results/reruns/2026-10-24/README.md) has the numbers.
 
+**What stands now, in one sentence:** the published `refuted` verdict is kept as the record of the run that produced it; the 2026-10-24 re-run reads `supported` and E4 `qualified`, so the refutation does not reproduce; and 18% Indic stays the declared share, with the instruction to treat it as an upper bound still in force — capping a share that was never moved costs nothing — but held now as a precaution for the first real-scale run to settle, not as a consequence the evidence forces.
+
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three orders of magnitude too small, all 6 funded lanes are present, three of them from openly-licensed **stand-in** text rather than the datasets the specification funds them from, and an arm that looks better here would still be an arm that looks better on a corpus small enough to memorise.
 
 Full write-up: [`EXPERIMENTS.md`](EXPERIMENTS.md). **If `H3`, `arm` or `bits per byte` are not familiar, [`METHOD.md`](METHOD.md) explains the whole apparatus from scratch** — the vocabulary, the model, the metric, both diagrams, and what each experiment was for.
