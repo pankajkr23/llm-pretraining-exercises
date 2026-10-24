@@ -2157,4 +2157,5 @@ predates the harness — so it is logged as what it was.
                           against; 05's 4-word preset label. The quoting gate passed on all of
                           these because each quote was short: the gate is not the rule. Earlier
                           commits keep the old wording; rewriting history is PK's call, not made.
+                          #210 opened
 ```
