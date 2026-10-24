@@ -270,3 +270,44 @@ def test_the_derived_batch_is_used_only_where_nothing_could_be_capped() -> None:
     from reversible.experiments import largest_found
 
     assert largest_found(_found(False, None)) == 108
+
+
+def _small_corpus(root: Path, train_tokens: int = 20000) -> Path:
+    """A synthetic corpus the size of a notebook's fetch, far below FULL's token budget."""
+    rng = np.random.default_rng(0)
+    splits = {}
+    for name, n in (("val", 2000), ("train", train_tokens)):
+        splits[name] = {
+            "tokens": n,
+            "sha256": write_split(rng.integers(0, VOCAB_SIZE, n), root / f"{name}.bin"),
+        }
+    (root / "manifest.json").write_text(
+        json.dumps({"dataset": "synthetic", "splits": splits}), encoding="utf-8"
+    )
+    return root
+
+
+def test_a_full_run_refuses_a_corpus_it_would_read_more_than_once(tmp_path) -> None:
+    """A notebook's small fetch shares the corpus directory; FULL on it is refused up front."""
+    from reversible.config import FULL
+
+    tool = _load("run_experiments")
+    corpus = _small_corpus(tmp_path / "corpus")
+    with pytest.raises(SystemExit, match="epochs"):
+        tool.refuse_before_running(FULL, "all", tmp_path / "out", corpus, chosen=False)
+    tool.refuse_before_running(SMOKE, "all", tmp_path / "out", corpus, chosen=False)
+
+
+def test_a_full_run_refuses_a_dated_set_that_already_holds_its_bundles(tmp_path) -> None:
+    """A second FULL run the same day wrote over the first in silence; it is refused now."""
+    from reversible.config import FULL
+
+    tool = _load("run_experiments")
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "fixed_batch.json").write_text("{}", encoding="utf-8")
+    corpus = _small_corpus(tmp_path / "corpus")
+    with pytest.raises(SystemExit, match="already holds fixed_batch"):
+        tool.refuse_before_running(FULL, "main", out, corpus, chosen=False)
+    with pytest.raises(SystemExit, match="epochs"):  # --out named: the clash is a decision
+        tool.refuse_before_running(FULL, "main", out, corpus, chosen=True)

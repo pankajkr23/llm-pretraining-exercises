@@ -38,10 +38,40 @@ def test_the_bundle_is_complete_and_at_full_scale() -> None:
     assert bundle["preset"]["name"] == "full"
 
 
-def test_the_bundle_was_produced_by_todays_code_and_settings() -> None:
-    prov = _bundle()["provenance"]
-    assert prov["code_digest"] == code_digest(), "re-run tools/run_experiments.py"
-    assert prov["config_fingerprint"] == config_fingerprint({"preset": FULL})
+def _stale(results: Path, today: str) -> str | None:
+    """Why no set describes today's code and settings, or `None` when one does.
+
+    The published bundle is the historical experiment and is never rewritten (`AGENTS.md`), so once
+    the code moves away from it the newest dated set under `results/reruns/` has to carry today's
+    digest instead.
+    """
+
+    def matches(path: Path) -> bool:
+        prov = json.loads(path.read_text(encoding="utf-8"))["provenance"]
+        return prov["code_digest"] == today and prov["config_fingerprint"] == config_fingerprint(
+            {"preset": FULL}
+        )
+
+    if matches(results / "upcycle.json"):
+        return None
+    dated = sorted((results / "reruns").glob("*/upcycle.json"))
+    if not dated:
+        return "the code or settings changed since the published run and no re-run exists"
+    if not matches(dated[-1]):
+        return f"the newest re-run, {dated[-1].parent.name}, came from other code or settings"
+    return None
+
+
+def test_todays_code_and_settings_produced_the_published_bundle_or_the_newest_rerun() -> None:
+    """Red here means: run `tools/run_experiments.py` (it writes `results/reruns/<today>/`)."""
+    assert _stale(BUNDLE.parent, code_digest()) is None, _stale(BUNDLE.parent, code_digest())
+
+
+def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
+    """The twin: other code than the published bundle ran, and no dated set, is reported."""
+    (tmp_path / "upcycle.json").write_bytes(BUNDLE.read_bytes())
+    assert _stale(tmp_path, code_digest()) is None
+    assert "no re-run exists" in _stale(tmp_path, "sha256:" + "0" * 64)
 
 
 def test_the_dense_model_came_from_exercise_13s_published_run() -> None:

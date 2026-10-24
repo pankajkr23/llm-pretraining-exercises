@@ -323,3 +323,43 @@ def test_the_default_path_is_unchanged_by_the_new_parameter() -> None:
         assert torch.equal(param, dict(swapped.named_parameters())[name]), (
             f"{name} differs, so replacing the embedding shifted the random stream"
         )
+
+
+def test_the_rerun_tool_refuses_a_dated_set_that_already_holds_a_bundle(tmp_path) -> None:
+    """`tools/run_experiments.py` writes a dated set; a clash is refused before anything runs."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parents[1] / "tools" / "run_experiments.py"
+    spec = importlib.util.spec_from_file_location("lossheads_rerun_tool", path)
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    (tmp_path / "training.json").write_text("the first run\n", encoding="utf-8")
+    assert tool.main(["--out", str(tmp_path)]) == 2
+    assert (tmp_path / "training.json").read_text(encoding="utf-8") == "the first run\n"
+    assert not (tmp_path / "harness.json").exists(), "it ran before refusing"
+
+
+def test_the_rerun_tool_restores_the_harness_destination(tmp_path, monkeypatch) -> None:
+    """The harness's file name is pointed at the dated set for one call and always put back."""
+    import importlib.util
+    from pathlib import Path
+
+    from lossheads import harness
+
+    path = Path(__file__).resolve().parents[1] / "tools" / "run_experiments.py"
+    spec = importlib.util.spec_from_file_location("lossheads_rerun_tool_2", path)
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    published = harness.RESULTS
+    seen = []
+
+    def fake_run():
+        seen.append(harness.RESULTS)
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(harness, "run", fake_run)
+    with pytest.raises(RuntimeError):
+        tool.run_harness(tmp_path)
+    assert seen == [tmp_path]
+    assert published == harness.RESULTS, "the published destination was not restored"

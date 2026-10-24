@@ -10,27 +10,44 @@ This is the tracked entry point for every number `RESULTS.md` and the README ren
 to write a bundle whose provenance block is incomplete (`zerosim.experiment.save` calls
 `zerosim.provenance.require` first), because a number nobody can regenerate is not evidence.
 
+**It writes a new dated set, `results/reruns/<today>/zero.json`, never the published
+`results/zero.json`**, which is the historical experiment `RESULTS.md` renders (`AGENTS.md`, "A
+published experiment is never rewritten"). It used to default to the published file, so running the
+documented command replaced the evidence. It refuses a dated file that already exists, before
+running. Render the new set with `tools/render_results.py --results results/reruns/<today>`.
+
 `--out` writes elsewhere — the tests use it to run the producer end to end into a temporary
 directory without touching the committed results.
 """
 
 import argparse
+import datetime
 import sys
 import time
 from pathlib import Path
 
 EXERCISE = Path(__file__).resolve().parents[1]
-DEFAULT_OUT = EXERCISE / "results" / "zero.json"
+RERUNS = EXERCISE / "results" / "reruns"
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run the measurement and write the bundle. Returns a process exit code."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="where to write the JSON")
+    parser.add_argument("--out", type=Path, default=None, help="where to write the JSON")
     parser.add_argument(
         "--steps", type=int, default=None, help="override Config.steps (tests use a short run)"
     )
     args = parser.parse_args(argv)
+    if args.out is None:
+        args.out = RERUNS / datetime.date.today().isoformat() / "zero.json"
+        if args.out.exists():
+            print(
+                f"refused: {args.out} already exists. Pass --out for a different path, so both "
+                "runs stay on the record.",
+                file=sys.stderr,
+            )
+            return 2
+        args.out.parent.mkdir(parents=True, exist_ok=True)
 
     from dataclasses import replace
 

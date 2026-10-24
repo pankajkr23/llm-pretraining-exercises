@@ -49,9 +49,10 @@ the renderer and the tests are done; the topic notebook is built and executed lo
 - **`current == peak` does not catch a leak.** A buffer added every step raises both together.
   The no-growth test compares the held total step by step, and against the formula.
 
-- **The committed bundle must be fresh.** `test_the_bundle_is_from_todays_code` and
-  `..._config` go red after any edit to `zerosim` or `lossheads`, or to `config.py`, until
-  `tools/run_zero.py` and `tools/render_results.py` are re-run. That is the intended workflow.
+- **Today's code must have a run behind it.** The two freshness tests in `test_zerosim_results.py`
+  go red after any edit to `zerosim` or `lossheads`, or to `config.py`, until `tools/run_zero.py`
+  has written a dated set under `results/reruns/` from that code. The published
+  `results/zero.json` is never rewritten to clear them (`AGENTS.md`).
 
 - **The corpus is shuffled by its total length.** `batches` calls exercise 09's `_corpus` with
   `steps × global_batch` sequences and that function permutes by count, so a one-step config and a
@@ -66,16 +67,16 @@ the renderer and the tests are done; the topic notebook is built and executed lo
 ```bash
 uv sync --all-packages --extra train
 
-uv run python src/exercises/12-distributed-training/tools/run_zero.py        # -> results/zero.json
-uv run python src/exercises/12-distributed-training/tools/render_results.py  # -> RESULTS.md
+uv run python src/exercises/12-distributed-training/tools/run_zero.py        # -> results/reruns/<today>/zero.json
+uv run python src/exercises/12-distributed-training/tools/render_results.py --results results/reruns/<today>
 
 uv run pytest src/exercises/12-distributed-training
 uv run pytest                       # and the repo-wide guards, which the line above misses
 ```
 
-Regenerate `results/zero.json` after any change to `zerosim` or `lossheads` (the bundle's code
-digest covers both), then re-render. `test_zerosim_results.py` fails if `RESULTS.md` or a figure
-the README quotes has drifted from the bundle.
+Re-run after any change to `zerosim` or `lossheads` (the bundle's code digest covers both); the run
+lands in a dated set beside the published one, which stays as published. `test_zerosim_results.py`
+fails if `RESULTS.md` or a figure the README quotes has drifted from the published bundle.
 
 Test modules are prefixed `test_zerosim_*`. pytest imports by **basename**, so a second
 `test_config.py` anywhere in the repo would abort collection rather than fail a test;

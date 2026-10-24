@@ -51,8 +51,8 @@ settling) · `train.py` (the one loop) · `sweep.py` (minima, power law, predict
 uv sync --all-packages --extra train
 uv run pytest src/exercises/11-optimizers-lr-schedules
 uv run python src/exercises/11-optimizers-lr-schedules/tools/fetch_corpus.py        # once
-uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py     # FULL
-uv run python src/exercises/11-optimizers-lr-schedules/tools/render_results.py
+uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py     # FULL -> results/reruns/<today>/
+uv run python src/exercises/11-optimizers-lr-schedules/tools/render_results.py --results results/reruns/<today>
 ```
 
 Test modules are prefixed `test_optimizers_*`. pytest imports by **basename**, so a second

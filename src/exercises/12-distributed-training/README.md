@@ -249,17 +249,19 @@ updates is 0.9999 ([`RESULTS.md` §6](RESULTS.md#6--does-the-stage-change-the-an
 | `provenance.py` | config fingerprint, code digest, and the refusal to write an unprovenanced result |
 | `experiment.py` | runs everything and sets each measurement beside its prediction |
 
-`tools/run_zero.py` writes `results/zero.json`; `tools/render_results.py` turns it into
-[`RESULTS.md`](RESULTS.md) and into `web/data.js`, the page's only source of numbers.
+`tools/run_zero.py` produced the published `results/zero.json`; `tools/render_results.py` turns it
+into [`RESULTS.md`](RESULTS.md) and into `web/data.js`, the page's only source of numbers. Run again,
+`run_zero.py` writes a new dated set, `results/reruns/<today>/zero.json`, and never the published
+file; `render_results.py --results` renders that set into itself.
 
 ## Run it
 
 ```bash
 uv sync --all-packages --extra train
 
-# Every measurement, with its provenance, into results/zero.json (about 20 s on a laptop CPU)
+# Every measurement, with its provenance, into results/reruns/<today>/zero.json (about 20 s)
 uv run python src/exercises/12-distributed-training/tools/run_zero.py
-uv run python src/exercises/12-distributed-training/tools/render_results.py
+uv run python src/exercises/12-distributed-training/tools/render_results.py --results results/reruns/<today>
 
 # The tests: formulas, collectives, ledger, equivalence, provenance, documents
 uv run pytest src/exercises/12-distributed-training

@@ -40,20 +40,49 @@ def test_every_published_bundle_carries_its_provenance_and_was_run_at_full_scale
         assert bundle["preset"]["name"] == "full", path.name
 
 
-def test_every_bundle_was_produced_by_todays_code_and_settings() -> None:
-    """Red here means: re-run `tools/run_experiments.py`, then `tools/render_results.py`.
+def _stale(results: Path, today: str) -> str | None:
+    """Why today's code and settings are described by no set, or `None` when one describes them.
+
+    The published set is the historical experiment and is never rewritten (`AGENTS.md`), so once
+    the code moves away from it the newest dated set under `results/reruns/` has to carry today's
+    digest instead. Each bundle's fingerprint covers every knob of `FULL` for its task.
+    """
+
+    def matches(paths: list[Path]) -> bool:
+        for path in paths:
+            prov = json.loads(path.read_text(encoding="utf-8"))["provenance"]
+            expected = config_fingerprint({"task": path.stem, "preset": FULL})
+            if prov["code_digest"] != today or prov["config_fingerprint"] != expected:
+                return False
+        return bool(paths)
+
+    if matches(sorted(results.glob("*.json"))):
+        return None
+    dated = sorted(p for p in (results / "reruns").glob("*") if p.is_dir())
+    if not dated:
+        return "the code or settings changed since the published run and no re-run exists"
+    if not matches(sorted(dated[-1].glob("*.json"))):
+        return f"the newest re-run, {dated[-1].name}, was produced by different code or settings"
+    return None
+
+
+def test_todays_code_and_settings_produced_the_published_set_or_the_newest_rerun() -> None:
+    """Red here means: run `tools/run_experiments.py` (it writes `results/reruns/<today>/`), then
+    `tools/render_results.py --results results/reruns/<today>`.
 
     A bundle that agrees with itself can still describe code that no longer exists — edit an
     experiment without re-running and every other check in this file stays green. The code digest
     covers the whole `optimizers` package (exercise 09 supplies only provenance helpers, not
-    numbers), and the fingerprint covers every knob of `FULL`.
+    numbers).
     """
-    today = code_digest()
-    for path in sorted(RESULTS.glob("*.json")):
-        prov = json.loads(path.read_text(encoding="utf-8"))["provenance"]
-        assert prov["code_digest"] == today, f"{path.name} was produced by different code"
-        expected = config_fingerprint({"task": path.stem, "preset": FULL})
-        assert prov["config_fingerprint"] == expected, f"{path.name} used different settings"
+    assert _stale(RESULTS, code_digest()) is None, _stale(RESULTS, code_digest())
+
+
+def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
+    """The twin: other code than the published set ran, and no dated set, is reported."""
+    shutil.copytree(RESULTS, tmp_path / "results", ignore=shutil.ignore_patterns("reruns"))
+    assert _stale(tmp_path / "results", code_digest()) is None
+    assert "no re-run exists" in _stale(tmp_path / "results", "sha256:" + "0" * 64)
 
 
 def test_results_md_is_the_render_of_the_published_bundles() -> None:

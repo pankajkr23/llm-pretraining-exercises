@@ -139,6 +139,44 @@ def max_stage(preset: Preset, device: str, out: Path, corpus_root: Path) -> None
     print("max_batch_run: done", flush=True)
 
 
+STAGE_WRITES = {
+    "main": ("trials", "fixed_batch"),
+    "max": ("max_batch", "max_batch_run"),
+    "all": ("trials", "fixed_batch", "max_batch", "max_batch_run"),
+}
+MAX_EPOCHS = 1.0
+"""Above one pass over the corpus a run measures repetition, not learning (`AGENTS.md`)."""
+
+
+def refuse_before_running(
+    preset: Preset, stage: str, out: Path, corpus_root: Path, *, chosen: bool
+) -> None:
+    """Refuse a FULL run that would replace a dated set's bundle, or read the corpus twice over.
+
+    Both checks run before a step is trained. **A same-day second run** wrote over the first one's
+    bundles in silence, because the shared `save` does not check; naming `--out` is the decision to
+    write elsewhere (and the stage-two child is always given one). **A notebook's fetch** of a few
+    million tokens lands in the same corpus directory as the full one, and a FULL run on it would
+    have trained its 50 million tokens as about 25 epochs and recorded the figure without refusing.
+    """
+    if preset.name != "full":
+        return
+    if not chosen:
+        clashes = [n for n in STAGE_WRITES[stage] if (out / f"{n}.json").exists()]
+        if clashes:
+            raise SystemExit(
+                f"refused: {out} already holds {', '.join(clashes)}. Pass --out for a different "
+                "directory, so both runs stay on the record."
+            )
+    corpus = open_corpus(corpus_root, verify=False)
+    if corpus.epochs(preset.tokens) > MAX_EPOCHS:
+        raise SystemExit(
+            f"refused: {preset.tokens:,} tokens is {corpus.epochs(preset.tokens):.2f} epochs of "
+            f"the {corpus.tokens('train'):,}-token corpus at {corpus_root}. A notebook's small "
+            "fetch may be there; fetch the full corpus first."
+        )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -155,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
     # rewritten"). The stage-two child gets this same directory through `--out`.
     rerun = RESULTS / "reruns" / datetime.date.today().isoformat()
     out = args.out or (rerun if preset.name == "full" else EXERCISE / "artifacts" / preset.name)
+    refuse_before_running(preset, args.stage, out, args.corpus, chosen=args.out is not None)
     if args.stage in ("main", "all"):
         main_stage(preset, device, out, args.corpus)
     if args.stage == "max":

@@ -108,15 +108,29 @@ it, so a fresh clone can price an output head without installing the wheels.
 ```bash
 uv sync --all-packages --extra train
 
-uv run python -m lossheads.harness                 # the seven numbers -> results/harness.json
-uv run python -m lossheads.training                # the two findings  -> results/training.json
-uv run python -m lossheads.training --sensitivity  # the noise floors  -> results/sensitivity.json
-uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py
+# all three producers, into a new dated set: results/reruns/<today>/
+uv run python src/exercises/09-loss-functions-output-heads/tools/run_experiments.py
+uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py \
+    --results results/reruns/<today>
 
 uv run pytest src/exercises/09-loss-functions-output-heads
 ```
 
-**These four are the only things that write into `results/`, and that is deliberate.** Every other
+**A re-run never replaces the published results.** `results/*.json` and `RESULTS.md` are the
+published experiment and stay as published; `tools/run_experiments.py` writes a dated set beside
+them and refuses one that already holds a bundle. The module entry points below are what produced
+the published files, and they still write over them — they are kept unchanged because exercise 12's
+published run pins this package's code digest, so use them only to regenerate the published record
+deliberately:
+
+```bash
+uv run python -m lossheads.harness                 # the seven numbers -> results/harness.json
+uv run python -m lossheads.training                # the two findings  -> results/training.json
+uv run python -m lossheads.training --sensitivity  # the noise floors  -> results/sensitivity.json
+uv run python src/exercises/09-loss-functions-output-heads/tools/render_results.py
+```
+
+**These four are the only things that write the published files, and that is deliberate.** Every other
 entry point — the notebook, the library, a `train()` call from a script — writes to `artifacts/`.
 Publishing a run is a decision someone takes after seeing it, not a side effect of producing it, and
 before this the topic notebook silently republished the tracked training log every time anyone read

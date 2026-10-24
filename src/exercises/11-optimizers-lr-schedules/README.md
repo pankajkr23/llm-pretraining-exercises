@@ -116,9 +116,9 @@ uv run pytest src/exercises/11-optimizers-lr-schedules
 # the corpus: 66M training + 1M validation tokens (outside the sandbox: its proxy truncates pages)
 uv run python src/exercises/11-optimizers-lr-schedules/tools/fetch_corpus.py
 
-# all five experiments at the published scale, then the document
+# all five at the published scale, into a new dated set (never over the published results/)
 uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py
-uv run python src/exercises/11-optimizers-lr-schedules/tools/render_results.py
+uv run python src/exercises/11-optimizers-lr-schedules/tools/render_results.py --results results/reruns/<today>
 
 # one experiment, quickly, written to artifacts/ rather than results/
 uv run python src/exercises/11-optimizers-lr-schedules/tools/run_experiments.py --preset lite --task schedules
