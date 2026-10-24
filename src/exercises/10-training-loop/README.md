@@ -28,7 +28,8 @@ ratio was actually counting.
 ## Best result, and what could beat it
 
 **Best result.** The one figure here with a target is utilisation, and the best honest one measured
-is the published **27.34%** MFU against a 40% rule of thumb, on this machine's CPU in fp32, with the
+is the published **27.34%** MFU (model FLOPs utilisation — the share of the machine's arithmetic the
+run actually used, defined under [What this is](#what-this-is)) against a 40% rule of thumb, on this machine's CPU in fp32, with the
 peak measured on the same device ([`RESULTS.md` §5](RESULTS.md), from
 [`results/run.json`](results/run.json)). Its run time and its peak are both wall-clock
 measurements, so it moves between runs. Beside it, the gradient check agrees with autograd to 8.8 matching decimal digits at its
@@ -63,8 +64,8 @@ counted differently in item 5, and the head is where the gradient check does its
 Six things a training step should be able to say about itself, each of which is a measurement or a
 deliberate breakage. None of them rewards a low loss.
 
-**The shapes.** Six tensors move through a step and the last has no dimensions at all. Everything
-collapses into that scalar and everything the optimiser does flows back out of it — which is why a
+**The shapes.** Every tensor in a step is traced, from the token ids to the head's gradient, and one
+of them — the loss — has no dimensions at all. Everything before it collapses into that scalar and everything the optimiser does flows back out of it — which is why a
 mistake anywhere in between changes training without changing a single shape.
 
 **One gradient, checked by hand.** `backward()` reports a derivative, and a derivative is a claim
@@ -179,8 +180,10 @@ denominator and once in its numerator:
   right figure ends up answering a different question.
 
 The honest figure is **27.34%**, roughly 13 points short of the 40% rule of thumb — and accounting
-for that gap, rather than closing it, is the useful part. It moves by a few tenths of a point between
-runs, because the numerator is fixed and the denominator is a wall clock on a shared machine.
+for that gap, rather than closing it, is the useful part. It moves between runs, because the numerator is
+fixed and the denominator is a wall clock on a shared machine — the one repeat so far, the
+[2026-10-24 re-run](results/reruns/2026-10-24/README.md), measured 20.62% with other jobs sharing
+the CPU, so how far it moves on an idle machine is not yet measured.
 
 A third was caught before publication: the gradient check was written in fp32, where a loss near 9.2
 resolves to about 5e-7, so a small gradient produced a numeric estimate of **exactly zero** at every

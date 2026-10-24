@@ -449,6 +449,12 @@ for label, mask_fn in (("correct", real_mask), ("leaky", leaky_mask)):
         ops.causal_mask = real_mask
 for label, res in losses.items():
     print(label, {k: round(v["summary"]["mean"], 3) for k, v in res.items()})
+
+# The claim the next cell makes, held rather than stated: a mask that leaks the next token must
+# score LOWER than the correct one. If this ever fails, the leak did not reach the model.
+correct = losses["correct"]["standard_attention"]["summary"]["mean"]
+leaky = losses["leaky"]["standard_attention"]["summary"]["mean"]
+assert leaky < correct, f"the leaky model should score lower: {leaky:.3f} against {correct:.3f}"
 """),
         md("""
 **Which would you ship?** The leaky model's loss is far lower — because it is reading the answer.

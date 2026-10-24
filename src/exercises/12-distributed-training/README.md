@@ -76,7 +76,8 @@ replicating one more kind of state:
 
 This exercise builds 32 devices inside one Python process, gives each its own memory and a ledger
 of every tensor it holds, connects them with real ring collectives that count every byte they send,
-and trains exercise 09's transformer on them under each stage. Then it checks three things: that
+and trains a reduced configuration of exercise 09's transformer on them under each stage — the same
+architecture at width 32 and two blocks, where 09's published run is width 256 and four blocks. Then it checks three things: that
 the training state each device keeps is what the arithmetic below predicts, that the communication
 is what it predicts, and that the stage never changes the result.
 
@@ -299,7 +300,8 @@ ledger records the storage bytes of the training state ZeRO shards, plus the tra
 creates; it does not record the temporaries inside one optimiser update, the ring's in-flight
 chunks, or anything a real device's allocator adds — caching, fragmentation, alignment.
 
-**The model is tiny** — 666,560 weights, two blocks — chosen so 32 devices finish in seconds. The
+**The model is tiny** — 666,560 weights, two blocks, a reduced configuration of exercise 09's
+model, whose published run is four blocks at width 256 — chosen so 32 devices finish in seconds. The
 memory and communication formulas are exact at any size and the ladder applies them to 30 billion
 weights, but that ladder is arithmetic, not a run. Nothing here measures the latency of gathering
 layer by layer, the effect of prefetching, or how ZeRO interacts with tensor or pipeline

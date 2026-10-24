@@ -131,7 +131,15 @@ file can only ever yield tensors).
         code("""
 from moe import experiments
 
-ckpt = None if LITE else root / "src/exercises/13-reversibility/artifacts/checkpoints/baseline-full.pt"
+# FULL starts from exercise 13's run: its published one if the checkpoint is on this machine, else
+# its newest re-run. The runner's own `dense_run` decides, so this cell and the tool cannot differ.
+ckpt, dense_results = None, None
+if not LITE:
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("run14", root / "src/exercises/14-moe/tools/run_experiments.py")
+    run14 = importlib.util.module_from_spec(spec); spec.loader.exec_module(run14)
+    ckpt, dense_results = run14.dense_run(PRESET)
+    print("exercise 13's run:", dense_results.relative_to(root))
 dense, origin = experiments.dense_model(PRESET, corpus, DEVICE, ckpt)
 print("dense model:", origin["source"], "|", f"{dense.count_parameters():,} parameters")
 if "trace" in origin:
@@ -172,7 +180,7 @@ print("experts identical at conversion:", same)
 Softmax or sigmoid scoring before the top-k: one short continuation each, from the same dense model.
 """),
         code("""
-trials = None if LITE else root / "src/exercises/13-reversibility/results/trials.json"
+trials = None if LITE else dense_results / "trials.json"  # the same 13 run as the weights
 lr = PRESET.continue_lr_fraction * experiments.dense_peak(PRESET, trials)
 print(f"continuation peak rate {lr:g} ({PRESET.continue_lr_fraction} x the dense model's peak)")
 trial = experiments.router_trial(PRESET, corpus, DEVICE, dense, lr)
@@ -249,8 +257,10 @@ CARRY = """## Carry forward
 
 **The path ends here.** Every notebook from 02 onward hands something to a later one, and
 [the map](README.md) lists each handoff. The natural next step is a single run that chains the
-choices made along the way — 02's tokenizer, 04's cleaning, 05's mix, 06's shards, 09's model with
-10's loop and 11's optimiser — end to end.
+choices made along the way — 02's tokenizer, 04's cleaning, 05's mix, 06's shards, and exercise
+11's decoder with its optimiser and schedule — end to end. That decoder is the one 13 and 14 build
+on, and it is 11's own model rather than 09's, because muP needs per-layer learning rates and a
+separately initialised output head.
 """
 
 

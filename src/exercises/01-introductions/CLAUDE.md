@@ -35,10 +35,13 @@ Component-specific notes for this exercise. Repo-wide conventions: root `AGENTS.
   `notebooks/01-introductions.ipynb` imports. Torch is the `train` extra, so
   `tests/test_foundations_*.py` gate on it with a module-level `importorskip` and run in CI's
   `train` job; both are in `OPTIONAL_DEPENDENCY_GATES`.
-- **`tests/` holds two suites, not one.** `test_web_bundle.py` (4 tests) is the bundle-integrity
-  smoke test — index links every proof, each proof is self-contained. `test_introductions_render.py`
+- **`tests/` holds three suites, not one.** `test_web_bundle.py` (4 tests) is the bundle-integrity
+  smoke test — index links every proof, each proof is self-contained. `test_foundations_parts.py`
+  and `test_foundations_claims.py` (18 each) test the `foundations` package and skip whole-file
+  without torch. `test_introductions_render.py`
   (109 tests, integration-marked) drives the real pages in Chromium and asserts what a reader sees;
-  it skips without a browser. This bullet claimed only the first for the day after the second landed
+  it skips without a browser. Counts from `pytest --collect-only -q` on 2026-10-24 — re-measure
+  rather than trust them. This bullet once claimed only the first for the day after the render suite landed
   at `5232586`, and the README said the same — which is this repo's own *"a new module is not done
   until every list that names modules includes it"*, applied to a test suite.
 - **`PROGRESS.md` is the stage ledger**, written retrospectively from the commit history and explicit

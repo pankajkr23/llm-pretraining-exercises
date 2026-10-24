@@ -140,7 +140,11 @@ function chapterThesis(M) {
   const big = M.scale_cost.rows[2];
   for (const [v, k, mark] of [
     ['100%', 'of a word’s bytes read back out of its numbers — and the decoder can prove it', 'good'],
-    [signed(best.gap), `nats better than the published design, on ${best.seeds} runs`, 'good'],
+    [
+      signed(best.gap),
+      `nats better than the published design, on ${best.seeds} runs of its first corpus — a second corpus reverses it`,
+      'good',
+    ],
     [`${(big.dense_params / big.v2_params).toFixed(0)}×`, 'smaller at a million-word vocabulary', 'good'],
     [
       signed(M.arms.rows.find((r) => r.arm.startsWith('byte head')).vs_control),
@@ -658,8 +662,8 @@ function chapterMethod(M) {
        <b>${M.v1_arithmetic.d_model}</b>, GPT-2 124M's size, because the cost argument is about
        models that big. A count at one width is never quoted as evidence at the other.`,
       `The load-bearing detail is the one most easily skipped. Across the five runs the ordinary
-       model’s own score moves by <b>${p.unpaired_spread.toFixed(3)} nats</b> — <i>larger than every
-       effect measured on this page</i>. Averaging the runs and comparing averages would bury every
+       model’s own score moves by <b>${p.unpaired_spread.toFixed(3)} nats</b> — <i>larger than the margin
+       by which any arm on this page beats v1</i>. Averaging the runs and comparing averages would bury every
        result in that noise.`,
       `So within a seed every arm sees the <b>same</b> text in the <b>same</b> order, and we compare
        inside a seed rather than across them. The shared wobble cancels and the noise falls to about

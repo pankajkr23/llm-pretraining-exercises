@@ -148,16 +148,26 @@ Any static server works — the pages have no origin requirements beyond being s
 ## Tests
 
 ```bash
-uv run pytest src/exercises/01-introductions                     # 113 tests
-uv run pytest src/exercises/01-introductions -m "not integration" # 4, no browser needed
+uv run pytest src/exercises/01-introductions                     # 149 tests with torch, 113 without
+uv run pytest src/exercises/01-introductions -m "not integration" # 40 with torch, 4 without; no browser
 ```
 
-Two suites, and they answer different questions.
+The counts are what `uv run pytest src/exercises/01-introductions --collect-only -q` reported on
+2026-10-24; that command is the authority, not this paragraph.
+
+Three suites, and they answer different questions.
 
 `tests/test_web_bundle.py` (**4 tests**) is bundle integrity: the landing page links all four
 proofs, every referenced local asset resolves, and each proof carries its own inline `<script>`, a
 `<canvas>` and a back-link to the index. It proves the site is wired together and self-contained,
 and it needs no browser.
+
+`tests/test_foundations_parts.py` and `tests/test_foundations_claims.py` (**18 tests each**) cover
+the `foundations` package the notebook imports. The first checks the parts — data generators,
+networks, the training loop; the second holds every claim the notebook makes at its default
+settings and over several seeds, each paired with the observation that would refute it. Torch is
+the `train` extra, so both **skip as whole files** without it (`uv sync --all-packages --extra
+train`); in CI they run in the `train` job.
 
 `tests/test_introductions_render.py` (**109 tests**, integration-marked) opens the real pages in
 Chromium and asserts what a reader sees. It exists because **this section used to say the opposite**

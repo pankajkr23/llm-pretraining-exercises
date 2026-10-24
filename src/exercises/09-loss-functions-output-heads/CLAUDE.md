@@ -28,8 +28,9 @@ engineering: the page reaches readers only once production is promoted, which is
   allocator hands a second path in the same process the first one's freed blocks.
 
 - **Chunking a softmax is not chunking a projection**, and only the second is what the technique is
-  named for. Chunking logits that already exist saves the intermediates: 1.92x. Projecting inside
-  the loop so the full `[rows, vocab]` tensor never exists: 9.1x. Both are measured here; quoting
+  named for. Chunking logits that already exist saves the intermediates: 1.80x. Projecting inside
+  the loop so the full `[rows, vocab]` tensor never exists: about 9x (five repeats, 8.88x to 9.44x,
+  so no decimals). Both are measured here; quoting
   the first as the second would understate the method by a factor of five.
 
 - **A generated document can still carry typed numbers, and the byte-equality test cannot see

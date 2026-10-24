@@ -48,7 +48,8 @@ for bit and moved the memory ratio only within that range.
 **The next hypothesis.** Measure the chunked projection under autograd, with and without per-chunk
 recomputation, at the same shapes: if the recomputing version keeps most of the ~9x at identical
 gradients, the saving transfers to training; if its peak sits near the plain path's, the figure
-describes inference only. Separately, re-running Part 2 on a corpus large enough that the run reads it
+describes inference only. Separately, re-running the two-head training run
+([Part 2 in `RESULTS.md`](RESULTS.md#part-2--the-t2-head)) on a corpus large enough that the run reads it
 less than once (today: 8.55 epochs) would show whether the further head still sits above the nearer
 one when nothing is memorised; if the gap closes, the published ordering was a property of
 repetition.
@@ -136,8 +137,11 @@ Publishing a run is a decision someone takes after seeing it, not a side effect 
 before this the topic notebook silently republished the tracked training log every time anyone read
 it.
 
-The harness prints as much as it computes — items 1 to 4 are about what a reader can *see*, so
-running it and reading the output is the point rather than a diagnostic. The 300-step training run
+*The seven numbers* are the seven measurements tabled at the top of
+[`RESULTS.md`](RESULTS.md#the-seven-numbers): 1 shapes, 2 the shift, 3 padding, 4 a packed
+boundary, 5 perplexity, 6 the head and 7 peak memory. The harness prints as much as it computes —
+items 1 to 4 are about what a reader can *see*, so running it and reading the output is the point
+rather than a diagnostic. The 300-step training run
 takes about 35 seconds on an M-series laptop; the sensitivity sweep repeats it at three step counts
 and re-measures memory five times, so it takes closer to two minutes.
 
@@ -176,11 +180,18 @@ generated into `results/sensitivity.json`; they used to be typed into the render
 disagreed with the table sixty lines above it.
 
 **That caveat used to read "re-running this sweep moves the spread as well as the ratio", and the
-sweep has now been re-run, so it is evidence rather than a hedge.** The earlier run recorded a
-0.44 where this one records 0.56 — five fresh repetitions, no code change to the
-measurement. Two things follow, and they point in opposite directions. **The training half is
-exactly deterministic**: every figure in `by_steps` reproduced bit for bit across the two runs, on
-different commits, so the step sweep is not being quoted through noise. **The memory half is not**,
+sweep has now been run three times, so it is evidence rather than a hedge.** Each run repeated the
+same measurement five times, and these are all three, read from each bundle's `memory` block:
+
+| run | commit the bundle records | spread of the five repeats |
+| --- | --- | ---: |
+| the first committed sweep, since replaced in place (it predates the rule against that) — `git show 2b190c0:src/exercises/09-loss-functions-output-heads/results/sensitivity.json` | `214d949` | 0.44 |
+| the historical bundle, [`results/sensitivity.json`](results/sensitivity.json) — the one `RESULTS.md` and the page render | `991a6a0` | 0.56 |
+| the [2026-10-24 re-run](results/reruns/2026-10-24/README.md), kept beside it, whose own README gives its range | `fd18c2e` | 0.29 |
+
+Two things follow, and they point in opposite directions. **The training half is
+exactly deterministic**: every figure in `by_steps` reproduced bit for bit across all three runs, on
+three different commits, so the step sweep is not being quoted through noise. **The memory half is not**,
 which is the entire reason it is repeated and the reason the ratio is quoted to no decimals at all.
 
 **The two ratios have different floors, and quoting them against one number was wrong.** The
@@ -217,7 +228,9 @@ the hand-written half.
 - The memory measurement was first written with `tracemalloc`, which is blind to torch: it reported
   **429 bytes** for an **81,928,192-byte** logits tensor. Both paths would have come back as noise
   and the ratio would have been the quotient of two noise figures.
-- A test claimed the head was "most" of a 128-wide model. It is 44.9%. It had also inherited
+- A test claimed the head was "most" of a 128-wide, eight-block model. It is 44.9% — the same share
+  as at the published 256-wide, four-block configuration, because the width-times-depth product is
+  equal. It had also inherited
   whatever `n_layer` defaulted to, so it silently became a different claim when that default moved.
 - **`keep_within_document` kept every pad-to-pad pair.** Padding carries document id `-1`, and
   `-1 == -1` is `True`, so a mask written as `source == destination` reads correctly and drops

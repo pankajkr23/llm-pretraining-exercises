@@ -846,11 +846,12 @@ plan is unchanged; then poison the English web dataset and watch which tier lose
 **The setting this exercise chose:** a dataset is committable only when it grades A or B (no
 blocking gate failed, A ≥ 8 points over all five gates, B ≥ 5 over at least three answered), has an
 **established** commercial licence, and has a **stated** size. That leaves four datasets, and at
-the recommended 16.8T rung they supply 6.56T of the 15.37T unique tokens the mix requires — 1.31T
-to 2.62T once cross-corpus duplication is taken out. The strictness is deliberate: unknown is not
-permission, and a budget you cannot add up is not a budget. Loosening the grade rule, as section 2
-showed, changes the letters and almost none of the outcome; the real bottleneck is licences and
-sizes, which are paperwork and measurement, not thresholds.
+the recommended 16.8T rung they supply 6.56T as their publishers state it, against the 15.37T unique
+tokens the mix requires. That 6.56T is raw: nothing has been deduplicated, and if the assumed 20–40%
+survives cross-corpus deduplication it is 1.31T to 2.62T. The strictness is deliberate: unknown is
+not permission, and a budget you cannot add up is not a budget. Loosening the grade rule, as
+section 2 showed, changes the letters and almost none of the outcome; the real bottleneck is
+licences and sizes, which are paperwork and measurement, not thresholds.
 
 **What `notebooks/04-data-cleaning-dedup.ipynb` uses from it:**
 

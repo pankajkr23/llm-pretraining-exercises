@@ -29,6 +29,14 @@ Six words do all the work in these documents.
 | **held-out** | Text reserved before training and never trained on. Scores use only this, because a model asked about text it memorised tells you nothing. |
 | **stand-in** | Text used in place of a dataset too large or too restricted to use here. GSM8K stands in for peS2o — same *kind* of text, not the same text. |
 
+And the names the documents use for models and datasets:
+
+| name | what it refers to |
+| --- | --- |
+| **V5** | The 40-billion-parameter model this recipe is for. |
+| **V4** | The model before it in the same line. Several decisions cite how its run behaved — a gradient spike at a stage seam, a selector that under-valued Indic. |
+| **D1–D4** | Four datasets the inventory carries over from V4's training data: D1 Web-Foundation, D2 Web-Diverse, D3 Code, D4 STEM. |
+
 # 3 · What we actually trained
 
 | | |
@@ -46,6 +54,8 @@ with that limit attached.
 
 ## The corpus it read
 
+| lane | train tokens | held-out tokens | held-out bytes | `[UNK]` |
+| --- | ---: | ---: | ---: | ---: |
 | `web` | 100,661 | 10,331 | 59,861 | 0.00% |
 | `indic` | 70,574 | 8,228 | 66,427 | 0.00% |
 | `code` | 352,415 | 37,162 | 77,843 | 0.17% |
@@ -70,16 +80,18 @@ flowchart TD
   D --> E
   E --> F["export.py<br/>SPEC.md, this file, the page"]
   C --> G["corpus.py<br/>build the proxy corpus"]
-  G --> H["train.py<br/>train one arm at one seed"]
+  G -.-> H["train.py<br/>train one arm at one seed"]
   H --> I["evaluate.py<br/>held-out bits per byte"]
   I --> J["experiment.py<br/>compare arms, judge hypotheses"]
   J --> K["results/step0.json"]
   K --> F
 ```
 
-Everything above the dotted line is arithmetic over a dataset inventory and needs no GPU. Only
-`train.py` and `evaluate.py` need torch, which is why it is an optional extra and CI never installs
-it.
+The dotted arrow, from `corpus.py` into `train.py`, is where torch starts. Everything before it is
+arithmetic over a dataset inventory or committed text and needs no GPU. Only `train.py` and
+`evaluate.py` need torch, which is why it is an optional extra: the default sync and CI's ordinary
+jobs leave it out, and only CI's `train` job installs it — the CPU-only build — to run the proxy's
+own tests.
 
 ## What one run looks like
 

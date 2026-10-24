@@ -4,7 +4,7 @@ Why this exercise is shaped the way it is, and what would overturn each choice.
 
 ---
 
-## D1 · This exercise's notebook IS tracked, and that is a written exception
+## D1 · Superseded — this exercise's notebook IS tracked, and that is a written exception
 
 **Superseded 2026-10-24: it is no longer an exception.** Every topic notebook and builder is
 tracked now, and this one was renamed to

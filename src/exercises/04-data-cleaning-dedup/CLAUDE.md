@@ -100,7 +100,7 @@ yield for it would be inventing one.
 uv run python -m datacleaning.fetch --profile lite   # reachability, seconds
 uv run python -m datacleaning --profile lite         # smoke run, ~2 minutes
 uv run python -m datacleaning --profile full         # the published corpus
-uv run pytest src/exercises/04-data-cleaning-dedup   # 160 tests
+uv run pytest src/exercises/04-data-cleaning-dedup   # this exercise's suite (`--collect-only -q` counts it)
 uv run pytest -m integration                         # browser suite, needs chromium
 ```
 

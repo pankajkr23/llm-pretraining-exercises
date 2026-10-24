@@ -105,8 +105,8 @@ if IN_COLAB:
 else:
     # **Found at run time, never baked in at build time.** This line used to interpolate the
     # BUILD machine's own absolute path, so the notebook imported on exactly one computer and
-    # raised on every other one -- including for anyone following the submission link, since
-    # this is the one topic notebook that ships in the repository.
+    # raised on every other one -- including for anyone following the submission link, which
+    # pointed at this notebook while it was the only topic notebook tracked in the repository.
     root = pathlib.Path.cwd().resolve()
     while not (root / "src" / "exercises").is_dir() and root != root.parent:
         root = root.parent
@@ -140,8 +140,8 @@ LITE   = True    # False runs the published configuration
 # Two step counts, because the two training cells are different experiments and the published run
 # used different lengths for them. Naming them separately is what lets `LITE` shorten both while the
 # full profile still reproduces what `results/run.json` holds.
-STEPS  = 40 if LITE else 200     # section 5: the instrumented run
-CURVES = 24 if LITE else 120     # section 4: the two accumulation curves
+STEPS  = 40 if LITE else 200     # section 4: the instrumented run
+CURVES = 24 if LITE else 120     # section 3: the two accumulation curves
 DRAWS  = 20_000 if LITE else 200_000   # section 6: the float regression sweep
 SEED   = 10      # the published seed
 
@@ -157,8 +157,9 @@ print(f"model    {CONFIG.model.n_layer} blocks x {CONFIG.model.d_model} wide")""
         md(
             """## 1 · Every tensor shape, and what each dimension means
 
-Six tensors move through one step. The last has **no dimensions at all** — and that is the point of
-printing them. Everything above collapses into that scalar, and everything the optimiser does flows
+Every tensor in one step is printed below, from the token ids to the head's gradient, and one of
+them — the loss — has **no dimensions at all**. That is the point of printing them: everything before
+it collapses into that scalar, and everything the optimiser does flows
 back out of it, so a mistake anywhere in between changes training without changing a single shape.
 
 Read the `head.weight.grad` row too: a gradient has exactly the shape of the weight it belongs to,

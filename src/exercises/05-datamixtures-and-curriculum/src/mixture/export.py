@@ -445,6 +445,9 @@ def _step_zero_summary() -> str:
             f"all {len(lane_keys)} funded lanes are present, three of them from openly-licensed "
             "**stand-in** text rather than the datasets the specification funds them from"
         )
+    dated_notes = (
+        _then(_h3_rerun_note()) + _then(_decision_rerun_note()) + _then(_h3_standing_note())
+    )
 
     return f"""Step 0 ran on {results["device"]}: a {model["layers"]}-layer model, \
 {results["steps"]} steps, **{seeds} seeds per arm**, over a {tokens:,}-token corpus across \
@@ -456,7 +459,7 @@ Every effect is reported against **the spread the same arm shows against itself*
 refutation condition with more than one clause is checked on every clause. Both rules can only \
 cost this specification marks; neither can earn it any.
 
-{consequence}{_then(_h3_rerun_note())}{_then(_decision_rerun_note())}
+{consequence}{dated_notes}
 
 **This does not validate the mixture at 40B and is not offered as doing so.** The corpus is three \
 orders of magnitude too small, {coverage}, and an arm that looks better here would still be an arm \
@@ -591,6 +594,32 @@ def _decision_rerun_note(prefix: str = "") -> str:
     return ""
 
 
+def _h3_standing_note() -> str:
+    """One sentence saying what stands on H3 once the published run and its re-runs are both read.
+
+    The published verdict, the dated notes and the standing instruction each sit in their own
+    paragraph; a reader who reads all three still has to assemble the answer. This assembles it.
+    """
+    old_h3 = _h3(_published("step0"))
+    for day in reversed(rerun_days()):
+        new_h3 = _h3(_rerun(day, "step0"))
+        if not (old_h3 and new_h3) or old_h3["verdict"] == new_h3["verdict"]:
+            continue
+        e4 = _h3(_rerun(day, "stem_sensitivity"))
+        e4_text = f" and E4 `{e4['verdict']}`" if e4 else ""
+        indic = lanes.shares()["indic"]
+        return (
+            f"**What stands now, in one sentence:** the published `{old_h3['verdict']}` verdict "
+            f"is kept as the record of the run that produced it; the {day} re-run reads "
+            f"`{new_h3['verdict']}`{e4_text}, so the refutation does not reproduce; and "
+            f"{indic:.0%} Indic stays the declared share, with the instruction to treat it as an "
+            "upper bound still in force — capping a share that was never moved costs nothing — "
+            "but held now as a precaution for the first real-scale run to settle, not as a "
+            "consequence the evidence forces."
+        )
+    return ""
+
+
 def _e4_rerun_note(prefix: str = "") -> str:
     """The dated note beside the published E4 conclusion, when a re-run of E4 exists."""
     for day in reversed(rerun_days()):
@@ -685,8 +714,43 @@ def _best_result(config: Config) -> str:
             f"{max(base_spread, spread):.4f} seed spread"
         )
 
+    scale_runs = [("published", "results/scale.json", _published("scale"))] + [
+        (f"{day} re-run", f"results/reruns/{day}/scale.json", _rerun(day, "scale"))
+        for day in rerun_days()
+    ]
+    beaten_at_scale = []
+    for label, path, bundle in scale_runs:
+        if not bundle:
+            continue
+        top = bundle["rungs"][-1]
+        winner = top["ranking"][0]
+        if winner == "A":
+            continue
+        lead, cand = top["arms"][winner], top["arms"]["A"]
+        gap = cand["weighted_mean"] - lead["weighted_mean"]
+        sds = (lead["weighted_sd"], cand["weighted_sd"])
+        reach = (
+            "larger than either arm's standard deviation"
+            if gap > max(sds)
+            else f"larger than arm A's standard deviation but inside arm {winner}'s"
+            if gap > min(sds)
+            else "inside both arms' standard deviations"
+        )
+        beaten_at_scale.append(
+            f"in [{label} E3]({path}) arm {winner} scores {lead['weighted_mean']:.4f} "
+            f"(±{lead['weighted_sd']:.4f} sd) against A's {cand['weighted_mean']:.4f} "
+            f"(±{cand['weighted_sd']:.4f}), a {gap:.4f} gap {reach}"
+        )
+
     name, base, spread = _arm_scores(published)["A"]
     seeds = len(published["seeds"])
+    scope_note = ""
+    if beaten_at_scale:
+        top_params = next(b for _, _, b in scale_runs if b)["rungs"][-1]["params"]
+        scope_note = (
+            " **That claim is about Step 0's model only.** At the largest model E3 trained "
+            f"({top_params:,} parameters) another arm leads it: " + "; ".join(beaten_at_scale) + "."
+        )
     if beaten:
         best = (
             f"**An arm beats the candidate beyond its seed spread**: {beaten[0]}. By this "
@@ -698,14 +762,11 @@ def _best_result(config: Config) -> str:
             f"held-out **{base:.4f} bits per byte** (lower is better), seed spread {spread:.4f} "
             f"over {seeds} seeds, in [the published Step 0](results/step0.json). By this "
             "exercise's own rule — a difference counts only when it clears the seed spread — no "
-            "arm beats it in any run so far."
+            "arm beats it at Step 0, in the published run or any re-run." + scope_note
         )
 
     candidates = [f"- **Lowest point estimate, inside the noise:** {item}." for item in leaders]
-    for label, path, bundle in [("published", "results/scale.json", _published("scale"))] + [
-        (f"{day} re-run", f"results/reruns/{day}/scale.json", _rerun(day, "scale"))
-        for day in rerun_days()
-    ]:
+    for label, path, bundle in scale_runs:
         if bundle:
             top = bundle["rungs"][-1]
             winner = top["ranking"][0]
@@ -1798,6 +1859,16 @@ _NOTEBOOK_LINE = (
 )
 
 
+#: The model and dataset names the README uses before any table could introduce them. They are
+#: defined once more in `METHOD.md`'s glossary, which is where every other link points.
+_NAMES_LINE = (
+    "**Names used below.** *V5* is the 40-billion-parameter model this recipe is for. *V4* is the"
+    " model before it in the same line; several decisions here cite how its run behaved. *D1–D4*"
+    " are four datasets the inventory carries over from V4's training data (web foundation, web"
+    " diverse, code, STEM). The rest of the vocabulary is in [`METHOD.md`](METHOD.md)."
+)
+
+
 #: The reading path at the top of the exercise README.
 #:
 #: Built from short literals rather than written inline, because each markdown table row has to be
@@ -1890,8 +1961,8 @@ def render_readme(config: Config | None = None) -> str:
 
 {_NOTEBOOK_LINE}
 
-**What V5 reads, in what order, and what happens to every share when it is checked against the
-data that actually exists.**
+**What V5 — the 40-billion-parameter model this recipe is for — reads, in what order, and what
+happens to every share when it is checked against the data that actually exists.**
 
 > Generated by `uv run python -m mixture` — every number below is computed from the same modules
 > the tests pin, never typed. Config fingerprint `{config.fingerprint()}` · run size {run_size}
@@ -1906,6 +1977,8 @@ twice.
 Two documents sit behind this one. [`SPEC.md`](SPEC.md) is the specification, with the full
 argument and the reviewer-facing detail. [`EXPERIMENTS.md`](EXPERIMENTS.md) is what happened when
 the proxy it commits to was actually run. This page is the recipe itself.
+
+{_NAMES_LINE}
 
 {_READING_PATH}{_best_result(config)}{pipeline_summary}## Where each required answer lives
 
@@ -1933,6 +2006,13 @@ inventory, never quoted from a slot headline.** It is a boring rule and it chang
 `epochs` is demand ÷ supply — how many times the model would have to re-read the lane. The
 repetition curve (Muennighoff et al., JMLR v26 2025, Eq. 18) says value decays with each pass and
 caps any pool's worth at **unique × 16.4**, which is what separates *expensive* from *impossible*.
+
+**`supply` here is after corrections**, which is why agentic reads
+{humanise(agentic.supply)} in this table and {humanise(agentic.raw_supply)} everywhere else on
+this page: {humanise(agentic.raw_supply)} is the raw pool its datasets hold, and
+{humanise(agentic.supply)} is what is left once §6's loss-map discount is applied — the one lane it
+applies to. Finding 2 below argues from the raw figure, so the verdict does not depend on the
+correction.
 
 ### Why each share is the number it is
 
@@ -2027,9 +2107,9 @@ Long-context capability is bought here, by the schedule, rather than by a lane h
 {_difficulty_table(config)}
 
 **How difficulty is assigned is a measurement, not a preference.** The obvious rule — a readability
-score such as Flesch-Kincaid — was tried and **rejected on evidence**: it is not monotone across
-our own bands ({curriculum.READABILITY_REJECTED}). A rule that ranks B5 easier than B4 cannot order
-a curriculum, so bands are assigned from dataset-level signals instead.
+score such as Flesch-Kincaid — was tried and **rejected on evidence**.
+{curriculum.READABILITY_REJECTED.strip().replace(" -- ", " — ")} A rule that ranks B5 easier than
+B4 cannot order a curriculum.
 
 Each band ships a concrete example, and each example is labelled by what it actually is:
 
@@ -2083,8 +2163,7 @@ fail is not a guard.
 
 ```bash
 uv run python -m mixture              # rebuild SPEC.md, TOKENIZER.md, EXPERIMENTS.md, README.md
-uv run python -m mixture.inventory    # lane supplies, itemised against the source material's
-headlines
+uv run python -m mixture.inventory    # lane supplies, itemised against the source's headlines
 uv run python -m mixture.checks       # the invariants
 uv run python -m mixture.bench        # measure this machine's throughput
 uv run python -m mixture.experiment   # run the four arms
@@ -2345,9 +2424,15 @@ def render_method(config: Config | None = None) -> str:
         lanes_here = list(run["corpus"])
         corpus_total = sum(s["train_tokens"] for s in run["corpus"].values())
         corpus_rows = "\n".join(
-            f"| `{lane}` | {shard['train_tokens']:,} | {shard['heldout_tokens']:,} | "
-            f"{shard['heldout_bytes']:,} | {shard['unk_share']:.2%} |"
-            for lane, shard in run["corpus"].items()
+            [
+                "| lane | train tokens | held-out tokens | held-out bytes | `[UNK]` |",
+                "| --- | ---: | ---: | ---: | ---: |",
+            ]
+            + [
+                f"| `{lane}` | {shard['train_tokens']:,} | {shard['heldout_tokens']:,} | "
+                f"{shard['heldout_bytes']:,} | {shard['unk_share']:.2%} |"
+                for lane, shard in run["corpus"].items()
+            ]
         )
         seeds = len(run["seeds"])
         steps = run["steps"]
@@ -2375,6 +2460,17 @@ def render_method(config: Config | None = None) -> str:
             "this, because a model asked about text it memorised tells you nothing. |",
             "| **stand-in** | Text used in place of a dataset too large or too restricted to use "
             "here. GSM8K stands in for peS2o — same *kind* of text, not the same text. |",
+        ]
+    )
+    names = "\n".join(
+        [
+            "| name | what it refers to |",
+            "| --- | --- |",
+            "| **V5** | The 40-billion-parameter model this recipe is for. |",
+            "| **V4** | The model before it in the same line. Several decisions cite how its run "
+            "behaved — a gradient spike at a stage seam, a selector that under-valued Indic. |",
+            "| **D1–D4** | Four datasets the inventory carries over from V4's training data: D1 "
+            "Web-Foundation, D2 Web-Diverse, D3 Code, D4 STEM. |",
         ]
     )
 
@@ -2425,6 +2521,10 @@ Six words do all the work in these documents.
 
 {glossary}
 
+And the names the documents use for models and datasets:
+
+{names}
+
 # 3 · What we actually trained
 
 {model_table}
@@ -2454,16 +2554,18 @@ flowchart TD
   D --> E
   E --> F["export.py<br/>SPEC.md, this file, the page"]
   C --> G["corpus.py<br/>build the proxy corpus"]
-  G --> H["train.py<br/>train one arm at one seed"]
+  G -.-> H["train.py<br/>train one arm at one seed"]
   H --> I["evaluate.py<br/>held-out bits per byte"]
   I --> J["experiment.py<br/>compare arms, judge hypotheses"]
   J --> K["results/step0.json"]
   K --> F
 ```
 
-Everything above the dotted line is arithmetic over a dataset inventory and needs no GPU. Only
-`train.py` and `evaluate.py` need torch, which is why it is an optional extra and CI never installs
-it.
+The dotted arrow, from `corpus.py` into `train.py`, is where torch starts. Everything before it is
+arithmetic over a dataset inventory or committed text and needs no GPU. Only `train.py` and
+`evaluate.py` need torch, which is why it is an optional extra: the default sync and CI's ordinary
+jobs leave it out, and only CI's `train` job installs it — the CPU-only build — to run the proxy's
+own tests.
 
 ## What one run looks like
 
@@ -2998,6 +3100,54 @@ def render_experiments(results: dict) -> str:
         )
     tally = f"{tally} of {len(results['comparisons'])} hypotheses"
 
+    tracked_text = {
+        "web": "exercise 02's wiki-faithful English for web",
+        "indic": "its Hindi, Telugu and Maithili for indic",
+        "code": "this repository's own Python for code",
+    }
+    tracked = [
+        lane
+        for lane, shard in results["corpus"].items()
+        if not all(source.startswith("data/") for source in shard["sources"])
+    ]
+    downloaded = [lane for lane in lane_keys if lane not in tracked]
+    origins = [tracked_text.get(lane, lane) for lane in tracked]
+    if len(origins) > 1:
+        origins = [", ".join(origins[:-1]) + " and " + origins[-1]]
+    corpus_origin = (
+        f"{len(tracked)} lanes ({', '.join(tracked)}) are text this repository tracks — "
+        f"{origins[0] if origins else 'none'} — and need no network."
+    )
+    if downloaded:
+        corpus_origin += (
+            f" The other {len(downloaded)} ({', '.join(downloaded)}) are openly-licensed stand-ins "
+            "that `tools/fetch_proxy_corpus.py` downloads into a gitignored cache, so a clone has "
+            "to fetch them before it can rebuild this run."
+        )
+
+    moved = []
+    for key, arm in arms.items():
+        declared = {lane: arm["shares"].get(lane, 0.0) for lane in scored}
+        total = sum(declared.values())
+        for lane in scored:
+            effective = arm["effective_shares"].get(lane, 0.0)
+            if total and abs(effective - declared[lane]) > 5e-4:
+                moved.append(
+                    f"arm {key} shows {effective:.1%} {lane} here rather than the "
+                    f"{declared[lane]:.1%} its declared mixture names"
+                )
+    if moved:
+        renormalised_note = (
+            "Every arm's shares are renormalised over the lanes that have text, so no arm is "
+            f"asked to sample a lane that does not exist — which is why {moved[0]}."
+        )
+    else:
+        renormalised_note = (
+            "Every arm's shares are renormalised over the lanes that have text, so no arm is "
+            "asked to sample a lane that does not exist. With every funded lane present that "
+            "changes nothing here: each share above is the one its arm declares."
+        )
+
     return f"""\
 # Step 0 — the proxy, actually run
 
@@ -3021,10 +3171,9 @@ both, which is what turned H3's verdict.
 {corpus_table}
 
 **This is small, and every number below inherits that.** The corpus is {corpus_tokens} training
-tokens of real text — exercise 02's wiki-faithful English, Hindi, Telugu and Maithili, plus this
-repository's own Python. It needs no network and exists in any checkout, which is what makes the
-run reproducible; it is also three orders of magnitude below the scale where a mixture decision
-would be made for real.
+tokens of real text across {len(lane_keys)} lanes. {corpus_origin} Every lane's content digest is
+recorded in the run, so a rebuilt corpus can be checked against the one measured here. It is also
+three orders of magnitude below the scale where a mixture decision would be made for real.
 
 The measured throughput says the machine was never the constraint. At
 {results["throughput"]["tflops_median"]:.1f} TFLOP/s, a week of compute would run **thousands of
@@ -3038,8 +3187,7 @@ the same finding the specification makes about the mixture: supply, not preferen
 
 {coverage_note}
 
-Every arm's shares are also renormalised, so no arm is asked to sample a lane that does not exist —
-which is why arm B shows 3.2% Indic here rather than the 3% its declared mixture names.
+{renormalised_note}
 
 ## Scores
 

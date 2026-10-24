@@ -70,8 +70,8 @@ corpus, each ending in `assert`s that state what it shows:
 1. **Adam by hand** — one weight, five real gradients, every quantity written out, checked against PyTorch.
 2. **Bias correction off** — how much bigger the steps are without it, and for how long.
 3. **The update-to-weight ratio** — per layer, with and without warmup.
-4. **Cosine against WSD** — both shaped for 300 steps, both stopped at 200, each tuned first.
-5. **The learning rate across widths** — swept at three widths, in the standard parametrization and in muP, and a prediction for a wider model.
+4. **Cosine against WSD** (warmup–stable–decay) — both shaped for 300 steps, both stopped at 200, each tuned first.
+5. **The learning rate across widths** — swept at three widths, in the standard parametrization and in muP (the maximal-update parametrization), and a prediction for a wider model.
 
 **Read it at two depths.** The prose before each cell says what and why; the asserts after it say
 what must hold. The last section loads the published full-scale results from `results/`, which
@@ -301,8 +301,11 @@ steps = range(T)
 plt.figure(figsize=(8, 3))
 plt.plot(steps, [cosine(s, T, 1.0, warmup=W) for s in steps], label="cosine (shaped for 300)")
 plt.plot(steps, [wsd(s, T, 1.0, warmup=W, decay_fraction=PRESET.wsd_decay_fraction) for s in steps], label="WSD (shaped for 300)")
-branch = range(S, S + PRESET.branch_decay)
-plt.plot(list(branch), [wsd_branch(s, S, PRESET.branch_decay, 1.0) for s in branch], label="WSD branch from 200", lw=2)
+# The branch is taken from WSD's checkpoint `branch_decay` steps BEFORE the stop, so that it ends
+# at the stop -- the same arithmetic experiments.schedules runs, so the drawing is the experiment.
+B = S - PRESET.branch_decay
+branch = range(B, S)
+plt.plot(list(branch), [wsd_branch(s, B, PRESET.branch_decay, 1.0) for s in branch], label=f"WSD branched at {B}, decayed to {S}", lw=2)
 plt.axvline(S, color="k", ls="--", lw=0.8); plt.xlabel("step"); plt.ylabel("lr / peak"); plt.legend(); plt.show()
 print(f"at step {S}: cosine is at {cosine(S - 1, T, 1.0, warmup=W):.2f} of peak, WSD at "
       f"{wsd(S - 1, T, 1.0, warmup=W, decay_fraction=PRESET.wsd_decay_fraction):.2f}")
@@ -311,7 +314,9 @@ print(f"at step {S}: cosine is at {cosine(S - 1, T, 1.0, warmup=W):.2f} of peak,
 Now the experiment. **Each schedule is tuned before they are compared** — several peak rates, two
 seeds each, trained to step 200 — because a comparison against a badly tuned baseline is the classic
 way an optimiser claim fails to replicate. Then each runs at its own best peak, and the two finished
-models at a 200-step budget are trained too: WSD's branch, and a cosine planned for 200 from the start.
+models at a 200-step budget are trained too: WSD's branch — taken from its checkpoint
+`PRESET.branch_decay` steps before the stop and decayed so that it ends there — and a cosine
+planned for 200 from the start.
 """),
         code("""
 r4 = experiments.schedules(PRESET, corpus, DEVICE)
@@ -326,11 +331,11 @@ rows = {
     "WSD (300) stopped at 200": mean(f["wsd"], "at_stop"),
     "cosine run to 300": mean(f["cosine"], "at_end"),
     "WSD run to 300": mean(f["wsd"], "at_end"),
-    "WSD branch: 200 + decay": mean(f["wsd_branch"], "at_end"),
+    f"WSD branched at {r4['branch_at']}, decayed to {S}": mean(f["wsd_branch"], "at_end"),
     "cosine planned for 200": mean(f["cosine_planned_for_stop"], "at_end"),
 }
 for k, v in rows.items():
-    print(f"  {k:30} {v:.4f}")
+    print(f"  {k:36} {v:.4f}")
 noise = max(np.ptp([x["at_stop"] for x in f["cosine"]]), np.ptp([x["at_stop"] for x in f["wsd"]]))
 print(f"seed-to-seed spread at step 200: {noise:.4f}")
 """),
@@ -413,8 +418,8 @@ else:
         md("""
 ## What this cannot tell you
 
-- **The models are small and the runs short.** Hundreds of steps on models of 8 to 60 million
-  parameters. A schedule's advantage, or the position of a minimum, can move at a hundred times the
+- **The models are small and the runs short.** Hundreds of steps on models of about 8 to 71 million
+  parameters (widths 256 to 1,024 in the full run). A schedule's advantage, or the position of a minimum, can move at a hundred times the
   scale; these experiments show the mechanisms, not production settings.
 - **The width prediction is an extrapolation.** It reaches four times past the widest width measured,
   from three points; the seed spread bounds the noise but not the model error of assuming a power law.

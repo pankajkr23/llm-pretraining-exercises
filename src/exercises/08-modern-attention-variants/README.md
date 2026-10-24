@@ -46,9 +46,13 @@ construct.
 **Best result.** Nothing here is trained, so the best result is what the chronology established: 30
 mechanisms from 2014 to 31 August 2026, each dated by its own source's `v1` line (29 papers and one
 archived post), all in [`results/mechanisms.json`](results/mechanisms.json). Tested on that axis,
-the claimed arc `compute → cache → position → cache` **does not hold**: six windows decide, in a
-different order, and the cache bill never dominates a window on its own under either slicing of
-the window edges ([the arc test](#the-arc-was-tested-and-the-test-had-to-be-fixed-first),
+the claimed arc `compute → cache → position → cache` — the story that the field paid down the
+compute bill first, then the cache, then position, then the cache again — **does not hold**. A
+*window* is a two-year bucket of launch dates, won by the bill most of its mechanisms pay down (a
+tie wins nothing); six windows decide, in a different order, and the cache bill never dominates a
+window on its own under either *slicing* of the edges — buckets starting in 2014, where attention
+starts, or the same buckets shifted a year earlier, which tests whether that arbitrary start
+decides the answer ([the arc test](#the-arc-was-tested-and-the-test-had-to-be-fixed-first),
 [`DECISIONS.md`](DECISIONS.md) D14).
 
 **Candidates that did or could do better.**
@@ -99,8 +103,8 @@ without breaking anything else.
 | `timeline.py` | ordering, the gaps, and which bill each period was paying down |
 | `story.py` | the six chapters the page tells, and the rule that every mechanism is in exactly one |
 
-The page is six more, and they are listed because a module nobody names is a module the next
-reader regenerates the site without:
+The page is seven more — six files and the field-guide directory — and they are listed because a
+module nobody names is a module the next reader regenerates the site without:
 
 | module | owns |
 | --- | --- |
@@ -299,6 +303,11 @@ page's index plate.
 | **MiniMax sparse attention (MSA)** | 2026-06-11 | [MiniMax Sparse Attention](https://arxiv.org/abs/2606.13392) | `[v1] Thu, 11 Jun 2026 14:23:41 UTC (3,976 KB)` |
 | **Higher-dimensional RoPE (HD-RoPE)** | 2026-08-30 | [Higher-Dimensional Rotary Position Embedding](https://arxiv.org/abs/2608.29715) | `[v1] Sun, 30 Aug 2026 10:46:24 UTC (1,372 KB)` |
 
+**One date disagrees with its own identifier, and it is recorded rather than resolved.** DeepSeek-V4's
+arXiv id `2606.19348` would normally mean June 2026, while its submission-history line reads 26 April
+2026. The catalogue records the `v1` line, as it does for every entry, and the disagreement is written
+into that entry's `source.note` in [`results/mechanisms.json`](results/mechanisms.json).
+
 **The last six carry the timeline to 31 August 2026**, and they are the reason the plate does not
 stop at a round number. Every one of them was verified by opening its arXiv abstract page and
 copying the submission-history line printed in the table above; six of the six are dated after the
@@ -373,12 +382,13 @@ sourced the same way the dates are, and both are checked mechanically.
 sizes at all, because *"a glyph drawn to specific numbers would be inventing them."* The diagrams
 need real numbers, so provenance became the price of entry: `Glyph._check_sizes` refuses a `stated`
 size without a quote and a location, refuses an `ours` size without a reason, and requires **the
-quote to contain the number it is evidence for**. All thirty carry sizes now — 78 of the 80 quoted
-verbatim from the primary paper.
+quote to contain the number it is evidence for**. All thirty carry sizes now: the catalogue holds 80, and 78 of them
+are `stated`, quoted verbatim from the primary paper; the other two are `ours`, each with its reason.
 
 The method is worth copying. Every paper was downloaded *first*; agents read those local files and
 proposed claims; then each quote was checked as a contiguous run of that file's own characters.
-**82 proposed, 82 verbatim, zero fabrications.** Verbatim is not the same as correct, so a second
+**82 proposed, 82 verbatim, zero fabrications** — 82 counts the quotes agents proposed, not the
+sizes the catalogue kept. Verbatim is not the same as correct, so a second
 check asked whether each quote talks about the quantity claimed — which caught *"Figure 4: The KV
 cache of StreamingLLM"* offered as evidence for four attention sinks, and a *Communications of the
 ACM* volume number offered as a head dimension.
@@ -401,7 +411,9 @@ The requirements' claim is that the field wanted *exactness, then memory, then l
 For a while the page published **"the claimed arc holds in 6 of these 7 two-year windows"**. That
 number was derived, and it was evidence for nothing: it counted windows that produced *a* clear
 winner, not windows whose winner the arc predicted. Six windows do decide, and they decide
-`origin → position → compute → both → (no winner) → both → both`. **The cache bill — the one the
+`origin → position → compute → both → (no winner) → both → both`, where `origin` labels the first
+entries on the timeline, which pay no bill but create the situation every later entry responds to.
+**The cache bill — the one the
 story has the field returning to twice — never dominates a single window on its own.**
 
 Then the noise floor cost a second finding. The two-year buckets begin in 2014 because attention

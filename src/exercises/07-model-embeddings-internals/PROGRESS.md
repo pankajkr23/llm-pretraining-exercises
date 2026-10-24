@@ -58,8 +58,8 @@ labelled as spanning two.
 
 2. **Coherence audit — tying costs essentially nothing.** Mean coherence over the `D` atoms after
    500 steps: random 0.041 · untied v1 **0.050** · ours tied+n-gram **0.051**. Our tie is
-   indistinguishable from the untied baseline, which is why recovery from a trained `W` still reads
-   99.85%. Nothing uses `W` directly as an output matrix — gradients reach it only through the fixed
+   indistinguishable from the untied baseline, which is why recovery from the tied + n-gram arm's
+   `W` after 500 steps still reads 99.85%. Nothing uses `W` directly as an output matrix — gradients reach it only through the fixed
    sparse `K`.
 
 3. **The standalone #5 arm — it works.** One-hot positions (v1's own) + tie + n-gram beats v1 by
@@ -115,7 +115,8 @@ in `AGENTS.md`. The previous version was nine tables and one button: ~1,300 word
 what an embedding is, never stated the question, and had no method, summary, conclusion or next
 step. It is now ~3,300 words. Every figure is generated from the tracked
 `results/measurements.json` by `tools/build_web_data.py`, so nothing on the page can drift from the
-run that produced it. **17 test functions, 20 collected**, over the assembled site.
+run that produced it. A browser suite runs over the assembled site; its count is stated in
+`README.md` and derived from the test files by `tests/test_embeddings_docs.py`.
 
 **The two widths are reconciled (v0.11.0).** The page carried `d_model` 256 for every measured
 number and 768 for every parameter and memory table, and never said which was which; the scale-cost

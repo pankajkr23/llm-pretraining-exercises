@@ -25,6 +25,19 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   re-run's documents to be exactly what that command writes. 07's `--manifest-only` created an
   empty dated folder instead of rebuilding the index it named; it rebuilds an existing index now,
   and the 2026-10-24 set's index, which listed files from another folder, was regenerated.
+- **What a reviewer reading 01–14 for the first time tripped over.** A final pass by independent
+  readers and engineers; each finding was checked against the code or the JSON before it was
+  changed. The ones that changed what a reader concludes: 05's best result said no arm beats the
+  declared mixture "in any run", while at the largest model arm D beats it by more than either
+  spread — now scoped to Step 0, with both scale results stated; 07's headline loss win now says,
+  everywhere it appears (root row, README, page tile), that it reverses on a second corpus; 07's
+  byte-head claim and two recovery figures now name the measurement each is; 11's notebook drew the
+  WSD branch from step 200 when the experiment branches at 170. The rest are undefined terms (V5,
+  OPUS, WSD, muP, MFU, the claimed arc), section numbers that pointed at the wrong section, counts
+  that disagreed with the table beside them, a broken link that swallowed 07's Layout heading, stale
+  "the notebook is not tracked" prose, and 06's notebook now asserting its producer's exit code.
+  Notebook 14's full mode starts from the same exercise-13 run as the runner, rather than a
+  hard-coded path. Published numbers and verdicts are unchanged.
 
 ## [0.18.0] — 2026-10-24
 

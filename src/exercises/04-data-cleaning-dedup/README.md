@@ -3,12 +3,14 @@
 **Notebook:** [`notebooks/04-data-cleaning-dedup.ipynb`](../../../notebooks/04-data-cleaning-dedup.ipynb) — run this exercise's pipeline yourself, every setting in one cell · [open in Colab](https://colab.research.google.com/github/pankajkr23/llm-pretraining-exercises/blob/main/notebooks/04-data-cleaning-dedup.ipynb) · [all fourteen, in order](../../../notebooks/README.md)
 
 
-**Raw data is not training data.** Eight named stages stand between the two. This exercise runs all
-eight over three real corpora, counts what each one removes, and publishes the result.
+**Raw data is not training data.** Eight cleaning strategies stand between the two, run here as
+**nine pipeline stages**: stages 1 to 8, plus format discipline as stage 2b (the
+[table below](#the-eight-strategies) lists all nine). This exercise runs every stage over three real
+corpora, counts what each one removes, and publishes the result.
 
 **[Read the published page →](https://llm-pretraining-demos.vercel.app/04-data-cleaning-dedup/)**
 
-All eight stages are real. `Extract` is the one permanent pass-through: every corpus here ships
+Every stage is real. `Extract` is the one permanent pass-through: every corpus here ships
 already-extracted text, so claiming a yield for it would be inventing one.
 
 ## What it builds, and what it found
@@ -84,12 +86,12 @@ bias, and if they are visibly worse, the remaining gap is a real difference in q
 |---|---|
 | **The question** | How many cleaning strategies does Exercise 04 list, and what do they do to a real corpus? |
 | **The answer** | **8** — and the source material names two *different* eights. See [`DECISIONS.md`](./DECISIONS.md) §D1. |
-| **The corpus** | ~90M tokens across three datasets, counted with **our own Exercise 02 tokenizer** |
+| **The corpus** | 85.7M tokens (85,691,489 before any stage, `yield.tokens` in [`web/data.json`](web/data.json)) across three datasets, counted with **our own Exercise 02 tokenizer** |
 | **The deliverable** | A published page and a manifest per shard |
 
 ## Why these three corpora
 
-No single corpus exercises eight stages. Format discipline never fires on web crawl; the Indic
+No single corpus exercises every stage. Format discipline never fires on web crawl; the Indic
 joiner branch never fires on English; PII regexes find nothing worth finding in reasoning traces.
 
 | corpus | licence | the stage it alone exercises |
@@ -160,8 +162,16 @@ src/datacleaning/
   fetch.py            # row-group streaming over HTTP range requests    (CLI)
   tokens.py           # our tokenizer, the [UNK] gate, the spread table
   corpus.py           # shards -> documents, deterministically
-  pipeline.py         # the eight stages, composed
+  pipeline.py         # the nine stages, composed
+  normalize.py        # stage 2 — Unicode, invisibles, entities, whitespace; joiners kept
+  formats.py          # stage 2b — format discipline: ghost tags are made by rendering
+  langid.py           # stage 3 — language ID; never trust the folder
+  quality.py          # stage 4 — nine Gopher/C4 heuristic rules
+  dedup.py            # stage 5 — exact hashes, then MinHash/LSH
+  pii.py              # stage 6 — structured identifiers by regex, names by a stand-in
+  decontaminate.py    # stage 7 — canaries and n-grams against held-out evaluation
   manifest.py         # stage 8 — provenance, hashes, determinism
+  __main__.py         # `python -m datacleaning` — runs the pipeline   (CLI)
   export.py           # artifacts/run.json + web/data.json (100 KB budget)
 tests/                # discovered by `uv run pytest` from the repo root
 artifacts/            # generated outputs (git-ignored)
@@ -223,7 +233,7 @@ One file per stage — `test_normalize`, `test_langid`, `test_quality`, `test_de
   regex, which is why the page shows the false positives instead of hiding them. Do not read the
   PII stage as a measure of how much PII a corpus contains.
 - **Three corpora is not a sample.** They were chosen because between them they are the smallest set
-  that fires all eight stages — no single corpus does. Yields are properties of these three, at
+  that fires every stage — no single corpus does. Yields are properties of these three, at
   these thresholds, and generalise no further.
 - **`lite` is deliberately below the requirements' 10M-token floor.** It exists to surface bugs in
   minutes. Only `full` produced the published numbers; a `lite` run reproduces the *pipeline*, not

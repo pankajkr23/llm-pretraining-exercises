@@ -157,6 +157,37 @@ print("repository root:", root)
 print("torch", torch.__version__)"""
 
 
+def _h3_rerun_sentence() -> str:
+    """What the newest dated re-run says about H3, read from the bundles rather than typed.
+
+    The carry-forward cell states the published H3 verdict and the decision drawn from it. A re-run
+    that diverges is part of what the next exercise inherits, so it is named there too.
+
+    Returns:
+        A sentence starting with a space, or an empty string when no re-run diverges.
+    """
+
+    def h3(path: Path) -> dict | None:
+        if not path.is_file():
+            return None
+        bundle = json.loads(path.read_text(encoding="utf-8"))
+        return next((c for c in bundle["comparisons"] if c["key"] == "H3"), None)
+
+    published = h3(EXERCISE / "results" / "step0.json")
+    reruns = EXERCISE / "results" / "reruns"
+    days = sorted(d.name for d in reruns.iterdir() if d.is_dir()) if reruns.is_dir() else []
+    for day in reversed(days):
+        again = h3(reruns / day / "step0.json")
+        if published and again and again["verdict"] != published["verdict"]:
+            return (
+                f" A {day} re-run on a frozen code lane did not reproduce that refutation (H3 "
+                f"reads `{again['verdict']}`; `results/reruns/{day}/README.md` says why), so the "
+                "upper bound is now a precaution for the first real-scale run to settle rather "
+                "than a consequence the evidence forces."
+            )
+    return ""
+
+
 def cells() -> list[dict]:
     """The notebook, in reading order.
 
@@ -741,7 +772,7 @@ whether it was measured on that machine or estimated from a published number."""
   openly licensed text of the right kind, not the datasets the full-scale mixture would use."""
         ),
         md(
-            """\
+            f"""\
 ## Carry forward
 
 **The setting this exercise chose:** web 32%, code 28%, Indic 18%, stem 12%, reasoning 8%,
@@ -751,7 +782,7 @@ decision made against supply: web is the only lane with real surplus, so it fund
 elsewhere, and agentic is held at its floor although no existing pool can fill it, with the gap
 declared as data to be built. The recorded proxy run supported composing a mixture over crawling
 whatever is cheapest (H1) and supported the protected floor (H2); it refuted H3, so 18% Indic is
-now treated as an upper bound to be tested against its 12% floor, not as a target.
+now treated as an upper bound to be tested against its 12% floor, not as a target.{_h3_rerun_sentence()}
 
 **What the next notebook uses:** `notebooks/06-build-training-dataset.ipynb` takes these lane
 shares and floors as its plan, fetches a corpus sized against its own run rather than against the

@@ -36,10 +36,9 @@ both, which is what turned H3's verdict.
 | agentic | 462,378 | 50,273 | 117,411 | 0.0001 |
 
 **This is small, and every number below inherits that.** The corpus is 1,784,212 training
-tokens of real text — exercise 02's wiki-faithful English, Hindi, Telugu and Maithili, plus this
-repository's own Python. It needs no network and exists in any checkout, which is what makes the
-run reproducible; it is also three orders of magnitude below the scale where a mixture decision
-would be made for real.
+tokens of real text across 6 lanes. 3 lanes (web, indic, code) are text this repository tracks — exercise 02's wiki-faithful English for web, its Hindi, Telugu and Maithili for indic and this repository's own Python for code — and need no network. The other 3 (stem, reasoning, agentic) are openly-licensed stand-ins that `tools/fetch_proxy_corpus.py` downloads into a gitignored cache, so a clone has to fetch them before it can rebuild this run. Every lane's content digest is
+recorded in the run, so a rebuilt corpus can be checked against the one measured here. It is also
+three orders of magnitude below the scale where a mixture decision would be made for real.
 
 The measured throughput says the machine was never the constraint. At
 3.7 TFLOP/s, a week of compute would run **thousands of
@@ -60,8 +59,7 @@ the same finding the specification makes about the mixture: supply, not preferen
 
 It also changed a verdict. With the STEM lane absent there was nothing to observe the second clause of H3's refutation on, and H3 read `qualified`. With it present the clause fires. **A missing lane does not make a hypothesis safer; it makes it untestable, and an untestable hypothesis had been reading as a passing one.**
 
-Every arm's shares are also renormalised, so no arm is asked to sample a lane that does not exist —
-which is why arm B shows 3.2% Indic here rather than the 3% its declared mixture names.
+Every arm's shares are renormalised over the lanes that have text, so no arm is asked to sample a lane that does not exist. With every funded lane present that changes nothing here: each share above is the one its arm declares.
 
 ## Scores
 
