@@ -2172,4 +2172,11 @@ predates the harness — so it is logged as what it was.
                           main test is sound); 14 dense_run's reverse=True survives with one dated
                           fixture; #208's title overstates 09 (its README says so).
                           #211 opened
+2026-10-25  release       v0.18.1, a patch: #208-#211 are fixes only. Main is 1301695 with #211
+                          merged; tripwire and backup --verify green. Reason to ship now rather
+                          than later: production still serves the quoted course wording #210
+                          removed from the 06/07/08 pages. CHECKED WITH release.yml's OWN awk
+                          EXTRACTOR: 0.18.1 yields 51 lines ending at [0.18.0], and 0.18.0's notes
+                          extract byte-identically to main. After merge: tag on green main,
+                          production gate is PK's, then snapshot_standards.
 ```
