@@ -56,12 +56,18 @@ def _stale(results: Path, today: str) -> str | None:
                 return False
         return bool(paths)
 
-    if matches(sorted(results.glob("*.json"))):
+    published = sorted(results.glob("*.json"))
+    if matches(published):
         return None
     dated = sorted(p for p in (results / "reruns").glob("*") if p.is_dir())
     if not dated:
         return "the code or settings changed since the published run and no re-run exists"
-    if not matches(sorted(dated[-1].glob("*.json"))):
+    newest = sorted(dated[-1].glob("*.json"))
+    missing = {p.stem for p in published} - {p.stem for p in newest}
+    if missing:
+        # A `--task` run writes one bundle; the others would still describe code that is gone.
+        return f"the newest re-run, {dated[-1].name}, lacks {', '.join(sorted(missing))}"
+    if not matches(newest):
         return f"the newest re-run, {dated[-1].name}, was produced by different code or settings"
     return None
 
@@ -78,11 +84,38 @@ def test_todays_code_and_settings_produced_the_published_set_or_the_newest_rerun
     assert _stale(RESULTS, code_digest()) is None, _stale(RESULTS, code_digest())
 
 
-def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
-    """The twin: other code than the published set ran, and no dated set, is reported."""
-    shutil.copytree(RESULTS, tmp_path / "results", ignore=shutil.ignore_patterns("reruns"))
-    assert _stale(tmp_path / "results", code_digest()) is None
-    assert "no re-run exists" in _stale(tmp_path / "results", "sha256:" + "0" * 64)
+def _set_with_digest(source: Path, target: Path, digest: str, only: str | None = None) -> None:
+    """Copy a set's bundles into `target`, each claiming to come from `digest`."""
+    target.mkdir(parents=True)
+    for path in sorted(source.glob("*.json")):
+        if only and path.stem != only:
+            continue
+        bundle = json.loads(path.read_text(encoding="utf-8"))
+        bundle["provenance"]["code_digest"] = digest
+        (target / path.name).write_text(json.dumps(bundle), encoding="utf-8")
+
+
+def test_the_freshness_check_reads_each_branch(tmp_path) -> None:
+    """The twin, synthetic so that it holds whatever today's code is.
+
+    The published set's own digest stands in for "today", and the dated sets are copies relabelled
+    with other digests. Each branch is driven: published current, no re-run, the newest re-run
+    current, the newest stale behind an older current one (a check reading `dated[0]` passes it),
+    and a newest re-run holding one experiment of five.
+    """
+    results = tmp_path / "results"
+    _set_with_digest(RESULTS, results, "sha256:" + "a" * 64)
+    old, new, other = "sha256:" + "a" * 64, "sha256:" + "b" * 64, "sha256:" + "c" * 64
+    assert _stale(results, old) is None
+    assert "no re-run exists" in _stale(results, new)
+
+    _set_with_digest(RESULTS, results / "reruns" / "2026-01-01", new)
+    assert _stale(results, new) is None
+    _set_with_digest(RESULTS, results / "reruns" / "2026-02-01", other)
+    assert "2026-02-01" in _stale(results, new)
+
+    _set_with_digest(RESULTS, results / "reruns" / "2026-03-01", new, only="schedules")
+    assert "lacks" in _stale(results, new)
 
 
 def test_results_md_is_the_render_of_the_published_bundles() -> None:

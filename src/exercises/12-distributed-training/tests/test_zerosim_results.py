@@ -198,13 +198,29 @@ def test_the_published_run_or_the_newest_rerun_is_from_todays_code() -> None:
     )
 
 
-def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
-    """The twin: other code than the published run, and no dated set, is reported."""
-    from zerosim.provenance import code_digest
+def _bundle_with_digest(target: Path, digest: str) -> None:
+    """Write the published bundle to `target`, claiming to come from `digest`."""
+    bundle = json.loads(RESULTS.read_text(encoding="utf-8"))
+    bundle["provenance"]["code_digest"] = digest
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(bundle), encoding="utf-8")
 
-    (tmp_path / "zero.json").write_bytes(RESULTS.read_bytes())
-    assert _stale(tmp_path, "code_digest", code_digest()) is None
-    assert "no re-run exists" in _stale(tmp_path, "code_digest", "sha256:" + "0" * 64)
+
+def test_the_freshness_check_reads_each_branch(tmp_path) -> None:
+    """The twin, synthetic so that it holds whatever today's code is.
+
+    Each branch is driven: published current, no re-run, the newest re-run current, and the newest
+    stale behind an older current one (a check reading `dated[0]` passes that).
+    """
+    old, new, other = ("sha256:" + c * 64 for c in "abc")
+    _bundle_with_digest(tmp_path / "zero.json", old)
+    assert _stale(tmp_path, "code_digest", old) is None
+    assert "no re-run exists" in _stale(tmp_path, "code_digest", new)
+
+    _bundle_with_digest(tmp_path / "reruns" / "2026-01-01" / "zero.json", new)
+    assert _stale(tmp_path, "code_digest", new) is None
+    _bundle_with_digest(tmp_path / "reruns" / "2026-02-01" / "zero.json", other)
+    assert "2026-02-01" in _stale(tmp_path, "code_digest", new)
 
 
 def test_every_step_of_the_published_run_sent_the_same_bytes() -> None:

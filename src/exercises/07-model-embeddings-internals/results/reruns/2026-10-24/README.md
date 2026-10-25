@@ -19,7 +19,7 @@ moved a number here; the `seconds` in `rerun.json` are the 2026-09-08 run's own.
 | [`rerun.json`](rerun.json) | **not a new training run**: the 2026-09-08 run republished with a repo-relative `run_directory` | `tools/publish_rerun.py` |
 | [`measurements.restructured.json`](measurements.restructured.json) | a key-for-key restructuring of the historical file, kept for the record; **not a run**, rendered by nothing | a one-off edit, since undone |
 | [`web-data.js`](web-data.js) | the page data built from that restructuring; identical to `web/data.js` except its banner comment | `tools/build_web_data.py` at the time |
-| [`MANIFEST.md`](MANIFEST.md) | the top-level `results/` index as regenerated during that restructuring — not an index of this directory | `tools/publish_rerun.py` at the time |
+| [`MANIFEST.md`](MANIFEST.md) | the index of this directory. It first held the top-level `results/` index, regenerated during that restructuring; #208 rebuilt it as this set's own, and the earlier copy is in git history | `tools/publish_rerun.py --date 2026-10-24` |
 
 ## Side by side with the historical run
 

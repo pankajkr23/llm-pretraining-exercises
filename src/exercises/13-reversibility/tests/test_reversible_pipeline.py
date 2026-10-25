@@ -311,3 +311,25 @@ def test_a_full_run_refuses_a_dated_set_that_already_holds_its_bundles(tmp_path)
         tool.refuse_before_running(FULL, "main", out, corpus, chosen=False)
     with pytest.raises(SystemExit, match="epochs"):  # --out named: the clash is a decision
         tool.refuse_before_running(FULL, "main", out, corpus, chosen=True)
+
+
+def test_main_refuses_before_either_stage_runs(tmp_path, monkeypatch) -> None:
+    """The refusal above is only worth having if `main` calls it: drive the entry point itself."""
+    import datetime
+
+    tool = _load("run_experiments")
+    monkeypatch.setattr(tool, "RESULTS", tmp_path / "results")
+    ran: list[str] = []
+    monkeypatch.setattr(tool, "main_stage", lambda *_: ran.append("main"))
+    monkeypatch.setattr(tool, "max_stage", lambda *_: ran.append("max"))
+    dated = tmp_path / "results" / "reruns" / datetime.date.today().isoformat()
+    dated.mkdir(parents=True)
+    (dated / "fixed_batch.json").write_text("{}", encoding="utf-8")
+    corpus = _small_corpus(tmp_path / "corpus")
+    args = ["--stage", "main", "--device", "cpu", "--corpus", str(corpus)]
+    with pytest.raises(SystemExit, match="already holds fixed_batch"):
+        tool.main(args)
+    with pytest.raises(SystemExit, match="epochs"):
+        tool.main([*args, "--out", str(tmp_path / "elsewhere")])
+    assert ran == []
+    assert (dated / "fixed_batch.json").read_text(encoding="utf-8") == "{}"

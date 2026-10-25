@@ -47,8 +47,18 @@ section to the new version with a date and open a fresh `[Unreleased]`.
   05 still states the course's warning that a small model is a poor proxy. 05's tokenizer section no
   longer names a file from the reference solution. Descriptions of class discussion and personal
   references to the instructor are gone too; the root README's Credits section is unchanged. The
-  graded phrases 08's coverage list must match stay verbatim, as `FUNCTIONAL_OVERLAP` records.
-  Earlier commits still contain the old wording.
+  graded phrases 08's coverage list must match stay verbatim; each is a few words, below the
+  quoting check's 12-word run. Earlier commits still contain the old wording.
+- **Four checks added for the fixes above could pass when they should not.** An independent audit
+  of those fixes found no blocker, and four gaps that each read as checked. 11, 12 and 14's
+  freshness twins ran against the live published file, so they would have gone red after a correct
+  re-run, and never exercised the re-run branch at all: a check reading the oldest dated set, or
+  waving through a stale newest one, stayed green. They are synthetic now and drive every branch.
+  11's check also accepted a newest re-run holding one experiment of five; it requires all five.
+  11 and 13 tested the refusal function but not that `main` calls it; both now drive `main`. Each
+  was watched failing against its mutant. 08's docs and the entry above claimed `FUNCTIONAL_OVERLAP`
+  records 08's graded phrases, which it does not, and 07's 2026-10-24 set described its
+  `MANIFEST.md` as the file it was before #208 rebuilt it.
 
 ## [0.18.0] — 2026-10-24
 

@@ -10,6 +10,7 @@ renders from the bundles.
 """
 
 import dataclasses
+import datetime
 import importlib.util
 import json
 import re
@@ -193,3 +194,23 @@ def test_a_full_run_refuses_a_clash_and_a_corpus_it_would_reread(
     with pytest.raises(SystemExit, match="epochs"):
         tool.refuse_before_running(FULL, ["schedules"], out, corpus_root, chosen=True)
     tool.refuse_before_running(SMOKE, ["schedules"], out, corpus_root, chosen=True)
+
+
+def test_main_refuses_before_any_task_runs(
+    corpus_root: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The refusal above is only worth having if `main` calls it: drive the entry point itself."""
+    tool = _load("run_experiments")
+    monkeypatch.setattr(tool, "RESULTS", tmp_path / "results")
+    ran: list[str] = []
+    monkeypatch.setattr(tool, "run_task", lambda name, *_: ran.append(name))
+    dated = tmp_path / "results" / "reruns" / datetime.date.today().isoformat()
+    dated.mkdir(parents=True)
+    (dated / "schedules.json").write_text("{}", encoding="utf-8")
+    args = ["--task", "schedules", "--device", "cpu", "--corpus", str(corpus_root)]
+    with pytest.raises(SystemExit, match="already holds schedules"):
+        tool.main(args)
+    with pytest.raises(SystemExit, match="epochs"):
+        tool.main([*args, "--out", str(tmp_path / "elsewhere")])
+    assert ran == []
+    assert (dated / "schedules.json").read_text(encoding="utf-8") == "{}"
