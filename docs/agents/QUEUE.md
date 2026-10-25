@@ -2185,4 +2185,5 @@ predates the harness — so it is logged as what it was.
                           build.sh on the tag gives 138 files and every one matches production
                           byte for byte. Standards snapshotted at v0.18.1 (8/8, --check green).
                           Tags: v0.1.0-v0.18.1 only. Working tree clean.
+                          #213 opened
 ```
