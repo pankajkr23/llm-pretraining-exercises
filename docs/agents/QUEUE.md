@@ -2179,4 +2179,5 @@ predates the harness — so it is logged as what it was.
                           EXTRACTOR: 0.18.1 yields 51 lines ending at [0.18.0], and 0.18.0's notes
                           extract byte-identically to main. After merge: tag on green main,
                           production gate is PK's, then snapshot_standards.
+                          #212 opened
 ```
