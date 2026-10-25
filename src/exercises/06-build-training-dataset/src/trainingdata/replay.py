@@ -7,8 +7,8 @@ can never be bit-identical. It also breaks quietly for duller reasons: a planner
 shard order, a library upgrade.
 
 **The strategy**, and it is deliberately not the obvious one: do not re-run the code, because
-nondeterminism creeps in. **Run the ledger instead** — read what was recorded and replay it, rather
-than recomputing it and hoping the second answer matches the first.
+nondeterminism creeps in. **Read the ledger instead** — replay what was recorded, rather than
+recomputing it and hoping the second answer matches the first.
 
 So this module never asks `plan.py` anything. It reads the recorded spans, slices the immutable
 shards at exactly those offsets, rebuilds the masks and positions, and hashes the result.

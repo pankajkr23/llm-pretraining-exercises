@@ -231,7 +231,7 @@ export const M = Object.freeze({
         "arxiv": "1706.03762",
         "quoted": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (1,102 KB)",
         "verifiedOn": "2026-09-01",
-        "note": "The course source dates this as 'invented in 2018 and 17'. It is June 2017."
+        "note": "The course material dates this to 2018. It is June 2017."
       }
     },
     {

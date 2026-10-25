@@ -47,40 +47,40 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   `new_tradeoff`, `gives_up` or `when_to_choose` is empty. A technique written down with only upside has not been
   understood yet, and the requirements say so.
 
-- **`MANDATED` is the instructor's own list, quoted, mapped to our keys.** The test reads his
-  phrases, so a rename on our side can never silently drop one of his items. Do not reword the left
-  side of that dict.
+- **`MANDATED` is the required list's own phrases, mapped to our keys.** They are graded
+  identifiers, recorded in `FUNCTIONAL_OVERLAP`. The test reads those phrases, so a rename on our
+  side can never silently drop a required item. Do not reword the left side of that dict.
 
 - **Reproduce the source material's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes
   6.44 GB at one user and 51.54 GB at eight, and GQA at two KV heads is exactly a quarter of MHA.
   Tests pin all three, so editing the yardstick breaks the documents that cite it.
 
-- **The claimed arc is derived, not repeated.** The requirements say the field went "exactness → memory →
-  length → memory again". `timeline.pressure_by_period` counts which bill each window addressed, and
+- **The claimed arc is derived, not repeated.** The requirements claim the field moved from the
+  compute bill to the cache, then to position, then back to the cache. `timeline.pressure_by_period` counts which bill each window addressed, and
   `Period.dominant` returns `None` on a tie instead of picking a winner. If the arc is not in the
   data, say so.
 
 ## Two errors in the course material, both verified
 
-Recorded because the requirements explicitly invites it — *"if you catch me in another one, tell me"* —
-and because a reader deserves to know which claims we checked.
+Recorded because reporting such errors was explicitly invited, and because a reader deserves to
+know which claims we checked.
 
-- **The transformer is mis-dated in the source.** It says Vaswani "invented in 2018 and 17";
+- **The transformer is mis-dated in the source.** It places it in 2018;
   *Attention Is All You Need* is `arXiv:1706.03762`, v1 **Mon, 12 Jun 2017**, read from the abstract
   page. June 2017, not 2018.
 
-- **DroPE is two different papers in the source, and the source quotes the wrong one's title.**
+- **DroPE is two different papers in the source, and the source names the wrong one.**
   The technique the source material describes — pretrain with positional embeddings, drop them, recalibrate
   briefly — is *Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings*,
-  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The source's garbled "rotate position
-  emitting for efficient" maps instead onto **DRoPE** (capital R), `arXiv:2503.15029`, *Directional
+  `arXiv:2512.12167` (Sakana AI), v1 **13 Dec 2025**. The title the source gives, garbled, matches
+  instead **DRoPE** (capital R), `arXiv:2503.15029`, *Directional
   Rotary Position Embedding for Efficient Agent Interaction Modeling* — an autonomous-driving
   trajectory paper with no relation to the technique. Two papers whose names differ by one
   capital letter. Cite the first; footnote the second so nobody re-finds it and "corrects" us.
 
 ## One number that does not reproduce
 
-The source says eight users at a 1M-token context need "about 1 TB". The source material's **own
+The source puts eight users at a 1M-token context at about 1 TB. The source material's **own
 formula**, at the source material's own yardstick, gives **1.57 TB**:
 
     2 x 48 x 8 x 128 x 1,000,000 x 8 x 2 = 1,572,864,000,000 bytes

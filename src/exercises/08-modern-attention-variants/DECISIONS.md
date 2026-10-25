@@ -77,7 +77,7 @@ with `kind: "release"`, which the schema already supports.
 **Decision.** `timeline.pressure_by_period` counts what each window contains, and `Period.dominant`
 returns `None` on a tie instead of choosing.
 
-**Why.** The requirements hands us an answer to Question 2 — *exactness, then memory, then length, then memory again* — and printing that sentence
+**Why.** The requirements offer an answer to Question 2 — a move from exactness to memory, then length, then back to memory — and printing that
 over a chart would be the easiest thing in this exercise. It would also be the same failure as an
 unsourced date: a claim presented as a finding without being one.
 
@@ -111,7 +111,7 @@ topic itself teaches at.
 **Decision.** Recorded now, applied when `web/` lands.
 
 **Why.** The spine fits this exercise unusually well. `negatives` is where the corrected dates go —
-which is exactly what the instructor asked us to look for. `conclusion` is the answer to Question 2.
+which is exactly what the requirements ask us to look for. `conclusion` is the answer to Question 2.
 `method` is how the dates were verified. Exercises 05, 06 and 07 all carry the spine, and a survey
 page that skipped it would be the odd one out on a site whose whole argument is that pages should be
 readable at several depths.
@@ -132,7 +132,7 @@ it makes a claim about what the timeline shows, and a claim needs the spine's `e
 **Decision.** The transformer's date, the DroPE/DRoPE confusion and the non-reproducing cache figure
 are all written down in `README.md`, `CLAUDE.md` and `PROGRESS.md`, with sources.
 
-**Why.** The requirements asks for it directly: *"if you catch me in another one, tell me."* But the
+**Why.** Reporting errors in the course material was invited directly. But the
 stronger reason is the DroPE case. Two papers exist whose names differ by one capital letter, and
 the course describes one while quoting the other's title. Silently citing the right one would leave
 the next reader — or the next agent — free to "fix" it back to the wrong one. Naming both, and
@@ -291,7 +291,7 @@ outlive its reason.
 The page's **Corrections** section published three disagreements with the teaching material it was
 built from. One of them has been moved here.
 
-**The Transformer is mis-dated.** The source says Vaswani *"invented in 2018 and 17"*.
+**The Transformer is mis-dated.** The source places it in 2018.
 *Attention Is All You Need* is arXiv:1706.03762, **v1 dated Mon, 12 Jun 2017** — read from the
 abstract page, not from memory. June 2017, not 2018.
 

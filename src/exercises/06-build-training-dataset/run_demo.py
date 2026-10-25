@@ -206,8 +206,8 @@ def demonstrate_firewall(shard_dir: Path, work: Path, manifests: list, log: RunL
 
     Two-sided on purpose: the shard's own manifest carries `split="eval"` **and** an independent
     registry is asked. Relying on either alone leaves one point of failure for the mistake that
-    makes every benchmark score fiction. The instructor's reason: *"who knows, maybe a mistake in
-    copying may still happen."*
+    makes every benchmark score fiction. The reason given for keeping both: a copying mistake can
+    always happen.
 
     Args:
         shard_dir: Where the real shards live. Read from, never written to.

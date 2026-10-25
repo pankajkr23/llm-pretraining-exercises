@@ -21,8 +21,8 @@ one pass and needing repetition.
 40B of a 627M pool, which the repetition ceiling
 (`unique × 16.4`) caps at 10.3B — **3.9× short before any correction**. §6's loss mask
 makes it far worse, which is exactly why the mask is *not* the argument: reject the supervision
-estimate entirely and the lane is still impossible. That is the source material's own point, not an
-objection to it — agentic data *"must largely be built rather than collected"*.
+estimate entirely and the lane is still impossible. The source material makes the same point
+rather than objecting to it: most agentic data has to be built, because there is little to collect.
 
 **3 · Long-context is not a lane.** 60B of its 100B is repo-packed code the inventory calls
 *"packed from code corpora"* — the code lane's tokens in longer sequences. A 6% share would
@@ -435,9 +435,9 @@ reach locally and cheap to rent, so it is a spending question with an answer rat
 
 ### Does a 1B result say anything about 40B?
 
-**This is an assumption, not a result.** Asked whether a smaller model is a good proxy, the
-instructor's answer was *"Not at all. Weights are completely changed."* That was about OPUS's
-in-run scoring proxy rather than scaled-down ablations, but the concern transfers.
+**This is an assumption, not a result.** The course's own answer to whether a smaller model is
+a good proxy for a larger one was a firm no, because the weights are entirely different. That was
+about OPUS's in-run scoring proxy rather than scaled-down ablations, but the concern transfers.
 
 **What would falsify it:** run the arms at both 1B and 3B, and if any two change rank between the
 scales, transfer has failed on our own data and no 1B result may be carried to 40B. A single scale

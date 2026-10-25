@@ -22,8 +22,8 @@ The one share that is *not* changed despite failing its supply check is **agenti
 floor**. `supply.py` shows the demand is 3.9x more than infinite repetition of the pool could ever
 be worth. Cutting the share to what supply allows (~0.03%) would satisfy the arithmetic and lose
 the capability, so the share stays and the gap is declared as a **generation bill** instead. That
-is the source's own instruction — agentic data *"must largely be built rather than collected"* —
-and `generation_bill()` prices it rather than waving at it.
+follows the source's own instruction that most agentic data has to be built rather than
+collected — and `generation_bill()` prices it rather than waving at it.
 """
 
 from dataclasses import dataclass

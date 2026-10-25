@@ -22,9 +22,10 @@ published peaks at an assumed utilisation -- and still say so. The rule is uncha
 mechanism is still tested: a device with no measurement produces an absent cost, not a plausible
 one.
 
-The objection this module has to answer is the instructor's own. Asked whether a smaller model is
-a good proxy, the answer was *"Not at all. Weights are completely changed."* That was about OPUS's
-in-run scoring proxy rather than about scaled-down ablations, but the concern transfers, and
+The objection this module has to answer comes from the course itself: asked whether a smaller
+model is a good proxy, the answer was a firm no, because the weights are entirely different. That
+was about OPUS's in-run scoring proxy rather than about scaled-down ablations, but the concern
+transfers, and
 `SCALE_TRANSFER` states it as an assumption with the observation that would falsify it.
 """
 
@@ -299,9 +300,9 @@ HYPOTHESES: tuple[Hypothesis, ...] = (
 
 SCALE_TRANSFER = """\
 **The assumption this whole experiment rests on, stated as one.** A mixture that ranks better at 1B
-parameters is assumed to rank better at 40B. That is an assumption, not a result. Asked whether a
-smaller model is a good proxy for the full one, the instructor's answer was blunt: *"Not at all.
-Weights are completely changed."* The remark was about OPUS's in-run scoring proxy rather than
+parameters is assumed to rank better at 40B. That is an assumption, not a result. The course's
+own answer to whether a smaller model is a good proxy for the full one was a firm no, because the
+weights are entirely different. The remark was about OPUS's in-run scoring proxy rather than
 about scaled-down ablations, but it transfers, and pretending otherwise would be the same wishful
 accounting the supply section exists to prevent.
 

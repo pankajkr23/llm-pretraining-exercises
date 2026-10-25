@@ -13,10 +13,8 @@ seeing new imports. Measured over a recorded interval: **32/32 microbatches re-d
 flipped bit in one shard turns **exactly 1 of the 32** red — the damage is local, and the rest of
 the replay stays green as evidence of that.
 
-**Why.** The source's own answer to "how is this reproducible without a seed":
-
-> *"I will not run the code… I'm going to run the ledger. I'm going to read and send. I will not
-> calculate it."*
+**Why.** Reproducibility without a seed comes from reading the record, not from running the
+selection code a second time: replay reads what the ledger says was sent, and sends that.
 
 It is not a stylistic preference. Once the selector's scores depend on the current checkpoint, the
 plan stops being a pure function of position, and re-deriving it can never be bit-identical. Measured
@@ -142,9 +140,9 @@ code rather than about us.
 **Decided.** Implement paper Eq. 23 — alignment of the *preconditioned* candidate gradient with a
 proxy direction, minus a redundancy penalty against already-selected candidates.
 
-**Why this is a decision at all.** The source says the proxy pass records *"which particular
-weight is acting bad… store this map"* and selects candidates *"updating those weights"* — a weight
-mask. **There is no weight mask in either implementation.** It is a continuous preconditioned inner
+**Why this is a decision at all.** The source describes the proxy pass as storing a map of the
+individual weights that misbehave, and selection as preferring candidates that update them — a
+weight mask. **There is no weight mask in either implementation.** It is a continuous preconditioned inner
 product. The source also omits the redundancy penalty, which is most of the benefit: greedy top-k
 scores 40.49 against full OPUS at 41.75, with random at 40.29.
 
@@ -445,8 +443,8 @@ structure — the code is identical either way, which is the reason `gloo` was c
 `Config.opus_temperature` moves from `0.9` to `0.25`, and the field's meaning changes with it.
 
 **Why.** Gumbel(0, 1) noise has a **fixed** standard deviation of `π/√6 ≈ 1.283`. A utility does
-not: it is an inner product of gradients, so it shrinks as the model improves — the instructor's own
-control-pool diagnostic shows mean ‖g‖ falling 3.07 → 0.74 over a run. Under an absolute
+not: it is an inner product of gradients, so it shrinks as the model improves — the control-pool
+diagnostic we were given shows mean ‖g‖ falling 3.07 → 0.74 over a run. Under an absolute
 temperature the ratio between the two drifts, and the selector slides from utility-driven toward
 random **over the course of the run with nothing failing**. Batches keep filling, loss keeps
 falling, and the audit trail records confident-looking scores beside decisions those scores did not

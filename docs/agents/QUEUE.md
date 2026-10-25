@@ -2146,4 +2146,16 @@ predates the harness — so it is logged as what it was.
                           digest; 13's frozen re-run README. ONE JUDGEMENT FOR PK: 05's new "what
                           stands now" sentence on H3.
                           #209 opened
+2026-10-24  paraphrase    PK said yes: every tracked quote of the course material restated in our
+                          own words, 04/05/06/07/08 (README, SPEC + export.py, DECISIONS, PROGRESS,
+                          docstrings, 3 test docstrings, 07's requirements table on the page, 08's
+                          catalogue note on the page, a comment on 06's page). Found by sweeping
+                          for attributed quotes, not just the reviewers' list -- roughly twice as
+                          many sites. 05 TOKENIZER also named a reference-solution file; removed.
+                          Kept: Credits; MANDATED's graded phrases (FUNCTIONAL_OVERLAP); unquoted
+                          references to "the source material's own default" that 05/08 argue
+                          against; 05's 4-word preset label. The quoting gate passed on all of
+                          these because each quote was short: the gate is not the rule. Earlier
+                          commits keep the old wording; rewriting history is PK's call, not made.
+                          #210 opened
 ```

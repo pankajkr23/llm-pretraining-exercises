@@ -41,11 +41,11 @@ constraint on the parameter count at all.
 
 Three clauses, three answers, all measured:
 
-| the requirements asks | answer |
+| what the requirements ask, in our words | answer |
 | --- | --- |
-| *"make a reverse of this"* | Exact recovery at `d_model = 384` — and the decoder **certifies its own answer** without being shown the truth. Holds on a **trained** projection (loss 2.45). |
-| *"get rid of the final head"* | The `d_model × V` head is **deleted** — tied to the induced embedding `E = K·W_proj`. Zero vocabulary-sized parameters. |
-| *"a vocab of 1M without any issues"* | **6,291,457 vs 768,000,000** parameters, and ~72 ms / 0.75 GB per step **flat in V** with sampled scoring. |
+| Invert the code exactly | Exact recovery at `d_model = 384` — and the decoder **certifies its own answer** without being shown the truth. Holds on a **trained** projection (loss 2.45). |
+| Remove the output head | The `d_model × V` head is **deleted** — tied to the induced embedding `E = K·W_proj`. Zero vocabulary-sized parameters. |
+| Handle a million-word vocabulary | **6,291,457 vs 768,000,000** parameters, and ~72 ms / 0.75 GB per step **flat in V** with sampled scoring. |
 
 **A second, separate solution to Problem 3** — the 32-byte cap — is included and labelled as such,
 never merged into the #5 result. The requirements say the problems are separate; the measurements keep
@@ -192,7 +192,7 @@ parameter. Its size does not mention `V`.
 
 ## Which requirement problem each result answers
 
-The requirements states its five problems are separate — *"each are separate, don't try and mix them."* So
+The requirements treat the five problems as separate, to be answered one at a time. So
 every result here is labelled with the problem it answers, and the gain is **split by which problem
 produced it** rather than reported as one number.
 
@@ -288,7 +288,7 @@ And the parameter count does not move with the vocabulary:
 | 200,000 | 52,512,000 | **3,409,153** |
 
 At **V = 1,000,000, d = 768** the head is **6,291,457 against 768,000,000** — 122× smaller. That is
-the requirements' *"vocab of 1M without any issues"*, as arithmetic.
+the requirements' million-word vocabulary, shown as arithmetic.
 
 ---
 

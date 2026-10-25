@@ -108,11 +108,10 @@ const ref = (label, anchor) => {
   return a;
 };
 
-/* ------------------------------------------------------------------ 1 · run the ledger (Diff) */
+/* ------------------------------------------------------------------ 1 · read the ledger (Diff) */
 
-/* The claim is the source material's thesis, stated by the instructor as: "I will not run the code —
- * because I know some nondeterminism can creep in. I'm going to run the ledger. I will not
- * calculate it."
+/* The claim: a run is reproduced by reading what its ledger recorded, never by running the
+ * selection code again, because nondeterminism creeps into any recomputation.
  *
  * The interaction IS the argument: the reader watches the same question answered twice, sees both
  * answers agree, changes one line, and sees only one of them survive. A static image of two green

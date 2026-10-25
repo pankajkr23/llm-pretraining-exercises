@@ -38,7 +38,7 @@ lines and 14 tests.
 
 ## The rules this exercise adds
 
-- **Replay reads the ledger. It never recomputes.** This is the source material's whole thesis, and the
+- **Replay reads the ledger. It never recomputes.** This is the exercise's whole thesis, and the
   reason is not stylistic: once OPUS scores depend on the current checkpoint, the plan stops being a
   pure function of position, so re-deriving it can never be bit-identical. `replay.py` keeps an
   import closure with **no torch and no planner**, and `test_replay_cannot_reach_the_planner_or_torch`
@@ -218,7 +218,7 @@ lines and 14 tests.
   `replayed_from` naming the discarded event each repeats, and the count is published.
 
 - **Replay reads the POLICY out of the event, and refuses one it cannot rebuild.** This is the half
-  of "run the ledger, don't calculate it" that is easiest to leave half-done, and it shipped:
+  of "read the ledger, never recompute it" that is easiest to leave half-done, and it shipped:
   `replay.rebuild` compares `pack_policy`, `position_policy` and `attention_policy` against the
   single values this build implements and raises rather than reconstructing under an assumption the
   event contradicts. `loss_policy` is checked the same way, and a `context-masked` event that

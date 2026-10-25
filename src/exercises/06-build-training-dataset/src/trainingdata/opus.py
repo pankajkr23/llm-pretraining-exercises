@@ -301,7 +301,7 @@ def select(
 
     Selection perturbs each score with Gumbel(0, 1) noise, whose standard deviation is a **fixed**
     `π/√6 ≈ 1.283`. A utility's spread is not fixed: it is an inner product of gradients, so it
-    shrinks as the model improves. Measured on the instructor's own control pool, mean ‖g‖ fell
+    shrinks as the model improves. Measured on the control pool we were given, mean ‖g‖ fell
     3.07 → 0.74 over a run.
 
     With an absolute temperature, those two facts collide silently. At `τ = 0.9` against unit-scale

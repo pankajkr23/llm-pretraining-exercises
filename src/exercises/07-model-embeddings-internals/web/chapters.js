@@ -978,21 +978,21 @@ function chapterConclusion(M) {
         {
           __mark: 'good',
           cells: [
-            '“make a reverse of this”',
+            'Invert the code exactly',
             `Exact recovery at <b>384 numbers per word</b>, self-checking, and it survives training the recipe down to a score of ${M.trained_projection.rows[2].loss}.`,
           ],
         },
         {
           __mark: 'good',
           cells: [
-            '“get rid of the final head”',
+            'Remove the output head',
             'Gone. The second table <i>is</i> the first one reused, and nothing in the head grows with the vocabulary.',
           ],
         },
         {
           __mark: 'good',
           cells: [
-            '“a vocab of 1M without any issues”',
+            'Handle a million-word vocabulary',
             `<b>${int(big.v2_params)}</b> numbers against <b>${int(big.dense_params)}</b>, at about ${big.sampled_ms} ms per step regardless of vocabulary size.`,
           ],
         },

@@ -1,11 +1,11 @@
 """The catalogue is the deliverable, so these are the tests that matter most.
 
-The requirements are graded on three things — the dates, the trade-offs, and the coverage — and the
-instructor said plainly that a missing mechanism scores zero. Each of those is a test here rather
-than something somebody remembers to check.
+The requirements are graded on three things — the dates, the trade-offs, and the coverage — and a
+missing mechanism scores zero. Each of those is a test here rather than something somebody
+remembers to check.
 
-Two of them are written against the **instructor's own words** rather than our keys, so a rename
-on our side can never make a failure disappear.
+Two of them are written against the **required list's own phrases** rather than our keys, so a
+rename on our side can never make a failure disappear.
 """
 
 import json
@@ -117,8 +117,8 @@ def test_the_catalogue_is_in_date_order() -> None:
     assert dates == sorted(dates)
 
 
-def test_at_least_one_mechanism_the_instructor_did_not_cover() -> None:
-    """Question 2 awards a further 1000 points for a mechanism he missed, with a sourced date.
+def test_at_least_one_mechanism_the_required_list_does_not_name() -> None:
+    """Question 2 awards a further 1000 points for a mechanism the list missed, with a sourced date.
 
     Asserted rather than assumed, because a bonus nobody checks is a bonus that quietly disappears
     in an edit.
@@ -155,7 +155,7 @@ def test_the_stored_json_round_trips_through_the_loader() -> None:
 def test_each_required_mechanism_individually(phrase: str, key: str) -> None:
     """One test per required mechanism, so a failure names exactly which one is missing.
 
-    Parametrised over the FLATTENED mapping, because two of the instructor's phrases name two
+    Parametrised over the FLATTENED mapping, because two of the list's phrases name two
     mechanisms each. "sparse and top-k attention" used to map to `sparse_attention` alone and this
     test passed on half a phrase — while the catalogue additionally claimed "top-k attention" as an
     alias of Sparse Transformers, which is a different technique with a different date and a
