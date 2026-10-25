@@ -2180,4 +2180,10 @@ predates the harness — so it is logged as what it was.
                           extract byte-identically to main. After merge: tag on green main,
                           production gate is PK's, then snapshot_standards.
                           #212 opened
+2026-10-25  deploy        v0.18.1 LIVE. Tagged 9e3ffe5 after main CI went green; release run
+                          40161243474: github-release ok, deploy ok after PK approved the gate.
+                          build.sh on the tag gives 138 files and every one matches production
+                          byte for byte. Standards snapshotted at v0.18.1 (8/8, --check green).
+                          Tags: v0.1.0-v0.18.1 only. Working tree clean.
+                          #213 opened
 ```
