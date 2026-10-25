@@ -48,7 +48,8 @@ A missing mechanism scores zero, and we were invited to catch errors in the sour
   understood yet, and the requirements say so.
 
 - **`MANDATED` is the required list's own phrases, mapped to our keys.** They are graded
-  identifiers, recorded in `FUNCTIONAL_OVERLAP`. The test reads those phrases, so a rename on our
+  identifiers, each shorter than the quoting check's 12-word run, so `FUNCTIONAL_OVERLAP` holds no
+  entry for them. The test reads those phrases, so a rename on our
   side can never silently drop a required item. Do not reword the left side of that dict.
 
 - **Reproduce the source material's numbers; never copy them into prose.** `cache.kv_cache_bytes` recomputes

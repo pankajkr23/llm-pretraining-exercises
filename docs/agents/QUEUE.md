@@ -2158,4 +2158,18 @@ predates the harness — so it is logged as what it was.
                           these because each quote was short: the gate is not the rule. Earlier
                           commits keep the old wording; rewriting history is PK's call, not made.
                           #210 opened
+2026-10-25  audit         After #210 merged: tripwire and backup --verify green on main. Auditor
+                          lens over ce670b6..7770c05, run from the tracked prompt through a general
+                          agent (the deployed auditor is stale; refresh is PK's). No BLOCKER. Fixed
+                          all five MINORs, each re-verified first: 11/12/14 freshness twins used the
+                          live published file and never ran the re-run branch (now synthetic, all
+                          branches); 11 accepted a partial re-run; 11/13 never drove main's
+                          refusal; 08 + #210's CHANGELOG claimed FUNCTIONAL_OVERLAP held 08's
+                          phrases (it holds two 06 files); 07 2026-10-24 README described the old
+                          MANIFEST. Mutants run in memory (pytest plugin, tools/ untouched):
+                          dated[0], None-on-stale, partial-set, refusal-call-deleted -- all red.
+                          NITs logged, not fixed: test_rerun_sets_render's twin cannot fail (its
+                          main test is sound); 14 dense_run's reverse=True survives with one dated
+                          fixture; #208's title overstates 09 (its README says so).
+                          #211 opened
 ```

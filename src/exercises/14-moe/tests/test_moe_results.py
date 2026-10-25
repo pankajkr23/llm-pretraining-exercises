@@ -67,11 +67,29 @@ def test_todays_code_and_settings_produced_the_published_bundle_or_the_newest_re
     assert _stale(BUNDLE.parent, code_digest()) is None, _stale(BUNDLE.parent, code_digest())
 
 
-def test_a_code_change_with_no_rerun_is_stale(tmp_path) -> None:
-    """The twin: other code than the published bundle ran, and no dated set, is reported."""
-    (tmp_path / "upcycle.json").write_bytes(BUNDLE.read_bytes())
-    assert _stale(tmp_path, code_digest()) is None
-    assert "no re-run exists" in _stale(tmp_path, "sha256:" + "0" * 64)
+def _bundle_with_digest(target: Path, digest: str) -> None:
+    """Write the published bundle to `target`, claiming to come from `digest`."""
+    bundle = json.loads(BUNDLE.read_text(encoding="utf-8"))
+    bundle["provenance"]["code_digest"] = digest
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(bundle), encoding="utf-8")
+
+
+def test_the_freshness_check_reads_each_branch(tmp_path) -> None:
+    """The twin, synthetic so that it holds whatever today's code is.
+
+    Each branch is driven: published current, no re-run, the newest re-run current, and the newest
+    stale behind an older current one (a check reading `dated[0]` passes that).
+    """
+    old, new, other = ("sha256:" + c * 64 for c in "abc")
+    _bundle_with_digest(tmp_path / "upcycle.json", old)
+    assert _stale(tmp_path, old) is None
+    assert "no re-run exists" in _stale(tmp_path, new)
+
+    _bundle_with_digest(tmp_path / "reruns" / "2026-01-01" / "upcycle.json", new)
+    assert _stale(tmp_path, new) is None
+    _bundle_with_digest(tmp_path / "reruns" / "2026-02-01" / "upcycle.json", other)
+    assert "2026-02-01" in _stale(tmp_path, new)
 
 
 def test_the_dense_model_came_from_exercise_13s_published_run() -> None:

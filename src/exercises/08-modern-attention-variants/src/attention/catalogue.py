@@ -14,8 +14,9 @@ and three questions each entry has to answer: what it buys, what it gives up, an
 actually the right choice. Those are fields below, not prose conventions, because a field can be
 checked for emptiness and a paragraph cannot.
 
-**`MANDATED` is the requirements' own list, quoted.** These phrases are graded identifiers and
-are recorded in `FUNCTIONAL_OVERLAP`. A missing mechanism scores zero, so "did we cover everything"
+**`MANDATED` is the requirements' own list, quoted.** These phrases are graded identifiers, each a
+few words, so they sit below the quoting check's 12-word run and need no exemption in
+`FUNCTIONAL_OVERLAP`. A missing mechanism scores zero, so "did we cover everything"
 is a test rather than a memory. Keep each phrase exactly as the list gives it; the mapping from a
 phrase to our key lives beside it and is the part allowed to change.
 """
